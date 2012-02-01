@@ -54,6 +54,7 @@ void lock_and_signal::lock() {
 
 void lock_and_signal::unlock() {
     _locked = false;
+    // FIXME: This is not a portable way of specifying an invalid pthread_
     _holding_thread = 0;
 #if defined(__WIN32__)
     LeaveCriticalSection(&_cs);
@@ -139,7 +140,7 @@ bool lock_and_signal::lock_held_by_current_thread()
 #if defined(__WIN32__)
     return _locked && _holding_thread == GetCurrentThreadId();
 #else
-    return _locked && _holding_thread == pthread_self();
+    return _locked && pthread_equal(_holding_thread, pthread_self());
 #endif
 }
 
