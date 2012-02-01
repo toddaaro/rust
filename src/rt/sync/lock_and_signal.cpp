@@ -54,6 +54,7 @@ void lock_and_signal::lock() {
 
 void lock_and_signal::unlock() {
     _locked = false;
+    _holding_thread = 0;
 #if defined(__WIN32__)
     LeaveCriticalSection(&_cs);
 #else
