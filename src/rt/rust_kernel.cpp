@@ -1,3 +1,4 @@
+#include <vector>
 #include "rust_internal.h"
 #include "rust_util.h"
 #include "rust_scheduler.h"
@@ -7,17 +8,17 @@
 #define KLOG_ERR_(field, ...)                   \
     KLOG_LVL(this, field, log_err, __VA_ARGS__)
 
-rust_kernel::rust_kernel(rust_srv *srv, size_t num_threads) :
+rust_kernel::rust_kernel(rust_srv *srv) :
     _region(srv, true),
     _log(srv, NULL),
     srv(srv),
     live_tasks(0),
     max_task_id(0),
+    live_schedulers(0),
+    max_sched_id(0),
     rval(0),
     env(srv->env)
 {
-    sched = new (this, "rust_scheduler")
-        rust_scheduler(this, srv, num_threads);
 }
 
 void
@@ -42,7 +43,6 @@ rust_kernel::fatal(char const *fmt, ...) {
 }
 
 rust_kernel::~rust_kernel() {
-    delete sched;
 }
 
 void *
@@ -59,15 +59,66 @@ void rust_kernel::free(void *mem) {
     _region.free(mem);
 }
 
-int rust_kernel::start_schedulers()
-{
+rust_sched_id
+rust_kernel::create_scheduler(size_t num_threads) {
+    rust_scheduler *sched = new (this, "rust_scheduler")
+        rust_scheduler(this, srv, num_threads);
+    uintptr_t new_live_schedulers;
+    rust_sched_id id;
+    {
+        scoped_lock with(sched_lock);
+        id = max_sched_id++;
+        sched_table[id] = sched;
+        new_live_schedulers = ++live_schedulers;
+    }
+    sched->set_id(id);
     sched->start_task_threads();
-    return rval;
+    K(srv, id != INTPTR_MAX, "Hit the maximum scheduler id");
+    KLOG_("Created scheduler %" PRIdPTR, id);
+    KLOG_("Total outstanding schedulers: %d", new_live_schedulers);
+    return id;
+}
+
+void
+rust_kernel::release_scheduler_id(rust_sched_id id) {
+    KLOG_("Releasing scheduler %" PRIdPTR, id);
+    uintptr_t new_live_schedulers;
+    rust_scheduler *sched;
+    {
+        scoped_lock with(sched_lock);
+        sched = sched_table[id];
+        new_live_schedulers = --live_schedulers;
+    }
+    I(this, sched != NULL);
+    delete sched;
+    KLOG_("Total outstanding schedulers: %d", new_live_schedulers);
+
+    if (new_live_schedulers == 0) {
+        scoped_lock with(sched_lock);
+        // Wake up the main thread waiting to exit
+        sched_lock.signal();
+    }
 }
 
 rust_scheduler *
-rust_kernel::get_default_scheduler() {
-    return sched;
+rust_kernel::get_scheduler_by_id(rust_sched_id id) {
+    scoped_lock with(sched_lock);
+    sched_map::iterator iter = sched_table.find(id);
+    if (iter != sched_table.end()) {
+        return iter->second;
+    } else {
+        return NULL;
+    }
+}
+
+int
+rust_kernel::wait_on_schedulers() {
+    scoped_lock with(sched_lock);
+    // It's possible that the main task has already exited?
+    if (!sched_table.empty()) {
+        sched_lock.wait();
+    }
+    return rval;
 }
 
 void
@@ -79,7 +130,45 @@ rust_kernel::fail() {
 #if defined(__WIN32__)
     exit(rval);
 #endif
-    sched->kill_all_tasks();
+    // FIXME: This cannot be the correct way to bring down all tasks.
+    // There's a lot that can happen between here and when they all fail.
+    // For example, a failing task could spawn another task that would keep
+    // its scheduler alive.
+
+    // Make a copy of the scheduler pointers so we can avoid holding the
+    // lock while we murder them.
+    std::vector<rust_scheduler*> scheds;
+    {
+        scoped_lock with(sched_lock);
+        for (sched_map::iterator iter = sched_table.begin();
+             iter != sched_table.end(); iter++) {
+            scheds.push_back(iter->second);
+        }
+    }
+
+    // FIXME: When it becomes possible to destroy schedulers we will need
+    // to make sure we are keeping them reffed here
+    for (std::vector<rust_scheduler*>::iterator iter = scheds.begin();
+         iter != scheds.end(); iter++) {
+        (*iter)->kill_all_tasks();
+    }
+}
+
+void
+rust_kernel::tell_schedulers_to_exit() {
+    std::vector<rust_scheduler*> scheds;
+    {
+        scoped_lock with(sched_lock);
+        for (sched_map::iterator iter = sched_table.begin();
+             iter != sched_table.end(); iter++) {
+            scheds.push_back(iter->second);
+        }
+    }
+
+    for (std::vector<rust_scheduler*>::iterator iter = scheds.begin();
+         iter != scheds.end(); iter++) {
+        (*iter)->exit();
+    }
 }
 
 void
@@ -108,8 +197,7 @@ rust_kernel::release_task_id(rust_task_id id) {
     KLOG_("Total outstanding tasks: %d", new_live_tasks);
     if (new_live_tasks == 0) {
         // There are no more tasks and there never will be.
-        // Tell all the schedulers to exit.
-        sched->exit();
+        tell_schedulers_to_exit();
     }
 }
 

@@ -2,11 +2,15 @@
 #ifndef RUST_KERNEL_H
 #define RUST_KERNEL_H
 
+#include <map>
 #include "memory_region.h"
 #include "rust_log.h"
 
 struct rust_task_thread;
 struct rust_scheduler;
+
+typedef hash_map<rust_task_id, rust_task *> task_map;
+typedef std::map<rust_sched_id, rust_scheduler *> sched_map;
 
 /**
  * A global object shared by all thread domains. Most of the data structures
@@ -20,7 +24,6 @@ class rust_kernel {
 public:
     rust_srv *srv;
 private:
-    rust_scheduler *sched;
 
     // Protects live_tasks, max_task_id and task_table
     lock_and_signal task_lock;
@@ -30,16 +33,26 @@ private:
     uintptr_t live_tasks;
     // The next task id
     rust_task_id max_task_id;
-    hash_map<rust_task_id, rust_task *> task_table;
+    task_map task_table;
+
+    // Potects max_sched_id and sched_table
+    lock_and_signal sched_lock;
+    // Tracks the number of schedulers that are running. When this
+    // hits zero the kernel will exit.
+    uintptr_t live_schedulers;
+    rust_sched_id max_sched_id;
+    sched_map sched_table;
 
     lock_and_signal rval_lock;
     int rval;
+
+    void tell_schedulers_to_exit();
 
 public:
 
     struct rust_env *env;
 
-    rust_kernel(rust_srv *srv, size_t num_threads);
+    rust_kernel(rust_srv *srv);
     ~rust_kernel();
 
     void log(uint32_t level, char const *fmt, ...);
@@ -51,8 +64,9 @@ public:
 
     void fail();
 
-    int start_schedulers();
-    rust_scheduler* get_default_scheduler();
+    rust_sched_id create_scheduler(size_t num_threads);
+    rust_scheduler *get_scheduler_by_id(rust_sched_id id);
+    void release_scheduler_id(rust_sched_id id);
 
 #ifdef __WIN32__
     void win32_require(LPCTSTR fn, BOOL ok);
@@ -63,6 +77,8 @@ public:
     void release_task_id(rust_task_id tid);
 
     void set_exit_status(int code);
+
+    int wait_on_schedulers();
 };
 
 #endif /* RUST_KERNEL_H */
