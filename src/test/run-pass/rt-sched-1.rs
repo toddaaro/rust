@@ -1,7 +1,7 @@
 // Tests of the runtime's scheduler interface
 
-type sched_id = int;
-type task_id = int;
+type sched_id = u64;
+type task_id = u64;
 
 type task = *ctypes::void;
 type closure = *ctypes::void;

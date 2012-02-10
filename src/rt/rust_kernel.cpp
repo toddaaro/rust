@@ -69,7 +69,7 @@ rust_kernel::create_scheduler(size_t num_threads) {
     {
         scoped_lock with(sched_lock);
         id = max_sched_id++;
-        K(srv, id != INTPTR_MAX, "Hit the maximum scheduler id");
+        K(srv, id != UINT64_MAX, "Hit the maximum scheduler id");
         sched = new (this, "rust_scheduler")
             rust_scheduler(this, srv, num_threads, id);
         bool is_new = sched_table
@@ -165,7 +165,7 @@ rust_kernel::register_task(rust_task *task) {
         task_table.put(task->id, task);
         new_live_tasks = ++live_tasks;
     }
-    K(srv, task->id != INTPTR_MAX, "Hit the maximum task id");
+    K(srv, task->id != UINT64_MAX, "Hit the maximum task id");
     KLOG_("Registered task %" PRIdPTR, task->id);
     KLOG_("Total outstanding tasks: %d", new_live_tasks);
 }

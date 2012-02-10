@@ -61,9 +61,9 @@ struct stk_seg;
 struct type_desc;
 struct frame_glue_fns;
 
-typedef intptr_t rust_sched_id;
-typedef intptr_t rust_task_id;
-typedef intptr_t rust_port_id;
+typedef uint64_t rust_sched_id;
+typedef uint64_t rust_task_id;
+typedef uint64_t rust_port_id;
 
 //NDM #ifndef __i386__
 //NDM #error "Target CPU not supported."

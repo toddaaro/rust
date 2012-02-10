@@ -52,7 +52,7 @@ native mod rusti {
     fn call_with_retptr<T: send>(&&f: fn@(*uint)) -> T;
 }
 
-type port_id = int;
+type port_id = u64;
 
 // It's critical that this only have one variant, so it has a record
 // layout, and will work in the rust_task structure in task.rs.

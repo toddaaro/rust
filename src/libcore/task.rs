@@ -85,8 +85,8 @@ native mod rustrt {
 
 type rust_task = *ctypes::void;
 
-type sched_id = int;
-type task_id = int;
+type sched_id = u64;
+type task_id = u64;
 
 /*
 Type: task
@@ -323,7 +323,7 @@ fn join(task_port: joinable_task) -> task_result {
         if _id == id {
             ret res
         } else {
-            fail #fmt["join received id %d, expected %d", _id, id]
+            fail #fmt["join received id %?, expected %?", _id, id]
         }
       }
     }
