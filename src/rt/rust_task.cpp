@@ -58,7 +58,7 @@
 #endif
 
 extern "C" CDECL void
-record_sp(void *limit);
+record_sp_limit(void *limit);
 
 // Tasks
 rust_task::rust_task(rust_task_thread *thread, rust_task_state state,
@@ -642,7 +642,7 @@ rust_task::record_stack_limit() {
       (uintptr_t)stk->end - RED_ZONE_SIZE
       - (uintptr_t)stk->data >= LIMIT_OFFSET,
       "Stack size must be greater than LIMIT_OFFSET");
-    record_sp(stk->data + LIMIT_OFFSET + RED_ZONE_SIZE);
+    record_sp_limit(stk->data + LIMIT_OFFSET + RED_ZONE_SIZE);
 }
 
 static bool
