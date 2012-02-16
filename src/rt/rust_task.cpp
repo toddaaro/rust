@@ -553,6 +553,7 @@ rust_task::new_stack(size_t requested_sz) {
     LOGPTR(thread, "new stk", (uintptr_t)new_stk);
     new_stk->prev = NULL;
     new_stk->next = stk;
+    new_stk->task = this;
     LOGPTR(thread, "stk end", new_stk->end);
 
     stk = new_stk;
