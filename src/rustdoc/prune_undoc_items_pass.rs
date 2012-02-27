@@ -35,7 +35,7 @@ fn fold_mod(
     fold: fold::fold<ctxt>,
     doc: doc::moddoc
 ) -> doc::moddoc {
-    let doc = {
+    let doc = ~{
         items: vec::filter_map(doc.items) {|itemtag|
             alt itemtag {
               doc::modtag(moddoc) {
@@ -105,7 +105,7 @@ fn fold_mod(
               _ { some(itemtag) }
             }
         }
-        with fold::default_any_fold_mod(fold, doc)
+        with *fold::default_any_fold_mod(fold, doc)
     };
     fold.ctxt.have_docs =
         doc.brief() != none
@@ -195,7 +195,7 @@ fn should_elide_undocumented_consts() {
 }
 
 fn fold_enum(fold: fold::fold<ctxt>, doc: doc::enumdoc) -> doc::enumdoc {
-    let doc = {
+    let doc = ~{
         variants: vec::filter_map(doc.variants) {|variant|
             if variant.desc != none {
                 some(variant)
@@ -203,7 +203,7 @@ fn fold_enum(fold: fold::fold<ctxt>, doc: doc::enumdoc) -> doc::enumdoc {
                 none
             }
         }
-        with fold::default_seq_fold_enum(fold, doc)
+        with *fold::default_seq_fold_enum(fold, doc)
     };
     fold.ctxt.have_docs =
         doc.brief() != none

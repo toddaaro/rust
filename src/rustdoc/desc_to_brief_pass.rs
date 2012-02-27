@@ -30,44 +30,44 @@ fn fold_item(fold: fold::fold<()>, doc: doc::itemdoc) -> doc::itemdoc {
     let doc = fold::default_seq_fold_item(fold, doc);
     let (brief, desc) = modify(doc.brief, doc.desc);
 
-    {
+    ~{
         brief: brief,
         desc: desc
-        with doc
+        with *doc
     }
 }
 
 fn fold_iface(fold: fold::fold<()>, doc: doc::ifacedoc) -> doc::ifacedoc {
     let doc =fold::default_seq_fold_iface(fold, doc);
 
-    {
+    ~{
         methods: par::anymap(doc.methods) {|doc|
             let (brief, desc) = modify(doc.brief, doc.desc);
 
-            {
+            ~{
                 brief: brief,
                 desc: desc
-                with doc
+                with *doc
             }
         }
-        with doc
+        with *doc
     }
 }
 
 fn fold_impl(fold: fold::fold<()>, doc: doc::impldoc) -> doc::impldoc {
     let doc =fold::default_seq_fold_impl(fold, doc);
 
-    {
+    ~{
         methods: par::anymap(doc.methods) {|doc|
             let (brief, desc) = modify(doc.brief, doc.desc);
 
-            {
+            ~{
                 brief: brief,
                 desc: desc
-                with doc
+                with *doc
             }
         }
-        with doc
+        with *doc
     }
 }
 

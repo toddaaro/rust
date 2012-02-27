@@ -214,9 +214,9 @@ fn merge_reexports(
         let new_items = get_new_items(path, fold.ctxt);
         #debug("merging into %?: %?", path, new_items);
 
-        {
+        ~{
             items: (doc.items + new_items)
-            with doc
+            with *doc
         }
     }
 
@@ -235,63 +235,63 @@ fn merge_reexports(
 
     fn reexport_doc(doc: doc::itemtag, name: str) -> doc::itemtag {
         alt doc {
-          doc::modtag(doc @ {item, _}) {
-            doc::modtag({
+          doc::modtag(doc @ ~{item, _}) {
+            doc::modtag(~{
                 item: reexport(item, name)
-                with doc
+                with *doc
             })
           }
           doc::nmodtag(_) { fail }
-          doc::consttag(doc @ {item, _}) {
-            doc::consttag({
+          doc::consttag(doc @ ~{item, _}) {
+            doc::consttag(~{
                 item: reexport(item, name)
-                with doc
+                with *doc
             })
           }
-          doc::fntag(doc @ {item, _}) {
-            doc::fntag({
+          doc::fntag(doc @ ~{item, _}) {
+            doc::fntag(~{
                 item: reexport(item, name)
-                with doc
+                with *doc
             })
           }
-          doc::enumtag(doc @ {item, _}) {
-            doc::enumtag({
+          doc::enumtag(doc @ ~{item, _}) {
+            doc::enumtag(~{
                 item: reexport(item, name)
-                with doc
+                with *doc
             })
           }
-          doc::restag(doc @ {item, _}) {
-            doc::restag({
+          doc::restag(doc @ ~{item, _}) {
+            doc::restag(~{
                 item: reexport(item, name)
-                with doc
+                with *doc
             })
           }
-          doc::ifacetag(doc @ {item, _}) {
-            doc::ifacetag({
+          doc::ifacetag(doc @ ~{item, _}) {
+            doc::ifacetag(~{
                 item: reexport(item, name)
-                with doc
+                with *doc
             })
           }
-          doc::impltag(doc @ {item, _}) {
-            doc::impltag({
+          doc::impltag(doc @ ~{item, _}) {
+            doc::impltag(~{
                 item: reexport(item, name)
-                with doc
+                with *doc
             })
           }
-          doc::tytag(doc @ {item, _}) {
-            doc::tytag({
+          doc::tytag(doc @ ~{item, _}) {
+            doc::tytag(~{
                 item: reexport(item, name)
-                with doc
+                with *doc
             })
           }
         }
     }
 
     fn reexport(doc: doc::itemdoc, name: str) -> doc::itemdoc {
-        {
+        ~{
             name: name,
             reexport: true
-            with doc
+            with *doc
         }
     }
 }

@@ -27,10 +27,10 @@ fn fold_fn(
 ) -> doc::fndoc {
     let doc = fold::default_seq_fold_fn(fold, doc);
 
-    {
+    ~{
         args: prune_args(doc.args),
         return: prune_return(doc.return)
-        with doc
+        with *doc
     }
 }
 
@@ -45,13 +45,13 @@ fn prune_args(docs: [doc::argdoc]) -> [doc::argdoc] {
 }
 
 fn prune_return(doc: doc::retdoc) -> doc::retdoc {
-    {
+    ~{
         ty: if option::is_some(doc.desc) {
             doc.ty
         } else {
             none
         }
-        with doc
+        with *doc
     }
 }
 
@@ -79,9 +79,9 @@ fn fold_res(
 ) -> doc::resdoc {
     let doc = fold::default_seq_fold_res(fold, doc);
 
-    {
+    ~{
         args: prune_args(doc.args)
-        with doc
+        with *doc
     }
 }
 
@@ -98,18 +98,18 @@ fn fold_iface(
 ) -> doc::ifacedoc {
     let doc = fold::default_seq_fold_iface(fold, doc);
 
-    {
+    ~{
         methods: prune_methods(doc.methods)
-        with doc
+        with *doc
     }
 }
 
 fn prune_methods(docs: [doc::methoddoc]) -> [doc::methoddoc] {
     par::anymap(docs) {|doc|
-        {
+        ~{
             args: prune_args(doc.args),
             return: prune_return(doc.return)
-            with doc
+            with *doc
         }
     }
 }
@@ -132,9 +132,9 @@ fn fold_impl(
 ) -> doc::impldoc {
     let doc = fold::default_seq_fold_impl(fold, doc);
 
-    {
+    ~{
         methods: prune_methods(doc.methods)
-        with doc
+        with *doc
     }
 }
 

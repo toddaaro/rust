@@ -20,7 +20,7 @@ fn extract(
     crate: @ast::crate,
     default_name: str
 ) -> doc::cratedoc {
-    {
+    ~{
         topmod: top_moddoc_from_crate(crate, default_name),
     }
 }
@@ -34,7 +34,7 @@ fn top_moddoc_from_crate(
 }
 
 fn mk_itemdoc(id: ast::node_id, name: ast::ident) -> doc::itemdoc {
-    {
+    ~{
         id: id,
         name: name,
         path: [],
@@ -48,7 +48,7 @@ fn moddoc_from_mod(
     itemdoc: doc::itemdoc,
     module: ast::_mod
 ) -> doc::moddoc {
-    {
+    ~{
         item: itemdoc,
         items: vec::filter_map(module.items) {|item|
             let itemdoc = mk_itemdoc(item.id, item.ident);
@@ -110,7 +110,7 @@ fn nmoddoc_from_mod(
     itemdoc: doc::itemdoc,
     module: ast::native_mod
 ) -> doc::nmoddoc {
-    {
+    ~{
         item: itemdoc,
         fns: par::seqmap(module.items) {|item|
             let itemdoc = mk_itemdoc(item.id, item.ident);
@@ -127,10 +127,10 @@ fn fndoc_from_fn(
     itemdoc: doc::itemdoc,
     decl: ast::fn_decl
 ) -> doc::fndoc {
-    {
+    ~{
         item: itemdoc,
         args: argdocs_from_args(decl.inputs),
-        return: {
+        return: ~{
             desc: none,
             ty: none
         },
@@ -154,7 +154,7 @@ fn argdocs_from_args(args: [ast::arg]) -> [doc::argdoc] {
 }
 
 fn argdoc_from_arg(arg: ast::arg) -> doc::argdoc {
-    {
+    ~{
         name: arg.ident,
         desc: none,
         ty: none
@@ -162,7 +162,7 @@ fn argdoc_from_arg(arg: ast::arg) -> doc::argdoc {
 }
 
 fn constdoc_from_const(itemdoc: doc::itemdoc) -> doc::constdoc {
-    {
+    ~{
         item: itemdoc,
         ty: none
     }
@@ -179,7 +179,7 @@ fn enumdoc_from_enum(
     itemdoc: doc::itemdoc,
     variants: [ast::variant]
 ) -> doc::enumdoc {
-    {
+    ~{
         item: itemdoc,
         variants: variantdocs_from_variants(variants)
     }
@@ -192,7 +192,7 @@ fn variantdocs_from_variants(
 }
 
 fn variantdoc_from_variant(variant: ast::variant) -> doc::variantdoc {
-    {
+    ~{
         name: variant.node.name,
         desc: none,
         sig: none
@@ -216,7 +216,7 @@ fn resdoc_from_resource(
     itemdoc: doc::itemdoc,
     decl: ast::fn_decl
 ) -> doc::resdoc {
-    {
+    ~{
         item: itemdoc,
         args: argdocs_from_args(decl.inputs),
         sig: none
@@ -240,15 +240,15 @@ fn ifacedoc_from_iface(
     itemdoc: doc::itemdoc,
     methods: [ast::ty_method]
 ) -> doc::ifacedoc {
-    {
+    ~{
         item: itemdoc,
         methods: par::seqmap(methods) {|method|
-            {
+            ~{
                 name: method.ident,
                 brief: none,
                 desc: none,
                 args: argdocs_from_args(method.decl.inputs),
-                return: {
+                return: ~{
                     desc: none,
                     ty: none
                 },
@@ -281,17 +281,17 @@ fn impldoc_from_impl(
     itemdoc: doc::itemdoc,
     methods: [@ast::method]
 ) -> doc::impldoc {
-    {
+    ~{
         item: itemdoc,
         iface_ty: none,
         self_ty: none,
         methods: par::seqmap(methods) {|method|
-            {
+            ~{
                 name: method.ident,
                 brief: none,
                 desc: none,
                 args: argdocs_from_args(method.decl.inputs),
-                return: {
+                return: ~{
                     desc: none,
                     ty: none
                 },
@@ -329,7 +329,7 @@ fn should_extract_impl_method_args() {
 fn tydoc_from_ty(
     itemdoc: doc::itemdoc
 ) -> doc::tydoc {
-    {
+    ~{
         item: itemdoc,
         sig: none
     }

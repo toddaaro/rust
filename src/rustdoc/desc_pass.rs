@@ -34,10 +34,10 @@ fn maybe_apply_op(op: op, s: option<str>) -> option<str> {
 fn fold_item(fold: fold::fold<op>, doc: doc::itemdoc) -> doc::itemdoc {
     let doc = fold::default_seq_fold_item(fold, doc);
 
-    {
+    ~{
         brief: maybe_apply_op(fold.ctxt, doc.brief),
         desc: maybe_apply_op(fold.ctxt, doc.desc)
-        with doc
+        with *doc
     }
 }
 
@@ -45,19 +45,19 @@ fn fold_fn(fold: fold::fold<op>, doc: doc::fndoc) -> doc::fndoc {
     let fold_ctxt = fold.ctxt;
     let doc = fold::default_seq_fold_fn(fold, doc);
 
-    {
+    ~{
         args: par::anymap(doc.args) {|doc|
-            {
+            ~{
                 desc: maybe_apply_op(fold_ctxt, doc.desc)
-                with doc
+                with *doc
             }
         },
-        return: {
+        return: ~{
             desc: maybe_apply_op(fold.ctxt, doc.return.desc)
-            with doc.return
+            with *doc.return
         },
         failure: maybe_apply_op(fold.ctxt, doc.failure)
-        with doc
+        with *doc
     }
 }
 
@@ -65,14 +65,14 @@ fn fold_enum(fold: fold::fold<op>, doc: doc::enumdoc) -> doc::enumdoc {
     let fold_ctxt = fold.ctxt;
     let doc = fold::default_seq_fold_enum(fold, doc);
 
-    {
+    ~{
         variants: par::anymap(doc.variants) {|variant|
-            {
+            ~{
                 desc: maybe_apply_op(fold_ctxt, variant.desc)
-                with variant
+                with *variant
             }
         }
-        with doc
+        with *doc
     }
 }
 
@@ -80,43 +80,43 @@ fn fold_res(fold: fold::fold<op>, doc: doc::resdoc) -> doc::resdoc {
     let fold_ctxt = fold.ctxt;
     let doc = fold::default_seq_fold_res(fold, doc);
 
-    {
+    ~{
         args: par::anymap(doc.args) {|arg|
-            {
+            ~{
                 desc: maybe_apply_op(fold_ctxt, arg.desc)
-                with arg
+                with *arg
             }
         }
-        with doc
+        with *doc
     }
 }
 
 fn fold_iface(fold: fold::fold<op>, doc: doc::ifacedoc) -> doc::ifacedoc {
     let doc = fold::default_seq_fold_iface(fold, doc);
 
-    {
+    ~{
         methods: apply_to_methods(fold.ctxt, doc.methods)
-        with doc
+        with *doc
     }
 }
 
 fn apply_to_methods(op: op, docs: [doc::methoddoc]) -> [doc::methoddoc] {
     par::anymap(docs) {|doc|
-        {
+        ~{
             brief: maybe_apply_op(op, doc.brief),
             desc: maybe_apply_op(op, doc.desc),
             args: par::anymap(doc.args) {|doc|
-                {
+                ~{
                     desc: maybe_apply_op(op, doc.desc)
-                    with doc
+                    with *doc
                 }
             },
-            return: {
+            return: ~{
                 desc: maybe_apply_op(op, doc.return.desc)
-                with doc.return
+                with *doc.return
             },
             failure: maybe_apply_op(op, doc.failure)
-            with doc
+            with *doc
         }
     }
 }
@@ -124,9 +124,9 @@ fn apply_to_methods(op: op, docs: [doc::methoddoc]) -> [doc::methoddoc] {
 fn fold_impl(fold: fold::fold<op>, doc: doc::impldoc) -> doc::impldoc {
     let doc = fold::default_seq_fold_impl(fold, doc);
 
-    {
+    ~{
         methods: apply_to_methods(fold.ctxt, doc.methods)
-        with doc
+        with *doc
     }
 }
 

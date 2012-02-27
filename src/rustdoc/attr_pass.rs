@@ -45,13 +45,13 @@ fn fold_crate(
         attr_parser::parse_crate(attrs)
     };
 
-    {
-        topmod: {
-            item: {
+    ~{
+        topmod: ~{
+            item: ~{
                 name: option::from_maybe(doc.topmod.name(), attrs.name)
-                with doc.topmod.item
+                with *doc.topmod.item
             }
-            with doc.topmod
+            with *doc.topmod
         }
     }
 }
@@ -79,10 +79,10 @@ fn fold_item(
         parse_item_attrs(srv, doc.id, attr_parser::parse_basic)
     };
 
-    {
+    ~{
         brief: attrs.brief,
         desc: attrs.desc
-        with doc
+        with *doc
     }
 }
 
@@ -141,11 +141,11 @@ fn fold_fn(
         doc: doc::fndoc,
         attrs: attr_parser::fn_attrs
     ) -> doc::fndoc {
-        ret {
+        ret ~{
             args: merge_arg_attrs(doc.args, attrs.args),
             return: merge_ret_attrs(doc.return, attrs.return),
             failure: attrs.failure
-            with doc
+            with *doc
         };
     }
 }
@@ -159,9 +159,9 @@ fn merge_arg_attrs(
             attr.name == doc.name
         } {
             some(attr) {
-                {
+                ~{
                     desc: some(attr.desc)
-                    with doc
+                    with *doc
                 }
             }
             none { doc }
@@ -175,9 +175,9 @@ fn merge_ret_attrs(
     doc: doc::retdoc,
     attrs: option<str>
 ) -> doc::retdoc {
-    {
+    ~{
         desc: attrs
-        with doc
+        with *doc
     }
 }
 
@@ -240,7 +240,7 @@ fn fold_enum(
     let doc_id = doc.id();
     let doc = fold::default_seq_fold_enum(fold, doc);
 
-    {
+    ~{
         variants: par::anymap(doc.variants) {|variant|
             let attrs = astsrv::exec(srv) {|ctxt|
                 alt check ctxt.ast_map.get(doc_id) {
@@ -257,12 +257,12 @@ fn fold_enum(
                 }
             };
 
-            {
+            ~{
                 desc: attrs.desc
-                with variant
+                with *variant
             }
         }
-        with doc
+        with *doc
     }
 }
 
@@ -289,21 +289,21 @@ fn fold_res(
     let doc = fold::default_seq_fold_res(fold, doc);
     let attrs = parse_item_attrs(srv, doc.id(), attr_parser::parse_res);
 
-    {
+    ~{
         args: par::seqmap(doc.args) {|doc|
             alt vec::find(attrs.args) {|attr|
                 attr.name == doc.name
             } {
                 some(attr) {
-                    {
+                    ~{
                         desc: some(attr.desc)
-                        with doc
+                        with *doc
                     }
                 }
                 none { doc }
             }
         }
-        with doc
+        with *doc
     }
 }
 
@@ -330,9 +330,9 @@ fn fold_iface(
     let srv = fold.ctxt;
     let doc = fold::default_seq_fold_iface(fold, doc);
 
-    {
+    ~{
         methods: merge_method_attrs(srv, doc.id(), doc.methods)
-        with doc
+        with *doc
     }
 }
 
@@ -377,13 +377,13 @@ fn merge_method_attrs(
         let basic_attrs = tuple::first(tuple::second(attrs));
         let method_attrs = tuple::second(tuple::second(attrs));
 
-        {
+        ~{
             brief: basic_attrs.brief,
             desc: basic_attrs.desc,
             args: merge_arg_attrs(doc.args, method_attrs.args),
             return: merge_ret_attrs(doc.return, method_attrs.return),
             failure: method_attrs.failure
-            with doc
+            with *doc
         }
     }
 }
@@ -421,9 +421,9 @@ fn fold_impl(
     let srv = fold.ctxt;
     let doc = fold::default_seq_fold_impl(fold, doc);
 
-    {
+    ~{
         methods: merge_method_attrs(srv, doc.id(), doc.methods)
-        with doc
+        with *doc
     }
 }
 

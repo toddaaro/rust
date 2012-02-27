@@ -46,11 +46,11 @@ fn test_run_passes() {
         _srv: astsrv::srv,
         doc: doc::cratedoc
     ) -> doc::cratedoc {
-        {
-            topmod: {
-                item: {
+        ~{
+            topmod: ~{
+                item: ~{
                     name: doc.topmod.name() + "two"
-                    with doc.topmod.item
+                    with *doc.topmod.item
                 },
                 items: []
             }
@@ -60,11 +60,11 @@ fn test_run_passes() {
         _srv: astsrv::srv,
         doc: doc::cratedoc
     ) -> doc::cratedoc {
-        {
-            topmod: {
-                item: {
+        ~{
+            topmod: ~{
+                item: ~{
                     name: doc.topmod.name() + "three"
-                    with doc.topmod.item
+                    with *doc.topmod.item
                 },
                 items: []
             }

@@ -24,9 +24,9 @@ fn run(srv: astsrv::srv, doc: doc::cratedoc) -> doc::cratedoc {
 }
 
 fn fold_item(fold: fold::fold<ctxt>, doc: doc::itemdoc) -> doc::itemdoc {
-    {
+    ~{
         path: fold.ctxt.path
-        with doc
+        with *doc
     }
 }
 
@@ -37,9 +37,9 @@ fn fold_mod(fold: fold::fold<ctxt>, doc: doc::moddoc) -> doc::moddoc {
     let doc = fold::default_any_fold_mod(fold, doc);
     if !is_topmod { vec::pop(fold.ctxt.path); }
 
-    {
+    ~{
         item: fold.fold_item(fold, doc.item)
-        with doc
+        with *doc
     }
 }
 
@@ -48,9 +48,9 @@ fn fold_nmod(fold: fold::fold<ctxt>, doc: doc::nmoddoc) -> doc::nmoddoc {
     let doc = fold::default_seq_fold_nmod(fold, doc);
     vec::pop(fold.ctxt.path);
 
-    {
+    ~{
         item: fold.fold_item(fold, doc.item)
-        with doc
+        with *doc
     }
 }
 

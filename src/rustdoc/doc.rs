@@ -5,7 +5,7 @@ type ast_id = int;
 // FIXME: We currently give topmod the name of the crate.  There would
 // probably be fewer special cases if the crate had its own name and
 // topmod's name was the empty string.
-type cratedoc = {
+type cratedoc = ~{
     topmod: moddoc,
 };
 
@@ -21,7 +21,7 @@ enum itemtag {
     tytag(tydoc)
 }
 
-type itemdoc = {
+type itemdoc = ~{
     id: ast_id,
     name: str,
     path: [str],
@@ -31,22 +31,22 @@ type itemdoc = {
     reexport: bool
 };
 
-type moddoc = {
+type moddoc = ~{
     item: itemdoc,
     items: [itemtag]
 };
 
-type nmoddoc = {
+type nmoddoc = ~{
     item: itemdoc,
     fns: [fndoc]
 };
 
-type constdoc = {
+type constdoc = ~{
     item: itemdoc,
     ty: option<str>
 };
 
-type fndoc = {
+type fndoc = ~{
     item: itemdoc,
     args: [argdoc],
     return: retdoc,
@@ -54,40 +54,40 @@ type fndoc = {
     sig: option<str>
 };
 
-type argdoc = {
+type argdoc = ~{
     name: str,
     desc: option<str>,
     ty: option<str>
 };
 
-type retdoc = {
+type retdoc = ~{
     desc: option<str>,
     ty: option<str>
 };
 
-type enumdoc = {
+type enumdoc = ~{
     item: itemdoc,
     variants: [variantdoc]
 };
 
-type variantdoc = {
+type variantdoc = ~{
     name: str,
     desc: option<str>,
     sig: option<str>
 };
 
-type resdoc = {
+type resdoc = ~{
     item: itemdoc,
     args: [argdoc],
     sig: option<str>
 };
 
-type ifacedoc = {
+type ifacedoc = ~{
     item: itemdoc,
     methods: [methoddoc]
 };
 
-type methoddoc = {
+type methoddoc = ~{
     name: str,
     brief: option<str>,
     desc: option<str>,
@@ -97,14 +97,14 @@ type methoddoc = {
     sig: option<str>
 };
 
-type impldoc = {
+type impldoc = ~{
     item: itemdoc,
     iface_ty: option<str>,
     self_ty: option<str>,
     methods: [methoddoc]
 };
 
-type tydoc = {
+type tydoc = ~{
     item: itemdoc,
     sig: option<str>
 };

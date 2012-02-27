@@ -20,9 +20,9 @@ fn run(srv: astsrv::srv, doc: doc::cratedoc) -> doc::cratedoc {
 
 fn fold_mod(fold: fold::fold<astsrv::srv>, doc: doc::moddoc) -> doc::moddoc {
     let doc = fold::default_any_fold_mod(fold, doc);
-    {
+    ~{
         items: exported_items(fold.ctxt, doc)
-        with doc
+        with *doc
     }
 }
 
@@ -70,9 +70,9 @@ fn exported_items_from(
         let itemtag = alt itemtag {
           doc::enumtag(enumdoc) {
             // Also need to check variant exportedness
-            doc::enumtag({
+            doc::enumtag(~{
                 variants: exported_variants_from(srv, enumdoc, is_exported)
-                with enumdoc
+                with *enumdoc
             })
           }
           _ { itemtag }
