@@ -100,6 +100,7 @@ RUNTIME_HDR_$(1) := rt/globals.h \
                rt/sync/lock_free_queue.h \
                rt/sync/rust_thread.h \
                rt/sync/spinlock.h \
+               rt/sync/scoped_lock.h \
                rt/rust_srv.h \
                rt/rust_kernel.h \
                rt/memory_region.h \

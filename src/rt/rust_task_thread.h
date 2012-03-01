@@ -2,6 +2,7 @@
 #define RUST_TASK_THREAD_H
 
 #include "sync/rust_thread.h"
+#include "sync/scoped_lock.h"
 #include "rust_stack.h"
 #include "context.h"
 

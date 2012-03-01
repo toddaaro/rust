@@ -26,12 +26,4 @@ public:
     bool lock_held_by_current_thread();
 };
 
-class scoped_lock {
-  lock_and_signal &lock;
-
-public:
-  scoped_lock(lock_and_signal &lock);
-  ~scoped_lock();
-};
-
 #endif /* LOCK_AND_SIGNAL_H */

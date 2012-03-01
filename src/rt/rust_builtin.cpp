@@ -6,6 +6,7 @@
 #include "rust_util.h"
 #include "rust_scheduler.h"
 #include "sync/timer.h"
+#include "sync/scoped_lock.h"
 #include "rust_abi.h"
 
 #ifdef __APPLE__

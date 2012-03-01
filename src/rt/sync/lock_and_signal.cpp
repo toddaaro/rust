@@ -113,17 +113,6 @@ bool lock_and_signal::lock_held_by_current_thread()
 #endif
 }
 
-scoped_lock::scoped_lock(lock_and_signal &lock)
-    : lock(lock)
-{
-    lock.lock();
-}
-
-scoped_lock::~scoped_lock()
-{
-    lock.unlock();
-}
-
 //
 // Local Variables:
 // mode: C++
