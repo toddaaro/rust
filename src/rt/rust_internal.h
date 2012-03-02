@@ -47,8 +47,6 @@ extern "C" {
 #include "util/synchronized_indexed_list.h"
 #include "util/hash_map.h"
 #include "sync/sync.h"
-#include "sync/lock_and_signal.h"
-#include "sync/lock_free_queue.h"
 
 struct rust_task_thread;
 struct rust_task;
