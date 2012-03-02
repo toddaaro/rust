@@ -6,6 +6,7 @@
 #include <vector>
 #include "memory_region.h"
 #include "rust_log.h"
+#include "sync/spinlock.h"
 
 struct rust_task_thread;
 class rust_scheduler;
@@ -25,7 +26,7 @@ public:
     rust_srv *srv;
 private:
     // Protects max_task_id and task_table
-    lock_and_signal task_lock;
+    spinlock task_lock;
     // The next task id
     rust_task_id max_task_id;
     hash_map<rust_task_id, rust_task *> task_table;
