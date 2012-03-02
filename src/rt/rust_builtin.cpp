@@ -550,7 +550,7 @@ chan_id_send(type_desc *t, rust_task_id target_task_id,
         rust_port *port = target_task->get_port_by_id(target_port_id);
         if(port) {
             port->send(sptr);
-            scoped_lock with(target_task->lock);
+            scoped_lock with(target_task->port_lock);
             port->deref();
             sent = true;
         } else {

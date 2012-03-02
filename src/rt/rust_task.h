@@ -93,7 +93,12 @@ rust_task : public kernel_owned<rust_task>, rust_cond
 
     bool propagate_failure;
 
-    lock_and_signal lock;
+    // Protects the port_table and also must be held to modify
+    // the reference count on a port.
+    // FIXME: The double-duty for protecting all port ref counts
+    // is kind of ugly. Should probably make port atomically ref
+    // counted again.
+    lock_and_signal port_lock;
 
     hash_map<rust_port_id, rust_port *> port_table;
 
