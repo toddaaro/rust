@@ -220,6 +220,28 @@ rust_task_thread::log_state() {
         }
     }
 }
+
+void
+rust_task_thread::transition(rust_task *task, rust_task_list *src,
+                             rust_task_list *dst) {
+    bool unlock = false;
+    if(!lock.lock_held_by_current_thread()) {
+        unlock = true;
+        lock.lock();
+    }
+    DLOG(this, task,
+         "task %s " PTR " state change '%s' -> '%s' while in '%s'",
+         task->name, (uintptr_t)this, src->name, dst->name,
+         task->state->name);
+    I(this, task->state == src);
+    src->remove(task);
+    dst->append(task);
+    task->state = dst;
+    lock.signal();
+    if(unlock)
+        lock.unlock();
+}
+
 /**
  * Starts the main scheduler loop which performs task scheduling for this
  * domain.

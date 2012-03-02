@@ -106,7 +106,6 @@ rust_task::rust_task(rust_task_thread *thread, rust_task_list *state,
 void
 rust_task::delete_this()
 {
-    I(thread, !thread->lock.lock_held_by_current_thread());
     I(thread, port_table.is_empty());
     DLOG(thread, task, "~rust_task %s @0x%" PRIxPTR ", refcnt=%d",
          name, (uintptr_t)this, ref_count);
@@ -385,21 +384,7 @@ rust_task::free(void *p)
 
 void
 rust_task::transition(rust_task_list *src, rust_task_list *dst) {
-    bool unlock = false;
-    if(!thread->lock.lock_held_by_current_thread()) {
-        unlock = true;
-        thread->lock.lock();
-    }
-    DLOG(thread, task,
-         "task %s " PTR " state change '%s' -> '%s' while in '%s'",
-         name, (uintptr_t)this, src->name, dst->name, state->name);
-    I(thread, state == src);
-    src->remove(this);
-    dst->append(this);
-    state = dst;
-    thread->lock.signal();
-    if(unlock)
-        thread->lock.unlock();
+    thread->transition(this, src, dst);
 }
 
 void
