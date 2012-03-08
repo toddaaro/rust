@@ -148,6 +148,7 @@ fn run(config: config::config) {
             // prune_undoc_items_pass::mk_pass(),
             prune_hidden_pass::mk_pass(),
             desc_to_brief_pass::mk_pass(),
+            markdown_extract_pass::mk_pass(),
             trim_pass::mk_pass(),
             unindent_pass::mk_pass(),
             sort_item_name_pass::mk_pass(),
