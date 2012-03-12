@@ -481,17 +481,15 @@ fn write_fnlike(
 fn write_sig(ctxt: ctxt, sig: option<str>) {
     alt sig {
       some(sig) {
-        ctxt.w.write_line(code_block_indent(sig));
+        // Attaching the .rust class will apply the correct syntax
+        // highlighting via pygments
+        ctxt.w.write_line("~~~ {.rust}");
+        ctxt.w.write_line(sig);
+        ctxt.w.write_line("~~~");
         ctxt.w.write_line("");
       }
       none { fail "unimplemented" }
     }
-}
-
-fn code_block_indent(s: str) -> str {
-    let lines = str::lines_any(s);
-    let indented = par::seqmap(lines, { |line| #fmt("    %s", line) });
-    str::connect(indented, "\n")
 }
 
 #[test]
@@ -503,40 +501,13 @@ fn write_markdown_should_write_function_header() {
 #[test]
 fn should_write_the_function_signature() {
     let markdown = test::render("#[doc = \"f\"] fn a() { }");
-    assert str::contains(markdown, "\n    fn a()\n");
-}
-
-#[test]
-fn should_insert_blank_line_after_fn_signature() {
-    let markdown = test::render("#[doc = \"f\"] fn a() { }");
-    assert str::contains(markdown, "fn a()\n\n");
-}
-
-#[test]
-fn should_correctly_indent_fn_signature() {
-    let doc = test::create_doc("fn a() { }");
-    let doc = {
-        pages: [
-            doc::cratepage({
-                topmod: {
-                    items: [doc::fntag({
-                        sig: some("line 1\nline 2")
-                        with doc.cratemod().fns()[0]
-                    })]
-                    with doc.cratemod()
-                }
-                with doc.cratedoc()
-            })
-        ]
-    };
-    let markdown = test::write_markdown_str(doc);
-    assert str::contains(markdown, "    line 1\n    line 2");
-}
-
-#[test]
-fn should_leave_blank_line_between_fn_header_and_sig() {
-    let markdown = test::render("fn a() { }");
-    assert str::contains(markdown, "Function `a`\n\n    fn a()");
+    assert str::contains(
+        markdown,
+        "\n\n\
+         ~~~ {.rust}\n\
+         fn a()\n\
+         ~~~\n\
+         ");
 }
 
 fn write_const(
