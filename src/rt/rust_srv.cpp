@@ -1,6 +1,10 @@
 #include "rust_internal.h"
 #include "rust_srv.h"
 
+extern "C" void *je_malloc(size_t size);
+extern "C" void je_free(void *ptr);
+extern "C" void *je_realloc(void *ptr, size_t size);
+
 rust_srv::rust_srv(rust_env *env) :
     env(env),
     local_region(this, false) {
@@ -8,17 +12,17 @@ rust_srv::rust_srv(rust_env *env) :
 
 void
 rust_srv::free(void *p) {
-    ::free(p);
+    je_free(p);
 }
 
 void *
 rust_srv::malloc(size_t bytes) {
-    return ::malloc(bytes);
+    return je_malloc(bytes);
 }
 
 void *
 rust_srv::realloc(void *p, size_t bytes) {
-    return ::realloc(p, bytes);
+    return je_realloc(p, bytes);
 }
 
 void

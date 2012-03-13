@@ -26,6 +26,8 @@
 # Hack for passing flags into LIBUV, see below.
 LIBUV_FLAGS_i386 = -m32 -fPIC
 LIBUV_FLAGS_x86_64 = -m64 -fPIC
+JEMALLOC_FLAGS_i386 = -m32 -fPIC -O3 -funroll-loops
+JEMALLOC_FLAGS_x86_64 = -m64 -fPIC -O3 -funroll-loops
 
 define DEF_RUNTIME_TARGETS
 
@@ -127,7 +129,8 @@ RUNTIME_INCS_$(1) := -I $$(S)src/rt -I $$(S)src/rt/isaac -I $$(S)src/rt/uthash \
 				-I $$(S)src/libuv/include
 RUNTIME_OBJS_$(1) := $$(RUNTIME_CS_$(1):rt/%.cpp=rt/$(1)/%.o) \
                      $$(RUNTIME_S_$(1):rt/%.S=rt/$(1)/%.o)
-RUNTIME_LIBS_$(1) := $$(LIBUV_LIB_$(1))
+RUNTIME_LIBS_$(1) := $$(LIBUV_LIB_$(1)) \
+                     rt/$(1)/jemalloc/lib/libjemalloc.a
 
 rt/$(1)/%.o: rt/%.cpp $$(MKFILE_DEPS)
 	@$$(call E, compile: $$@)
@@ -150,6 +153,15 @@ rt/$(1)/$(CFG_RUNTIME): $$(RUNTIME_OBJS_$(1)) $$(MKFILE_DEPS) \
 	$$(Q)$$(call CFG_LINK_C_$(1),$$@, $$(RUNTIME_OBJS_$(1)) \
 	  $$(CFG_GCCISH_POST_LIB_FLAGS) $$(RUNTIME_LIBS_$(1)) \
 	  $$(CFG_LIBUV_LINK_FLAGS),$$(RUNTIME_DEF_$(1)),$$(CFG_RUNTIME))
+
+rt/$(1)/jemalloc/lib/libjemalloc.a: $$(MKFILE_DEPS)
+	@$$(call E, jemalloc: $$@)
+	$$(Q)$$(MAKE) -C rt/$(1)/jemalloc \
+		CFLAGS="$$(JEMALLOC_FLAGS_$$(HOST_$(1)))" \
+	        LDFLAGS="$$(JEMALLOC_FLAGS_$$(HOST_$(1)))" \
+		CC="$$(CFG_GCCISH_CROSS)$$(CC)" \
+		CXX="$$(CFG_GCCISH_CROSS)$$(CXX)" \
+		AR="$$(CFG_GCCISH_CROSS)$$(AR)" \
 
 # FIXME: For some reason libuv's makefiles can't figure out the correct definition
 # of CC on the mingw I'm using, so we are explicitly using gcc. Also, we

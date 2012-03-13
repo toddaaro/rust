@@ -435,7 +435,8 @@ do
   make_dir rt/$t
   for i in                                          \
     isaac bigint sync test arch/i386 arch/x86_64    \
-    libuv libuv/src/ares libuv/src/eio libuv/src/ev
+    libuv libuv/src/ares libuv/src/eio libuv/src/ev \
+    jemalloc
   do
     make_dir rt/$t/$i
   done
@@ -513,6 +514,21 @@ then
     done
     cd ${CFG_BUILD_DIR}
 fi
+
+step_msg "configuring jemalloc"
+for t in $CFG_TARGET_TRIPLES
+do
+    cd $CFG_BUILD_DIR/rt/$t/jemalloc
+    case $CFG_SRC_DIR in
+        /* | [a-z]:* | [A-Z]:*)
+            ${CFG_SRC_DIR}src/jemalloc/configure --with-jemalloc-prefix=je_
+            ;;
+        *)
+            ${CFG_BUILD_DIR}/${CFG_SRC_DIR}src/jemalloc/configure --with-jemalloc-prefix=je_
+            ;;
+    esac
+    cd $CFG_BUILD_DIR
+done
 
 # Configure llvm, only if necessary
 step_msg "looking at LLVM"
