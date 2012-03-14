@@ -52,6 +52,7 @@ RUNTIME_CS_$(1) := \
               rt/rust_uv.cpp \
               rt/rust_log.cpp \
               rt/rust_port_selector.cpp \
+              rt/rust_allocator.cpp \
               rt/circular_buffer.cpp \
               rt/isaac/randport.cpp \
               rt/rust_srv.cpp \
@@ -86,6 +87,7 @@ RUNTIME_HDR_$(1) := rt/globals.h \
                rt/rust_stack.h \
                rt/rust_log.h \
                rt/rust_port_selector.h \
+               rt/rust_allocator.h \
                rt/circular_buffer.h \
                rt/util/array_list.h \
                rt/util/indexed_list.h \

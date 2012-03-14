@@ -1,28 +1,30 @@
 #include "rust_internal.h"
 #include "rust_srv.h"
-
-extern "C" void *je_malloc(size_t size);
-extern "C" void je_free(void *ptr);
-extern "C" void *je_realloc(void *ptr, size_t size);
+#include "rust_allocator.h"
 
 rust_srv::rust_srv(rust_env *env) :
+    allocator(create_rust_allocator()),
     env(env),
     local_region(this, false) {
 }
 
+rust_srv::~rust_srv() {
+    delete_rust_allocator(allocator);
+}
+
 void
 rust_srv::free(void *p) {
-    je_free(p);
+    allocator->free(p);
 }
 
 void *
 rust_srv::malloc(size_t bytes) {
-    return je_malloc(bytes);
+    return allocator->malloc(bytes);
 }
 
 void *
 rust_srv::realloc(void *p, size_t bytes) {
-    return je_realloc(p, bytes);
+    return allocator->realloc(p, bytes);
 }
 
 void

@@ -4,10 +4,15 @@
 
 #include "rust_internal.h"
 
+class rust_allocator;
+
 class rust_srv {
+private:
+    rust_allocator *allocator;
 public:
     rust_env *env;
     memory_region local_region;
+    ~rust_srv();
     void log(char const *msg);
     void fatal(char const *expression,
         char const *file,
