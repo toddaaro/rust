@@ -43,6 +43,7 @@ Returns a pointer to a type descriptor.
 Useful for calling certain function in the Rust runtime or otherwise
 performing dark magick.
 "]
+#[inline(always)]
 fn get_type_desc<T>() -> *type_desc {
     ret rusti::get_type_desc::<T>();
 }
@@ -53,6 +54,7 @@ fn last_os_error() -> str {
 }
 
 #[doc = "Returns the size of a type"]
+#[inline(always)]
 fn size_of<T>() -> uint unsafe {
     ret (*get_type_desc::<T>()).size;
 }

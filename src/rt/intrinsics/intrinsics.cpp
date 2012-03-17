@@ -11,6 +11,7 @@
 extern "C" CDECL void
 rust_task_yield(rust_task *task, bool *killed);
 
+// FIXME: Unused. Remove
 extern "C" void
 rust_intrinsic_vec_len(size_t *retptr,
                          void *env,
@@ -20,6 +21,7 @@ rust_intrinsic_vec_len(size_t *retptr,
     *retptr = (*vp)->fill / ty->size;
 }
 
+// FIXME: Unused. Remove
 extern "C" void
 rust_intrinsic_ptr_offset(void **retptr,
                           void *env,

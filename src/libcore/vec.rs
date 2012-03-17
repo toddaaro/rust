@@ -74,11 +74,6 @@ export vec_len;
 export unsafe;
 export u8;
 
-#[abi = "rust-intrinsic"]
-native mod rusti {
-    fn vec_len<T>(&&v: [const T]) -> libc::size_t;
-}
-
 #[abi = "cdecl"]
 native mod rustrt {
     fn vec_reserve_shared<T>(t: *sys::type_desc,
@@ -122,7 +117,17 @@ fn reserve<T>(&v: [const T], n: uint) {
 
 #[doc = "Returns the length of a vector"]
 #[inline(always)]
-pure fn len<T>(v: [const T]) -> uint { unchecked { rusti::vec_len(v) } }
+pure fn len<T>(v: [const T]) -> uint {
+    unchecked {
+        unsafe {
+            let vptr = addr_of(v);
+            let repr: **unsafe::vec_repr = ::unsafe::reinterpret_cast(vptr);
+            let fill = (**repr).fill;
+            let size = sys::size_of::<T>();
+            ret fill / size;
+        }
+    }
+}
 
 #[doc = "
 Creates and initializes an immutable vector.
