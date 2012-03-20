@@ -569,8 +569,6 @@ rust_task::next_stack(size_t stk_sz, void *args_addr, size_t args_sz) {
     }
 
     memcpy(new_sp, args_addr, args_sz);
-    A(thread, rust_task_thread::get_task() == this,
-      "Recording the stack limit for the wrong thread");
     record_stack_limit();
     return new_sp;
 }
@@ -578,8 +576,6 @@ rust_task::next_stack(size_t stk_sz, void *args_addr, size_t args_sz) {
 void
 rust_task::prev_stack() {
     del_stack();
-    A(thread, rust_task_thread::get_task() == this,
-      "Recording the stack limit for the wrong thread");
     record_stack_limit();
 }
 
