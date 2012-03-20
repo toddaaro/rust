@@ -13,53 +13,6 @@
 #include "globals.h"
 #include "rust_upcall.h"
 
-// The amount of extra space at the end of each stack segment, available
-// to the rt, compiler and dynamic linker for running small functions
-// FIXME: We want this to be 128 but need to slim the red zone calls down
-#define RZ_LINUX_32 (1024*2)
-#define RZ_LINUX_64 (1024*2)
-#define RZ_MAC_32   (1024*20)
-#define RZ_MAC_64   (1024*20)
-#define RZ_WIN_32   (1024*20)
-#define RZ_BSD_32   (1024*20)
-#define RZ_BSD_64   (1024*20)
-
-#ifdef __linux__
-#ifdef __i386__
-#define RED_ZONE_SIZE RZ_LINUX_32
-#endif
-#ifdef __x86_64__
-#define RED_ZONE_SIZE RZ_LINUX_64
-#endif
-#endif
-#ifdef __APPLE__
-#ifdef __i386__
-#define RED_ZONE_SIZE RZ_MAC_32
-#endif
-#ifdef __x86_64__
-#define RED_ZONE_SIZE RZ_MAC_64
-#endif
-#endif
-#ifdef __WIN32__
-#ifdef __i386__
-#define RED_ZONE_SIZE RZ_WIN_32
-#endif
-#ifdef __x86_64__
-#define RED_ZONE_SIZE RZ_WIN_64
-#endif
-#endif
-#ifdef __FreeBSD__
-#ifdef __i386__
-#define RED_ZONE_SIZE RZ_BSD_32
-#endif
-#ifdef __x86_64__
-#define RED_ZONE_SIZE RZ_BSD_64
-#endif
-#endif
-
-extern "C" CDECL void
-record_sp_limit(void *limit);
-
 // Tasks
 rust_task::rust_task(rust_task_thread *thread, rust_task_state state,
                      rust_task *spawner, const char *name,
@@ -633,12 +586,6 @@ rust_task::prev_stack() {
 void
 rust_task::record_stack_limit() {
     I(thread, stk);
-    // The function prolog compares the amount of stack needed to the end of
-    // the stack. As an optimization, when the frame size is less than 256
-    // bytes, it will simply compare %esp to to the stack limit instead of
-    // subtracting the frame size. As a result we need our stack limit to
-    // account for those 256 bytes.
-    const unsigned LIMIT_OFFSET = 256;
     A(thread,
       (uintptr_t)stk->end - RED_ZONE_SIZE
       - (uintptr_t)stk->data >= LIMIT_OFFSET,
