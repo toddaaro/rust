@@ -97,12 +97,12 @@ fn Br(cx: block, Dest: BasicBlockRef) {
 }
 
 fn CondBr(cx: block, If: ValueRef, Then: BasicBlockRef,
-          Else: BasicBlockRef) {
-    if cx.unreachable { ret; }
+          Else: BasicBlockRef) -> option<ValueRef> {
+    if cx.unreachable { ret none; }
     assert (!cx.terminated);
     cx.terminated = true;
     count_insn(cx, "condbr");
-    llvm::LLVMBuildCondBr(B(cx), If, Then, Else);
+    some(llvm::LLVMBuildCondBr(B(cx), If, Then, Else))
 }
 
 fn Switch(cx: block, V: ValueRef, Else: BasicBlockRef, NumCases: uint)

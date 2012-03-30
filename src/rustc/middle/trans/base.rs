@@ -2281,7 +2281,8 @@ fn trans_index(cx: block, ex: @ast::expr, base: @ast::expr,
     let lim = tvec::get_fill(bcx, v);
     let body = tvec::get_dataptr(bcx, v, type_of(ccx, unit_ty));
     let bounds_check = ICmp(bcx, lib::llvm::IntUGE, scaled_ix, lim);
-    let bcx = with_cond(bcx, bounds_check) {|bcx|
+    let bcx = with_cond_likelyhood(
+        bcx, bounds_check, unlikely) {|bcx|
         // fail: bad bounds check.
         trans_fail(bcx, some(ex.span), "bounds check")
     };
@@ -3764,13 +3765,60 @@ fn with_scope_result(bcx: block, name: str, f: fn(block) -> result)
     {bcx: leave_block(bcx, scope_cx), val: val}
 }
 
+enum likelyhood {
+    likely,
+    unlikely,
+    unknown
+}
+
 fn with_cond(bcx: block, val: ValueRef, f: fn(block) -> block) -> block {
+    with_cond_likelyhood(bcx, val, unknown, f)
+}
+
+fn with_cond_likelyhood(bcx: block, val: ValueRef,
+                        likelyhood: likelyhood,
+                        f: fn(block) -> block) -> block {
     let _icx = bcx.insn_ctxt("with_cond");
     let next_cx = sub_block(bcx, "next"), cond_cx = sub_block(bcx, "cond");
-    CondBr(bcx, val, cond_cx.llbb, next_cx.llbb);
+    let condinstr = CondBr(bcx, val, cond_cx.llbb, next_cx.llbb);
+    alt condinstr {
+      some(condinstr) {
+        add_cond_branch_weight(condinstr, likelyhood);
+      }
+      none { }
+    }
     let after_cx = f(cond_cx);
     if !after_cx.terminated { Br(after_cx, next_cx.llbb); }
     next_cx
+}
+
+fn add_cond_branch_weight(condinstr: ValueRef,
+                          likelyhood: likelyhood) {
+    let weights = alt likelyhood {
+      likely { some((u32::max_value, u32::min_value)) }
+      unlikely { some((u32::min_value, u32::max_value)) }
+      unknown { none }
+    };
+
+    alt weights {
+      some((true_weight, false_weight)) {
+        let s = "branch_weights";
+        let kindid = str::as_c_str(s) {|buf|
+            llvm::LLVMGetMDKindID(buf, str::len(s) as libc::c_uint)
+        };
+        let lldata = [
+            C_i32(true_weight as i32),
+            C_i32(false_weight as i32)
+        ];
+        let node = unsafe {
+            llvm::LLVMMDNode(vec::unsafe::to_ptr(lldata),
+                             vec::len(lldata) as libc::c_uint)
+        };
+        llvm::LLVMSetMetadata(
+            condinstr, kindid, node);
+      }
+      none { /* fallthrough */ }
+    }
 }
 
 fn block_locals(b: ast::blk, it: fn(@ast::local)) {
