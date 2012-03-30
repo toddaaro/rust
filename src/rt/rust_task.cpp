@@ -109,9 +109,6 @@ cleanup_task(cleanup_args *args) {
     // since that would hide memory management errors (like not derefing
     // boxes), it needs to be disableable in debug builds.
     if (threw_exception) {
-        // FIXME: When the annihilator is more powerful and successfully
-        // runs resource destructors, etc. we can get rid of this cc
-        cc::do_cc(task);
         annihilate_boxes(task);
     }
     cc::do_final_cc(task);
