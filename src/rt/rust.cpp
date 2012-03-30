@@ -60,6 +60,19 @@ command_line_args : public kernel_owned<command_line_args>
     }
 };
 
+void
+log_debug_status(rust_kernel *kernel) {
+#ifdef RUST_DEBUG
+    KLOG(kernel, kern, "built with extra debugging");
+#else
+#ifdef RUST_NDEBUG
+    KLOG(kernel, kern, "built without extra debugging");
+#else
+    K(kernel->srv, false, "built without RUST_DEBUG or RUST_NDEBUG");
+#endif
+#endif
+}
+
 /**
  * Main entry point into the Rust runtime. Here we create a Rust service,
  * initialize the kernel, create the root domain and run it.
@@ -77,6 +90,7 @@ rust_start(uintptr_t main_fn, int argc, char **argv, void* crate_map) {
 
     rust_srv *srv = new rust_srv(env);
     rust_kernel *kernel = new rust_kernel(srv);
+    log_debug_status(kernel);
     rust_sched_id sched_id = kernel->create_scheduler(env->num_sched_threads);
     rust_scheduler *sched = kernel->get_scheduler_by_id(sched_id);
     rust_task *root_task = sched->create_task(NULL, "main");
