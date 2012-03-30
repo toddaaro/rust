@@ -12,6 +12,14 @@
 
 #include "rust_upcall.h"
 
+// Running the box annihilator is fast but can hide memory management
+// errors, so don't do it when debugging.
+#ifdef RUST_NDEBUG
+const bool always_annihilate_boxes = true;
+#else
+const bool always_annihilate_boxes = false;
+#endif
+
 // Tasks
 rust_task::rust_task(rust_task_thread *thread, rust_task_state state,
                      rust_task *spawner, const char *name,
@@ -104,11 +112,7 @@ cleanup_task(cleanup_args *args) {
         }
     }
 
-    // FIXME: For performance we should do the annihilator instead
-    // of the cycle collector even under normal termination, but
-    // since that would hide memory management errors (like not derefing
-    // boxes), it needs to be disableable in debug builds.
-    if (threw_exception) {
+    if (threw_exception || always_annihilate_boxes) {
         annihilate_boxes(task);
     }
     cc::do_final_cc(task);
