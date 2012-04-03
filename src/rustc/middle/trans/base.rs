@@ -1060,9 +1060,8 @@ fn call_tydesc_glue_full(cx: block, v: ValueRef, tydesc: ValueRef,
         }
     };
 
-    Call(cx, llfn, [C_null(T_ptr(T_nil())), C_null(T_ptr(T_nil())),
-                    lltydescs, llrawptr]);
-    ret cx;
+    invoke(cx, llfn, [C_null(T_ptr(T_nil())), C_null(T_ptr(T_nil())),
+                    lltydescs, llrawptr])
 }
 
 fn call_tydesc_glue(cx: block, v: ValueRef, t: ty::t, field: int) ->
