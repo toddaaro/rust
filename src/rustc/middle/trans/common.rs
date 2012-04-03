@@ -339,6 +339,7 @@ type block = @{
     llbb: BasicBlockRef,
     mut terminated: bool,
     mut unreachable: bool,
+    lpad: bool,
     parent: block_parent,
     // The 'kind' of basic block this is.
     kind: block_kind,
