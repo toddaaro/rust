@@ -3650,7 +3650,7 @@ fn scope_block(bcx: block, n: str) -> block {
 
 fn lpad_block(bcx: block, n: str) -> block {
     ret @{
-        lpad: false
+        lpad: true
         with *new_block(bcx.fcx, parent_some(bcx), simple_block_scope(),
                        n, none)
     };
