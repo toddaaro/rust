@@ -3637,6 +3637,14 @@ fn scope_block(bcx: block, n: str) -> block {
                   n, none);
 }
 
+fn lpad_block(bcx: block, n: str) -> block {
+    ret @{
+        lpad: false
+        with *new_block(bcx.fcx, parent_some(bcx), simple_block_scope(),
+                       n, none)
+    };
+}
+
 fn loop_scope_block(bcx: block, _cont: loop_cont,
                     _break: block, n: str, sp: span)
     -> block {
