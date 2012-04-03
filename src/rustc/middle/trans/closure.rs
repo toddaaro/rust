@@ -570,8 +570,8 @@ fn make_opaque_cbox_take_glue(
         // Take the data in the tuple
         let ti = none;
         let cdata_out = GEPi(bcx, cbox_out, [0, abi::box_field_body]);
-        call_tydesc_glue_full(bcx, cdata_out, tydesc,
-                              abi::tydesc_field_take_glue, ti);
+        let bcx = call_tydesc_glue_full(bcx, cdata_out, tydesc,
+                                        abi::tydesc_field_take_glue, ti);
         bcx
     }
 }
@@ -618,8 +618,8 @@ fn make_opaque_cbox_free_glue(
         // Drop the tuple data then free the descriptor
         let ti = none;
         let cdata = GEPi(bcx, cbox, [0, abi::box_field_body]);
-        call_tydesc_glue_full(bcx, cdata, tydesc,
-                              abi::tydesc_field_drop_glue, ti);
+        let bcx = call_tydesc_glue_full(bcx, cdata, tydesc,
+                                        abi::tydesc_field_drop_glue, ti);
 
         // Free the ty descr (if necc) and the box itself
         alt ck {

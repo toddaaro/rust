@@ -633,8 +633,9 @@ fn make_free_glue(bcx: block, v: ValueRef, t: ty::t) {
         let v = PointerCast(bcx, v, type_of(ccx, t));
         let td = Load(bcx, GEPi(bcx, v, [0, abi::box_field_tydesc]));
         let valptr = GEPi(bcx, v, [0, abi::box_field_body]);
-        call_tydesc_glue_full(bcx, valptr, td, abi::tydesc_field_drop_glue,
-                              none);
+        let bcx = call_tydesc_glue_full(bcx, valptr, td,
+                                        abi::tydesc_field_drop_glue,
+                                        none);
         trans_free(bcx, v)
       }
       ty::ty_uniq(content_mt) {
@@ -1025,10 +1026,11 @@ fn lazily_emit_tydesc_glue(ccx: @crate_ctxt, field: int,
 }
 
 fn call_tydesc_glue_full(cx: block, v: ValueRef, tydesc: ValueRef,
-                         field: int, static_ti: option<@tydesc_info>) {
+                         field: int, static_ti: option<@tydesc_info>
+                        ) -> block {
     let _icx = cx.insn_ctxt("call_tydesc_glue_full");
     lazily_emit_tydesc_glue(cx.ccx(), field, static_ti);
-    if cx.unreachable { ret; }
+    if cx.unreachable { ret cx; }
 
     let mut static_glue_fn = none;
     alt static_ti {
@@ -1060,6 +1062,7 @@ fn call_tydesc_glue_full(cx: block, v: ValueRef, tydesc: ValueRef,
 
     Call(cx, llfn, [C_null(T_ptr(T_nil())), C_null(T_ptr(T_nil())),
                     lltydescs, llrawptr]);
+    ret cx;
 }
 
 fn call_tydesc_glue(cx: block, v: ValueRef, t: ty::t, field: int) ->
@@ -1067,7 +1070,7 @@ fn call_tydesc_glue(cx: block, v: ValueRef, t: ty::t, field: int) ->
     let _icx = cx.insn_ctxt("call_tydesc_glue");
     let mut ti = none;
     let td = get_tydesc(cx.ccx(), t, ti);
-    call_tydesc_glue_full(cx, v, td, field, ti);
+    let cx = call_tydesc_glue_full(cx, v, td, field, ti);
     ret cx;
 }
 
