@@ -2782,6 +2782,18 @@ fn need_invoke(bcx: block) -> bool {
         ret true;
     }
 
+    let mut cur = bcx;
+    loop {
+        if cur.lpad {
+            ret false;
+        } else {
+            alt cur.parent {
+              parent_some(p) { cur = p; }
+              parent_none { break; }
+            }
+        }
+    }
+
     // Walk the scopes to look for cleanups
     let mut cur = bcx;
     loop {
@@ -2841,7 +2853,7 @@ fn get_landing_pad(bcx: block) -> BasicBlockRef {
         alt info.landing_pad {
           some(target) { cached = some(target); }
           none {
-            pad_bcx = sub_block(bcx, "unwind");
+            pad_bcx = lpad_block(bcx, "unwind");
             info.landing_pad = some(pad_bcx.llbb);
           }
         }
