@@ -1,20 +1,11 @@
 #[doc = "Misc low level stuff"];
 
-export type_desc;
-export get_type_desc;
 export last_os_error;
 export size_of;
 export align_of;
 export refcount;
 export log_str;
 export set_exit_status;
-
-enum type_desc = {
-    first_param: **libc::c_int,
-    size: libc::size_t,
-    align: libc::size_t
-    // Remaining fields not listed
-};
 
 #[abi = "cdecl"]
 native mod rustrt {
@@ -24,25 +15,14 @@ native mod rustrt {
     fn last_os_error() -> str;
     fn refcount<T>(t: @T) -> libc::intptr_t;
     fn unsupervise();
-    fn shape_log_str<T>(t: *sys::type_desc, data: T) -> str;
+    fn shape_log_str<T>(t: *refl::type_desc, data: T) -> str;
     fn rust_set_exit_status(code: libc::intptr_t);
 }
 
 #[abi = "rust-intrinsic"]
 native mod rusti {
-    fn get_tydesc<T>() -> *();
     fn size_of<T>() -> uint;
     fn align_of<T>() -> uint;
-}
-
-#[doc = "
-Returns a pointer to a type descriptor.
-
-Useful for calling certain function in the Rust runtime or otherwise
-performing dark magick.
-"]
-fn get_type_desc<T>() -> *type_desc {
-    rusti::get_tydesc::<T>() as *type_desc
 }
 
 #[doc = "Get a string representing the platform-dependent last error"]
@@ -66,7 +46,7 @@ fn refcount<T>(t: @T) -> uint {
 }
 
 fn log_str<T>(t: T) -> str {
-    rustrt::shape_log_str(get_type_desc::<T>(), t)
+    rustrt::shape_log_str(refl::get_type_desc::<T>(), t)
 }
 
 #[doc = "

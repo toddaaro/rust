@@ -77,10 +77,10 @@ export extensions;
 
 #[abi = "cdecl"]
 native mod rustrt {
-    fn vec_reserve_shared<T>(t: *sys::type_desc,
+    fn vec_reserve_shared<T>(t: *refl::type_desc,
                              &v: [const T],
                              n: libc::size_t);
-    fn vec_from_buf_shared<T>(t: *sys::type_desc,
+    fn vec_from_buf_shared<T>(t: *refl::type_desc,
                               ptr: *T,
                               count: libc::size_t) -> [T];
 }
@@ -115,7 +115,7 @@ capacity, then no action is taken.
 fn reserve<T>(&v: [const T], n: uint) {
     // Only make the (slow) call into the runtime if we have to
     if capacity(v) < n {
-        rustrt::vec_reserve_shared(sys::get_type_desc::<T>(), v, n);
+        rustrt::vec_reserve_shared(refl::get_type_desc::<T>(), v, n);
     }
 }
 
@@ -1150,7 +1150,7 @@ mod unsafe {
     "]
     #[inline(always)]
     unsafe fn from_buf<T>(ptr: *T, elts: uint) -> [T] {
-        ret rustrt::vec_from_buf_shared(sys::get_type_desc::<T>(),
+        ret rustrt::vec_from_buf_shared(refl::get_type_desc::<T>(),
                                         ptr, elts);
     }
 
