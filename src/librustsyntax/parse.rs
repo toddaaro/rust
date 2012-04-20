@@ -17,28 +17,30 @@ import lexer::reader;
 
 type parse_sess = @{
     cm: codemap::codemap,
-    mut next_id: node_id,
     span_diagnostic: diagnostic::span_handler,
+    mut next_id: node_id,
     // these two must be kept up to date
     mut chpos: uint,
     mut byte_pos: uint
 };
 
-fn parse_crate_from_file(input: str, cfg: ast::crate_cfg, sess: parse_sess) ->
-   @ast::crate {
-    if str::ends_with(input, ".rc") {
-        parse_crate_from_crate_file(input, cfg, sess)
-    } else if str::ends_with(input, ".rs") {
-        parse_crate_from_source_file(input, cfg, sess)
+fn parse_crate_from_file(sess: parse_sess,
+                         cfg: ast::crate_cfg,
+                         path: str) -> @ast::crate {
+    if str::ends_with(path, ".rc") {
+        parse_crate_from_crate_file(path, cfg, sess)
+    } else if str::ends_with(path, ".rs") {
+        parse_crate_from_source_file(path, cfg, sess)
     } else {
         sess.span_diagnostic.handler().fatal("unknown input file type: " +
-                                             input)
+                                             path)
     }
 }
 
-fn parse_crate_from_crate_file(input: str, cfg: ast::crate_cfg,
-                               sess: parse_sess) -> @ast::crate {
-    let p = new_parser_from_file(sess, cfg, input, parser::CRATE_FILE);
+fn parse_crate_from_crate_file(sess: parse_sess,
+                               cfg: ast::crate_cfg,
+                               path: str) -> @ast::crate {
+    let p = new_parser_from_file(sess, cfg, path, parser::CRATE_FILE);
     let lo = p.span.lo;
     let prefix = path::dirname(p.reader.filemap.name);
     let leading_attrs = attr::parse_inner_attrs_and_next(p);
@@ -52,7 +54,7 @@ fn parse_crate_from_crate_file(input: str, cfg: ast::crate_cfg,
         @{p: p,
           sess: sess,
           cfg: p.cfg};
-    let (companionmod, _) = path::splitext(path::basename(input));
+    let (companionmod, _) = path::splitext(path::basename(path));
     let (m, attrs) = eval::eval_crate_directives_to_mod(
         cx, cdirs, prefix, option::some(companionmod));
     let mut hi = p.span.hi;
@@ -64,17 +66,20 @@ fn parse_crate_from_crate_file(input: str, cfg: ast::crate_cfg,
                            config: p.cfg});
 }
 
-fn parse_crate_from_source_file(input: str, cfg: ast::crate_cfg,
-                                sess: parse_sess) -> @ast::crate {
-    let p = new_parser_from_file(sess, cfg, input, parser::SOURCE_FILE);
+fn parse_crate_from_source_file(sess: parse_sess,
+                                cfg: ast::crate_cfg,
+                                path: str) -> @ast::crate {
+    let p = new_parser_from_file(sess, cfg, path, parser::SOURCE_FILE);
     let r = parser::parse_crate_mod(p, cfg);
     sess.chpos = p.reader.chpos;
     sess.byte_pos = sess.byte_pos + p.reader.pos;
     ret r;
 }
 
-fn parse_crate_from_source_str(name: str, source: @str, cfg: ast::crate_cfg,
-                               sess: parse_sess) -> @ast::crate {
+fn parse_crate_from_source_str(sess: parse_sess,
+                               cfg: ast::crate_cfg,
+                               name: str,
+                               source: @str) -> @ast::crate {
     let p = new_parser_from_source_str(
         sess, cfg, name, codemap::fss_none, source);
     let r = parser::parse_crate_mod(p, cfg);
@@ -83,8 +88,10 @@ fn parse_crate_from_source_str(name: str, source: @str, cfg: ast::crate_cfg,
     ret r;
 }
 
-fn parse_expr_from_source_str(name: str, source: @str, cfg: ast::crate_cfg,
-                              sess: parse_sess) -> @ast::expr {
+fn parse_expr_from_source_str(sess: parse_sess,
+                              cfg: ast::crate_cfg,
+                              name: str,
+                              source: @str) -> @ast::expr {
     let p = new_parser_from_source_str(
         sess, cfg, name, codemap::fss_none, source);
     let r = parser::parse_expr(p);
@@ -93,12 +100,12 @@ fn parse_expr_from_source_str(name: str, source: @str, cfg: ast::crate_cfg,
     ret r;
 }
 
-fn parse_from_source_str<T>(f: fn (p: parser) -> T,
-                            name: str, ss: codemap::file_substr,
-                            source: @str, cfg: ast::crate_cfg,
-                            sess: parse_sess)
-    -> T
-{
+fn parse_from_source_str<T>(sess: parse_sess,
+                            cfg: ast::crate_cfg,
+                            name: str,
+                            source: @str, 
+                            ss: codemap::file_substr,
+                            f: fn (p: parser) -> T) -> T {
     let p = new_parser_from_source_str(sess, cfg, name, ss, source);
     let r = f(p);
     if !p.reader.is_eof() {
@@ -136,8 +143,8 @@ fn new_parser(sess: parse_sess, cfg: ast::crate_cfg, rdr: lexer::reader,
 }
 
 fn new_parser_from_source_str(sess: parse_sess, cfg: ast::crate_cfg,
-                              name: str, ss: codemap::file_substr,
-                              source: @str) -> parser {
+                              name: str, source: @str,
+                              ss: codemap::file_substr) -> parser {
     let ftype = parser::SOURCE_FILE;
     let filemap = codemap::new_filemap_w_substr
         (name, ss, source, sess.chpos, sess.byte_pos);

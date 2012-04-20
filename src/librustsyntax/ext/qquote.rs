@@ -188,8 +188,8 @@ fn finish<T: qq_helper>
     #debug["qquote--str==%?", str];
     let fname = codemap::mk_substr_filename(cm, body.span);
     let node = parse_from_source_str
-        (f, fname, codemap::fss_internal(body.span), str,
-         ecx.cfg(), ecx.parse_sess());
+        (fname, codemap::fss_internal(body.span), str,
+         ecx.cfg(), ecx.parse_sess(), f);
     let loc = codemap::lookup_char_pos(cm, body.span.lo);
 
     let sp = node.span();
