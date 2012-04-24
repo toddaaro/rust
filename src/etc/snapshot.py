@@ -27,6 +27,7 @@ snapshot_files = {
               "lib/libcore-*.so",
               "lib/libstd-*.so",
               "lib/librustc-*.so",
+              "lib/librustmeta-*.so",
               "lib/librustsyntax-*.so",
               "lib/librustrt.so",
               "lib/librustllvm.so"],
@@ -34,6 +35,7 @@ snapshot_files = {
               "lib/libcore-*.dylib",
               "lib/libstd-*.dylib",
               "lib/librustc-*.dylib",
+              "lib/librustmeta-*.dylib",
               "lib/librustsyntax-*.dylib",
               "lib/librustrt.dylib",
               "lib/librustllvm.dylib"],
@@ -48,6 +50,7 @@ snapshot_files = {
                 "lib/libcore-*.so",
                 "lib/libstd-*.so",
                 "lib/librustc-*.so",
+                "lib/librustmeta-*.so",
                 "lib/librustsyntax-*.so",
                 "lib/librustrt.so",
                 "lib/librustllvm.so"]
