@@ -23,6 +23,7 @@ $$(HBIN$(2)_H_$(4))/rustc$$(X): \
 
 $$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTC): \
 	$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_LIBRUSTC) \
+	$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTMETA) \
 	$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTSYNTAX) \
 	$$(HLIB$(2)_H_$(4))/$$(CFG_RUNTIME) \
 	$$(HLIB$(2)_H_$(4))/$$(CFG_RUSTLLVM) \
@@ -33,6 +34,20 @@ $$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTC): \
 	$$(Q)cp -R $$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBRUSTC_GLOB) \
 		$$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBRUSTC_DSYM_GLOB) \
 	        $$(HLIB$(2)_H_$(4))
+
+$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTMETA): \
+	$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_LIBRUSTMETA) \
+	$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTSYNTAX) \
+	$$(HLIB$(2)_H_$(4))/$$(CFG_RUNTIME) \
+	$$(HLIB$(2)_H_$(4))/$$(CFG_RUSTLLVM) \
+	$$(HCORELIB_DEFAULT$(2)_H_$(3)) \
+	$$(HSTDLIB_DEFAULT$(2)_H_$(3))
+	@$$(call E, cp: $$@)
+	$$(Q)cp $$< $$@
+	$$(Q)cp -R $$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBRUSTMETA_GLOB) \
+		$$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBRUSTMETA_DSYM_GLOB) \
+	        $$(HLIB$(2)_H_$(4))
+
 
 $$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTSYNTAX): \
 	$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_LIBRUSTSYNTAX) \

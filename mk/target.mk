@@ -38,7 +38,18 @@ $$(TBIN$(1)_T_$(2)_H_$(3))/rustc$$(X):				\
 
 $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_LIBRUSTC):		\
 		$$(COMPILER_CRATE) $$(COMPILER_INPUTS)		\
+                $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_LIBRUSTMETA)  \
                 $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_LIBRUSTSYNTAX)
+	@$$(call E, compile_and_link: $$@)
+	$$(STAGE$(1)_T_$(2)_H_$(3)) -o $$@ $$< && touch $$@
+
+$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_LIBRUSTMETA): \
+                $$(LIBRUSTMETA_CRATE) $$(LIBRUSTMETA_INPUTS) \
+                $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_LIBRUSTSYNTAX) \
+		$$(TSREQ$(1)_T_$(2)_H_$(3))			\
+		$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_RUSTLLVM)	\
+		$$(TCORELIB_DEFAULT$(1)_T_$(2)_H_$(3))      \
+		$$(TSTDLIB_DEFAULT$(1)_T_$(2)_H_$(3))
 	@$$(call E, compile_and_link: $$@)
 	$$(STAGE$(1)_T_$(2)_H_$(3)) -o $$@ $$< && touch $$@
 
