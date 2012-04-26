@@ -1,8 +1,6 @@
-// xfail-test
-
-tag a_tag<A,B> {
-    varA(A);
-    varB(B);
+enum a_tag<A,B> {
+    varA(A),
+    varB(B)
 }
 
 type t_rec<A,B> = {
@@ -28,34 +26,46 @@ fn variant_data_is_aligned<A,B>(amnt: uint, &&u: a_tag<A,B>) -> bool {
     }
 }
 
+#[cfg(target_arch = "x86")]
+mod m {
+    const u32align: uint = 4u;
+    const u64align: uint = 4u;
+}
+
+#[cfg(target_arch = "x86_64")]
+mod m {
+    const u32align: uint = 4u;
+    const u64align: uint = 8u;
+}
+
 fn main() {
     let x = mk_rec(22u64, 23u64);
-    assert is_aligned(8u, x.tA);
-    assert variant_data_is_aligned(8u, x.tA);
-    assert is_aligned(8u, x.tB);
-    assert variant_data_is_aligned(8u, x.tB);
+    assert is_aligned(m::u64align, x.tA);
+    assert variant_data_is_aligned(m::u64align, x.tA);
+    assert is_aligned(m::u64align, x.tB);
+    assert variant_data_is_aligned(m::u64align, x.tB);
 
     let x = mk_rec(22u64, 23u32);
-    assert is_aligned(8u, x.tA);
-    assert variant_data_is_aligned(8u, x.tA);
-    assert is_aligned(8u, x.tB);
-    assert variant_data_is_aligned(4u, x.tB);
+    assert is_aligned(m::u64align, x.tA);
+    assert variant_data_is_aligned(m::u64align, x.tA);
+    assert is_aligned(m::u64align, x.tB);
+    assert variant_data_is_aligned(m::u32align, x.tB);
 
     let x = mk_rec(22u32, 23u64);
-    assert is_aligned(8u, x.tA);
-    assert variant_data_is_aligned(4u, x.tA);
-    assert is_aligned(8u, x.tB);
-    assert variant_data_is_aligned(8u, x.tB);
+    assert is_aligned(m::u64align, x.tA);
+    assert variant_data_is_aligned(m::u32align, x.tA);
+    assert is_aligned(m::u64align, x.tB);
+    assert variant_data_is_aligned(m::u64align, x.tB);
 
     let x = mk_rec(22u32, 23u32);
-    assert is_aligned(4u, x.tA);
-    assert variant_data_is_aligned(4u, x.tA);
-    assert is_aligned(4u, x.tB);
-    assert variant_data_is_aligned(4u, x.tB);
+    assert is_aligned(m::u32align, x.tA);
+    assert variant_data_is_aligned(m::u32align, x.tA);
+    assert is_aligned(m::u32align, x.tB);
+    assert variant_data_is_aligned(m::u32align, x.tB);
 
     let x = mk_rec(22f64, 23f64);
-    assert is_aligned(8u, x.tA);
-    assert variant_data_is_aligned(8u, x.tA);
-    assert is_aligned(8u, x.tB);
-    assert variant_data_is_aligned(8u, x.tB);
+    assert is_aligned(m::u64align, x.tA);
+    assert variant_data_is_aligned(m::u64align, x.tA);
+    assert is_aligned(m::u64align, x.tB);
+    assert variant_data_is_aligned(m::u64align, x.tB);
 }

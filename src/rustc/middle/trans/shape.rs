@@ -723,6 +723,25 @@ fn static_size_of_enum(cx: @crate_ctxt, t: ty::t) -> uint {
     }
 }
 
+fn static_align_of_enum(cx: @crate_ctxt, t: ty::t) -> uint {
+    alt ty::get(t).struct {
+      ty::ty_enum(tid, substs) {
+        let mut max_align = 0u;
+        let variants = ty::enum_variants(cx.tcx, tid);
+        for vec::each(*variants) {|variant|
+            let tup_ty = simplify_type(cx.tcx,
+                                       ty::mk_tup(cx.tcx, variant.args));
+            let tup_ty = ty::subst(cx.tcx, substs, tup_ty);
+            let this_align =
+                llalign_of_min(cx, type_of::type_of(cx, tup_ty));
+            if max_align < this_align { max_align = this_align; }
+        }
+        ret max_align;
+      }
+      _ { cx.sess.bug("static_align_of_enum called on non-enum"); }
+    }
+}
+
 // Creates a simpler, size-equivalent type. The resulting type is guaranteed
 // to have (a) the same size as the type that was passed in; (b) to be non-
 // recursive. This is done by replacing all boxes in a type with boxed unit
