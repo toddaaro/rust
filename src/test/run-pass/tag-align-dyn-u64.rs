@@ -1,7 +1,5 @@
-// xfail-test
-
-tag a_tag<A> {
-    a_tag(A);
+enum a_tag<A> {
+    a_tag(A)
 }
 
 type t_rec = {

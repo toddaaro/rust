@@ -1,9 +1,8 @@
-// xfail-test
 //
 // See issue #1535
 
-tag a_tag {
-    a_tag(u64);
+enum a_tag {
+    a_tag(u64)
 }
 
 type t_rec = {

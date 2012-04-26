@@ -1,8 +1,6 @@
-// xfail-test
-
-tag a_tag<A,B> {
-    varA(A);
-    varB(B);
+enum a_tag<A,B> {
+    varA(A),
+    varB(B)
 }
 
 type t_rec<A,B> = {
