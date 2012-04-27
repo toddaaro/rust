@@ -1,5 +1,4 @@
 // xfail-pretty
-// xfail-win32
 // Issue #2303
 
 #[abi = "rust-intrinsic"]
