@@ -62,6 +62,7 @@ enum token {
     LIT_STR(str_num),
 
     /* Name components */
+    KEYWORD(str_num),
     IDENT(str_num, bool),
     UNDERSCORE,
     EOF,
@@ -145,6 +146,9 @@ fn to_str(in: interner<str>, t: token) -> str {
       }
 
       /* Name components */
+      KEYWORD(s) {
+        ret interner::get::<str>(in, s);
+      }
       IDENT(s, _) {
         ret interner::get::<str>(in, s);
       }
@@ -159,6 +163,7 @@ pure fn can_begin_expr(t: token) -> bool {
       LPAREN { true }
       LBRACE { true }
       LBRACKET { true }
+      KEYWORD(_) { true }
       IDENT(_, _) { true }
       UNDERSCORE { true }
       TILDE { true }
@@ -202,83 +207,54 @@ fn is_bar(t: token::token) -> bool {
 
 #[doc = "
 All the valid words that have meaning in the Rust language.
-
-Rust keywords are either 'contextual' or 'restricted'. Contextual
-keywords may be used as identifiers because their appearance in
-the grammar is unambiguous. Restricted keywords may not appear
-in positions that might otherwise contain _value identifiers_.
 "]
 fn keyword_table() -> hashmap<str, ()> {
-    let keywords = str_hash();
-    for contextual_keyword_table().each_key {|word|
-        keywords.insert(word, ());
-    }
-    for restricted_keyword_table().each_key {|word|
-        keywords.insert(word, ());
-    }
-    ret keywords;
-}
-
-#[doc = "Keywords that may be used as identifiers"]
-fn contextual_keyword_table() -> hashmap<str, ()> {
-    let words = str_hash();
-    let keys = [
-        "as",
-        "bind",
-        "else",
-        "implements",
-        "move",
-        "of",
-        "priv",
-        "self", "send", "static",
-        "to",
-        "use",
-        "with"
-    ];
-    for keys.each {|word|
-        words.insert(word, ());
-    }
-    words
-}
-
-#[doc = "
-Keywords that may not appear in any position that might otherwise contain a
-_value identifier_. Restricted keywords may still be used as other types of
-identifiers.
-
-Reasons:
-
-* For some (most?), if used at the start of a line, they will cause the line
-  to be interpreted as a specific kind of statement, which would be confusing.
-
-* `true` or `false` as identifiers would always be shadowed by
-  the boolean constants
-"]
-fn restricted_keyword_table() -> hashmap<str, ()> {
-    let words = str_hash();
-    let keys = [
-        "alt",
-        "assert",
-        "be", "break",
+    str_set([
+        "alt", "as", "assert",
+        "be", "bind", "break",
         "check", "claim", "class", "const", "cont", "copy", "crust",
         "do",
         "else", "enum", "export",
         "fail", "false", "fn", "for",
-        "if", "iface", "impl", "import",
+        "if", "iface", "impl", "implements", "import",
         "let", "log", "loop",
-        "mod", "mut",
+        "mod", "move", "mut",
         "native", "new",
-        "pure",
+        "of",
+        "pure", "priv",
         "resource", "ret",
-        "true", "trait", "type",
-        "unchecked", "unsafe",
-        "while"
-    ];
-    for keys.each {|word|
+        "self", "send", "static",
+        "to", "true", "trait", "type",
+        "unchecked", "unsafe", "use",
+        "while", "with"
+    ])
+}
+
+fn valid_kw_mod_idents() -> hashmap<str, ()> {
+    str_set([
+        "alt",
+        "impl",
+        "native",
+        "unsafe",
+        "priv"
+    ])
+}
+
+fn valid_kw_value_idents() -> hashmap<str, ()> {
+    str_set([
+        "as",
+        "to"
+    ])
+}
+
+fn str_set(strs: [str]) -> hashmap<str, ()> {
+    let words = str_hash();
+    for strs.each {|word|
         words.insert(word, ());
     }
     words
 }
+
 
 // Local Variables:
 // fill-column: 78;

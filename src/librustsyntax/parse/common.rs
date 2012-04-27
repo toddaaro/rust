@@ -27,6 +27,13 @@ fn expect(p: parser, t: token::token) {
     }
 }
 
+fn parse_path_list_ident(p: parser) -> ast::path_list_ident {
+    let lo = p.span.lo;
+    let ident = parse_ident(p);
+    let hi = p.span.hi;
+    ret spanned(lo, hi, {name: ident, id: p.get_id()});
+}
+
 fn parse_ident(p: parser) -> ast::ident {
     alt p.token {
       token::IDENT(i, _) { p.bump(); ret p.get_str(i); }
@@ -35,16 +42,46 @@ fn parse_ident(p: parser) -> ast::ident {
     }
 }
 
-fn parse_path_list_ident(p: parser) -> ast::path_list_ident {
-    let lo = p.span.lo;
-    let ident = parse_ident(p);
-    let hi = p.span.hi;
-    ret spanned(lo, hi, {name: ident, id: p.get_id()});
+fn parse_any_ident(p: parser) -> ast::ident {
+    alt p.token {
+      token::KEYWORD(w) if is_valid_mod_ident_kw(p, p.get_str(w))
+                        || is_valid_value_ident_kw(p, p.get_str(w)) {
+        p.bump(); ret p.get_str(w);
+      }
+      token::IDENT(i, _) { p.bump(); ret p.get_str(i); }
+      _ { p.fatal("expecting ident, found "
+                  + token_to_str(p.reader, p.token)); }
+    }
 }
 
 fn parse_value_ident(p: parser) -> ast::ident {
-    check_restricted_keywords(p);
-    ret parse_ident(p);
+    alt p.token {
+      token::KEYWORD(w) if is_valid_value_ident_kw(p, p.get_str(w)) {
+        p.bump(); ret p.get_str(w);
+      }
+      token::IDENT(i, _) { p.bump(); ret p.get_str(i); }
+      _ { p.fatal("expecting ident, found "
+                  + token_to_str(p.reader, p.token)); }
+    }
+}
+
+fn parse_mod_ident(p: parser) -> ast::ident {
+    alt p.token {
+      token::KEYWORD(w) if is_valid_mod_ident_kw(p, p.get_str(w)) {
+        p.bump(); ret p.get_str(w);
+      }
+      token::IDENT(i, _) { p.bump(); ret p.get_str(i); }
+      _ { p.fatal("expecting ident, found "
+                  + token_to_str(p.reader, p.token)); }
+    }
+}
+
+fn is_valid_mod_ident_kw(p: parser, w: str) -> bool {
+    p.keywords.valid_kw_mod_idents.contains_key(w)
+}
+
+fn is_valid_value_ident_kw(p: parser, w: str) -> bool {
+    p.keywords.valid_kw_value_idents.contains_key(w)
 }
 
 fn eat(p: parser, tok: token::token) -> bool {
@@ -53,7 +90,7 @@ fn eat(p: parser, tok: token::token) -> bool {
 
 // A sanity check that the word we are asking for is a known keyword
 fn require_keyword(p: parser, word: str) {
-    if !p.keywords.contains_key(word) {
+    if !p.keywords.keywords.contains_key(word) {
         p.bug(#fmt("unknown keyword: %s", word));
     }
 }
@@ -61,7 +98,7 @@ fn require_keyword(p: parser, word: str) {
 fn is_keyword(p: parser, word: str) -> bool {
     require_keyword(p, word);
     ret alt p.token {
-          token::IDENT(sid, false) { str::eq(word, p.get_str(sid)) }
+          token::KEYWORD(sid) { str::eq(word, p.get_str(sid)) }
           _ { false }
         };
 }
@@ -69,7 +106,7 @@ fn is_keyword(p: parser, word: str) -> bool {
 fn eat_keyword(p: parser, word: str) -> bool {
     require_keyword(p, word);
     alt p.token {
-      token::IDENT(sid, false) {
+      token::KEYWORD(sid) {
         if str::eq(word, p.get_str(sid)) {
             p.bump();
             ret true;
@@ -80,30 +117,9 @@ fn eat_keyword(p: parser, word: str) -> bool {
 }
 
 fn expect_keyword(p: parser, word: str) {
-    require_keyword(p, word);
     if !eat_keyword(p, word) {
         p.fatal("expecting " + word + ", found " +
                     token_to_str(p.reader, p.token));
-    }
-}
-
-fn is_restricted_keyword(p: parser, word: str) -> bool {
-    p.restricted_keywords.contains_key(word)
-}
-
-fn check_restricted_keywords(p: parser) {
-    alt p.token {
-      token::IDENT(_, false) {
-        let w = token_to_str(p.reader, p.token);
-        check_restricted_keywords_(p, w);
-      }
-      _ { }
-    }
-}
-
-fn check_restricted_keywords_(p: parser, w: ast::ident) {
-    if is_restricted_keyword(p, w) {
-        p.fatal("found `" + w + "` in restricted position");
     }
 }
 

@@ -130,8 +130,12 @@ fn new_parser(sess: parse_sess, cfg: ast::crate_cfg, rdr: lexer::reader,
       mut buffer: [],
       mut restriction: parser::UNRESTRICTED,
       reader: rdr,
-      keywords: token::keyword_table(),
-      restricted_keywords: token::restricted_keyword_table()}
+      keywords: {
+          keywords: token::keyword_table(),
+          valid_kw_mod_idents: token::valid_kw_mod_idents(),
+          valid_kw_value_idents: token::valid_kw_value_idents()
+      }
+     }
 }
 
 fn new_parser_from_source_str(sess: parse_sess, cfg: ast::crate_cfg,

@@ -1,6 +1,7 @@
 import util::interner;
 import util::interner::intern;
 import diagnostic;
+import std::map::{hashmap};
 
 export reader, new_reader, next_token, is_whitespace;
 
@@ -12,7 +13,8 @@ type reader = @{
     mut curr: char,
     mut chpos: uint,
     filemap: codemap::filemap,
-    interner: @interner::interner<str>
+    interner: @interner::interner<str>,
+    keywords: hashmap<str, ()>
 };
 
 impl reader for reader {
@@ -59,7 +61,8 @@ fn new_reader(span_diagnostic: diagnostic::span_handler,
     let r = @{span_diagnostic: span_diagnostic, src: filemap.src,
               mut col: 0u, mut pos: 0u, mut curr: -1 as char,
               mut chpos: filemap.start_pos.ch,
-              filemap: filemap, interner: itr};
+              filemap: filemap, interner: itr,
+              keywords: token::keyword_table()};
     if r.pos < (*filemap.src).len() {
         let next = str::char_range_at(*r.src, r.pos);
         r.pos = next.next;
@@ -318,9 +321,14 @@ fn next_token_inner(rdr: reader) -> token::token {
         if str::eq(accum_str, "_") { ret token::UNDERSCORE; }
         let is_mod_name = c == ':' && rdr.next() == ':';
 
-        // FIXME: perform NFKC normalization here. (Issue #2253)
-        ret token::IDENT(interner::intern::<str>(*rdr.interner,
-                                                 accum_str), is_mod_name);
+        if rdr.keywords.contains_key(accum_str) {
+            ret token::KEYWORD(interner::intern::<str>(
+                *rdr.interner, accum_str));
+        } else {
+            // FIXME: perform NFKC normalization here. (Issue #2253)
+            ret token::IDENT(interner::intern::<str>(
+                *rdr.interner, accum_str), is_mod_name);
+        }
     }
     if is_dec_digit(c) {
         ret scan_number(c, rdr);

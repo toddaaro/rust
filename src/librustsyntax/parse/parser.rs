@@ -47,6 +47,12 @@ enum restriction {
 
 enum file_type { CRATE_FILE, SOURCE_FILE, }
 
+type keywords = {
+    keywords: hashmap<str, ()>,
+    valid_kw_mod_idents: hashmap<str, ()>,
+    valid_kw_value_idents: hashmap<str, ()>
+};
+
 type parser = @{
     sess: parse_sess,
     cfg: ast::crate_cfg,
@@ -57,8 +63,7 @@ type parser = @{
     mut buffer: [{tok: token::token, span: span}],
     mut restriction: restriction,
     reader: reader,
-    keywords: hashmap<str, ()>,
-    restricted_keywords: hashmap<str, ()>
+    keywords: keywords,
 };
 
 impl parser for parser {
@@ -2180,7 +2185,6 @@ fn parse_item_enum(p: parser, attrs: [ast::attribute]) -> @ast::item {
     let mut variants: [ast::variant] = [];
     // Newtype syntax
     if p.token == token::EQ {
-        check_restricted_keywords_(p, id);
         p.bump();
         let ty = parse_ty(p, false);
         expect(p, token::SEMI);
@@ -2306,17 +2310,17 @@ fn parse_use(p: parser) -> ast::view_item_ {
 
 fn parse_view_path(p: parser) -> @ast::view_path {
     let lo = p.span.lo;
-    let first_ident = parse_ident(p);
+    let first_ident = parse_any_ident(p);
     let mut path = [first_ident];
     #debug("parsed view_path: %s", first_ident);
     alt p.token {
       token::EQ {
         // x = foo::bar
         p.bump();
-        path = [parse_ident(p)];
+        path = [parse_any_ident(p)];
         while p.token == token::MOD_SEP {
             p.bump();
-            let id = parse_ident(p);
+            let id = parse_any_ident(p);
             path += [id];
         }
         let path = @{span: mk_sp(lo, p.span.hi), global: false,
@@ -2474,7 +2478,7 @@ fn parse_crate_directive(p: parser, first_outer_attr: [ast::attribute]) ->
     let lo = p.span.lo;
     if expect_mod || is_keyword(p, "mod") {
         expect_keyword(p, "mod");
-        let id = parse_ident(p);
+        let id = parse_mod_ident(p);
         alt p.token {
           // mod x = "foo.rs";
           token::SEMI {
