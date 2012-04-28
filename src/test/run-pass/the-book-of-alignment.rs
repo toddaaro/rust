@@ -73,9 +73,9 @@ fn say_it_like_it_is() {
         (all_arch, all_os, 4, 8, 1) ]);
 
     assert what_the::<{a: u16}> ([
-        (all_arch, all_os, 2, 8, 1) ]);
+        (all_arch, all_os, 2, 8, 1) ]); // FIXME: This 1 should be a 2
     assert what_the::<{a: u16, b: u8}> ([
-        (all_arch, all_os, 4, 8, 1) ]);
+        (all_arch, all_os, 4, 8, 1) ]); // FIXME: This 1 should be a 2
     assert what_the::<{a: u16, b: u8, c: u16}> ([
         (all_arch, all_os, 6, 8, 2) ]);
 
