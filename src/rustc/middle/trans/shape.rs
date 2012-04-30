@@ -116,7 +116,7 @@ fn largest_variants(ccx: @crate_ctxt, tag_id: ast::def_id) -> [uint] {
                 bounded = false;
             } else {
                 let llty = type_of::type_of(ccx, elem_t);
-                min_size += llsize_of_real(ccx, llty);
+                min_size += llsize_of_store(ccx, llty);
                 min_align += llalign_of_pref(ccx, llty);
             }
         }
@@ -189,7 +189,7 @@ fn compute_static_enum_size(ccx: @crate_ctxt, largest_variants: [uint],
         }
 
         let llty = trans::common::T_struct(lltys);
-        let dp = llsize_of_real(ccx, llty) as u16;
+        let dp = llsize_of_store(ccx, llty) as u16;
         let variant_align = llalign_of_pref(ccx, llty) as u8;
 
         if max_size < dp { max_size = dp; }
@@ -201,7 +201,7 @@ fn compute_static_enum_size(ccx: @crate_ctxt, largest_variants: [uint],
     // aligned quantity, we don't align it.
     if vec::len(*variants) > 1u {
         let variant_t = T_enum_discrim(ccx);
-        max_size += llsize_of_real(ccx, variant_t) as u16;
+        max_size += llsize_of_store(ccx, variant_t) as u16;
         let align = llalign_of_pref(ccx, variant_t) as u8;
         if max_align < align { max_align = align; }
     }
@@ -615,7 +615,7 @@ type tag_metrics = {
 };
 
 // Returns the real size of the given type for the current target.
-fn llsize_of_real(cx: @crate_ctxt, t: TypeRef) -> uint {
+fn llsize_of_store(cx: @crate_ctxt, t: TypeRef) -> uint {
     ret llvm::LLVMStoreSizeOfType(cx.td.lltd, t) as uint;
 }
 
@@ -666,7 +666,7 @@ fn static_size_of_enum(cx: @crate_ctxt, t: ty::t) -> uint {
             let tup_ty = ty::subst(cx.tcx, substs, tup_ty);
             // Here we possibly do a recursive call.
             let this_size =
-                llsize_of_real(cx, type_of::type_of(cx, tup_ty));
+                llsize_of_store(cx, type_of::type_of(cx, tup_ty));
             if max_size < this_size { max_size = this_size; }
         }
         cx.enum_sizes.insert(t, max_size);

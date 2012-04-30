@@ -786,7 +786,7 @@ fn trans_intrinsic(ccx: @crate_ctxt, decl: ValueRef, item: @ast::native_item,
     let tp_ty = substs.tys[0], lltp_ty = type_of::type_of(ccx, tp_ty);
     alt check item.ident {
       "size_of" {
-        Store(bcx, C_uint(ccx, shape::llsize_of_real(ccx, lltp_ty)),
+        Store(bcx, C_uint(ccx, shape::llsize_of_store(ccx, lltp_ty)),
               fcx.llretptr);
       }
       "min_align_of" {
@@ -809,8 +809,8 @@ fn trans_intrinsic(ccx: @crate_ctxt, decl: ValueRef, item: @ast::native_item,
       "forget" {}
       "reinterpret_cast" {
         let llout_ty = type_of::type_of(ccx, substs.tys[1]);
-        let tp_sz = shape::llsize_of_real(ccx, lltp_ty),
-            out_sz = shape::llsize_of_real(ccx, llout_ty);
+        let tp_sz = shape::llsize_of_store(ccx, lltp_ty),
+            out_sz = shape::llsize_of_store(ccx, llout_ty);
         if tp_sz != out_sz {
             let sp = alt check ccx.tcx.items.get(option::get(ref_id)) {
               ast_map::node_expr(e) { e.span }
