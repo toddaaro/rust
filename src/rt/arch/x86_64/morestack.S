@@ -35,8 +35,12 @@
 
 #if defined(__linux__) || defined(__APPLE__) || defined(__FreeBSD__)
 MORESTACK:
+.LFB1:
 	.cfi_startproc
 
+	.cfi_personality 0x9b,DW.ref.__gcc_personality_v0
+	.cfi_lsda 0x1b,.LLSDA1
+        
 	pushq %rbp
 	// The CFA is 24 bytes above the register that it will
 	// be associated with for this frame (%rbp). That is 8
@@ -80,7 +84,7 @@ MORESTACK:
 	movq %r11, %rdx // Size of stack arguments
 	movq %rax, %rsi // Address of stack arguments
 	movq %r10, %rdi // The amount of stack needed
-        
+
 #ifdef __APPLE__
 	call UPCALL_NEW_STACK
 #endif
@@ -112,9 +116,12 @@ MORESTACK:
         movq 8(%rbp),%r10       // Grab the return pointer.
         incq %r10               // Skip past the `ret` in our parent frame
         movq %rax,%rsp          // Switch to the new stack.
+.LEHB0:
 
         call *%r10              // Reenter the caller function
 
+.LEHE0:
+        
 	// Switch back to the rust stack
 	movq %rbp, %rsp
 
@@ -139,8 +146,47 @@ MORESTACK:
 	.cfi_restore %rbp
 	.cfi_def_cfa %rsp, 16
 	ret
-	
+
+.L1:
+        .cfi_restore_state
+
+	movq %rbp, %rsp   // Swatch back to the rust stack
+        movq %rax, %rbx   // Save the exception header
+        call UPCALL_DEL_STACK@PLT
+        movq %rbx, %rdi // Pass exception header to unwinder
+        call _Unwind_Resume@PLT
+        
 	.cfi_endproc
+
+        .section .gcc_except_table,"a",@progbits
+        .align 4
+.LLSDA1:
+        .byte 0xff // @LPStart format (omit)
+        .byte 0xff // @TType format (omit)
+        .byte 0x1  // call-site format (uleb128)
+        .uleb128 .LLSDACSE1-.LLSDACSB1 // length of call-site table
+.LLSDACSB1:
+        .uleb128 .LEHB0-.LFB1  // region 0 start
+        .uleb128 .LEHE0-.LEHB0 // region 0 length
+        .uleb128 .L1-.LFB1     // landing pad
+        .uleb128 0             // action
+.LLSDACSE1:
+
+        .global __gcc_personality_v0
+        .hidden DW.ref.__gcc_personality_v0
+	.weak   DW.ref.__gcc_personality_v0
+	.section .data.DW.ref.__gcc_personality_v0,"awG",@progbits,DW.ref.__gcc_personality_v0,comdat
+	.type	DW.ref.__gcc_personality_v0, @object
+DW.ref.__gcc_personality_v0:
+#ifndef __LP64__
+	.align 4
+	.size	DW.ref.__gcc_personality_v0, 4
+	.long	__gcc_personality_v0
+#else
+	.align 8
+	.size	DW.ref.__gcc_personality_v0, 8
+	.quad	__gcc_personality_v0
+#endif
 
 #else
 MORESTACK:
