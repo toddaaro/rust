@@ -299,7 +299,7 @@ fn type_of_supervariant(cx: @crate_ctxt, t: ty::t) -> TypeRef {
 
     #debug("supertype: %s", common::ty_str(cx.tn, llty));
 
-    let supersize = shape::llsize_of_real(cx, llty);
+    let supersize = shape::llsize_of_store(cx, llty);
     let superalign = shape::llalign_of_min(cx, llty);
     #debug("supersize: %u, superalign: %u", supersize, superalign);
 

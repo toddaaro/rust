@@ -277,7 +277,7 @@ fn create_block(cx: block) -> @metadata<block_md> {
 
 fn size_and_align_of(cx: @crate_ctxt, t: ty::t) -> (int, int) {
     let llty = type_of::type_of(cx, t);
-    (shape::llsize_of_real(cx, llty) as int,
+    (shape::llsize_of_store(cx, llty) as int,
      shape::llalign_of_pref(cx, llty) as int)
 }
 

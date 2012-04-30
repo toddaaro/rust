@@ -2125,7 +2125,7 @@ fn make_mono_id(ccx: @crate_ctxt, item: ast::def_id, substs: [ty::t],
                 else if uses == type_use::use_repr &&
                         !ty::type_needs_drop(ccx.tcx, subst) {
                     let llty = type_of(ccx, subst);
-                    let size = shape::llsize_of_real(ccx, llty);
+                    let size = shape::llsize_of_store(ccx, llty);
                     let align = shape::llalign_of_pref(ccx, llty);
                     // Special value for nil to prevent problems with undef
                     // return pointers.
@@ -2628,8 +2628,8 @@ fn trans_index(cx: block, ex: @ast::expr, base: @ast::expr,
     let ccx = cx.ccx();
 
     // Cast to an LLVM integer. Rust is less strict than LLVM in this regard.
-    let ix_size = llsize_of_real(cx.ccx(), val_ty(ix.val));
-    let int_size = llsize_of_real(cx.ccx(), ccx.int_type);
+    let ix_size = llsize_of_store(cx.ccx(), val_ty(ix.val));
+    let int_size = llsize_of_store(cx.ccx(), ccx.int_type);
     let ix_val = if ix_size < int_size {
         if ty::type_is_signed(expr_ty(cx, idx)) {
             SExt(bcx, ix.val, ccx.int_type)
