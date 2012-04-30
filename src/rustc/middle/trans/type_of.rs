@@ -216,13 +216,13 @@ fn type_of_enum(cx: @crate_ctxt, did: ast::def_id, t: ty::t)
         let degen = (*ty::enum_variants(cx.tcx, did)).len() == 1u;
         let size = shape::static_size_of_enum(cx, t);
         if !degen {
-            [T_enum_discrim(cx), type_of_supervariant(cx, t)]
+            [T_enum_discrim(cx)] + type_of_supervariant(cx, t)
         }
         else if size == 0u {
             [T_enum_discrim(cx)]
         }
         else {
-            [type_of_supervariant(cx, t)]
+            type_of_supervariant(cx, t)
         }
     };
 
@@ -254,59 +254,83 @@ fn llvm_type_name(cx: @crate_ctxt, t: ty::t) -> str {
 // The superviariant is a struct type that has both the maximum alignment
 // and maximum size of all variants for a particular enum, discounting
 // the discriminator
-fn type_of_supervariant(cx: @crate_ctxt, t: ty::t) -> TypeRef {
+fn type_of_supervariant(cx: @crate_ctxt, t: ty::t) -> [TypeRef] {
 
     #debug("finding supervariant for %?",
            util::ppaux::ty_to_str(cx.tcx, t));
+
+    let (basety, basesize, basealign) = alt check ty::get(t).struct {
+      ty::ty_enum(tid, substs) {
+        let mut ty = none;
+        let mut size = 0u;
+        let mut align = 0u;
+        for vec::each(*ty::enum_variants(cx.tcx, tid)) {|variant|
+            let tup_ty = shape::simplify_type(
+                cx.tcx,
+                ty::mk_tup(cx.tcx, variant.args));
+            let tup_ty = ty::subst(cx.tcx, substs, tup_ty);
+            let this_size = shape::llsize_of_alloc(
+                cx, type_of::type_of(cx, tup_ty));
+            let this_align = shape::llalign_of_min(
+                cx, type_of::type_of(cx, tup_ty));
+            #debug("variant %? %? %?", tup_ty, this_size, this_align);
+            if align <= this_align {
+                if size < this_size || align < this_align {
+                    ty = some(tup_ty);
+                    size = this_size;
+                    align = this_align;
+                }
+            }
+        }
+
+        (ty, size, align)
+      }
+    };
 
     let size = shape::static_size_of_enum(cx, t);
     let align = shape::static_align_of_enum(cx, t);
 
     #debug("size: %u, align: %u", size, align);
+    #debug("basety: %?, basesize: %u, basealign: %u",
+           basety, basesize, basealign);
 
     if size == 0u {
-        ret T_struct([]);
+        ret [];
     }
-
-    // The type used to fill out the structure to the maximum
-    // multiple of the alignment. It has the same alignment
-    // as the struct alignment.
-    let fill_ty = alt align {
-      1u { T_i8() }
-      2u { T_i16() }
-      4u { T_i32() }
-      8u { T_i64() }
-      unknown_alignment {
-        cx.sess.bug(
-            #fmt("unknown alignment %u in type_of_supervariant",
-                 unknown_alignment));
-      }
-    };
 
     // The type used to pad the structure up to the structure size
     let pad_ty = T_i8();
 
     // The number of each of the above types to stuff into our structure
-    let fill_times = size / align;
-    let pad_times = size % align;
-
-    #debug("supervariant fill: %u, pad %u", fill_times, pad_times);
-
-    let fill_vec = vec::from_elem(fill_times, fill_ty);
+    let pad_times = size - basesize;
     let pad_vec = vec::from_elem(pad_times, pad_ty);
 
-    let llty = T_struct(fill_vec + pad_vec);
+    let lltys = {
+        let mut tys = [];
+        if basety.is_some() {
+            alt check ty::get(basety.get()).struct {
+              ty::ty_tup(elts) {
+                for elts.each {|elt|
+                    tys += [type_of(cx, elt)];
+                }
+              }
+            }
+            tys + pad_vec
+        } else {
+            []
+        }
+    };
 
-    #debug("supertype: %s", common::ty_str(cx.tn, llty));
+    /*#debug("supertype: %s", common::ty_str(cx.tn, llty));
 
-    let supersize = shape::llsize_of_store(cx, llty);
+    let supersize = shape::llsize_of_alloc(cx, llty);
     let superalign = shape::llalign_of_min(cx, llty);
     #debug("supersize: %u, superalign: %u", supersize, superalign);
 
     // FIXME: This should always be true but isn't in some
     // of the tests in run-pass/the-book-of-alignment
     //assert size == supersize;
-    assert align == superalign;
+    assert align == superalign;*/
 
-    ret llty;
+    ret lltys;
 }

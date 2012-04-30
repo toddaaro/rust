@@ -713,7 +713,7 @@ fn static_size_of_enum(cx: @crate_ctxt, t: ty::t) -> uint {
             let tup_ty = ty::subst(cx.tcx, substs, tup_ty);
             // Here we possibly do a recursive call.
             let this_size =
-                llsize_of_store(cx, type_of::type_of(cx, tup_ty));
+                llsize_of_alloc(cx, type_of::type_of(cx, tup_ty));
             if max_size < this_size { max_size = this_size; }
         }
         cx.enum_sizes.insert(t, max_size);
