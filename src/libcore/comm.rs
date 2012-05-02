@@ -28,10 +28,6 @@ import either::either;
 
 export port::{};
 export chan::{};
-export send;
-export recv;
-export peek;
-export recv_chan;
 export select2;
 export channel;
 export listen;

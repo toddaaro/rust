@@ -24,6 +24,7 @@ import option::{some, none};
 
 import getcwd = rustrt::rust_getcwd;
 import consts::*;
+import comm::*;
 
 export close, fclose, fsync_fd, waitpid;
 export env, getenv, setenv, fdopen, pipe;
@@ -146,16 +147,18 @@ mod global_env {
 
     fn getenv(n: str) -> option<str> {
         let env_ch = get_global_env_chan();
-        let po = comm::port();
-        comm::send(env_ch, msg_getenv(n, comm::chan(po)));
-        comm::recv(po)
+        listen {|ch|
+            env_ch.send(msg_getenv(n, ch));
+            ch.recv()
+        }
     }
 
     fn setenv(n: str, v: str) {
         let env_ch = get_global_env_chan();
-        let po = comm::port();
-        comm::send(env_ch, msg_setenv(n, v, comm::chan(po)));
-        comm::recv(po)
+        listen {|ch|
+            env_ch.send(msg_setenv(n, v, ch));
+            ch.recv()
+        }
     }
 
     fn get_global_env_chan() -> comm::chan<msg> {
@@ -185,10 +188,10 @@ mod global_env {
             loop {
                 alt comm::select2(msg_po, weak_po) {
                   either::left(msg_getenv(n, resp_ch)) {
-                    comm::send(resp_ch, impl::getenv(n))
+                    resp_ch.send(impl::getenv(n))
                   }
                   either::left(msg_setenv(n, v, resp_ch)) {
-                    comm::send(resp_ch, impl::setenv(n, v))
+                    resp_ch.send(impl::setenv(n, v))
                   }
                   either::right(_) {
                     break;

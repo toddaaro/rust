@@ -10,6 +10,7 @@ export high_level_loop, high_level_msg;
 export run_high_level_loop, interact;
 
 import ll = uv_ll;
+import comm::*;
 
 #[doc = "
 Used to abstract-away direct interaction with a libuv loop.
@@ -139,7 +140,7 @@ unsafe fn send_high_level_msg(hl_loop: high_level_loop,
                               -msg: high_level_msg) {
     let op_chan = alt hl_loop{simple_task_loop({async_handle, op_chan}){
       op_chan}};
-    comm::send(op_chan, msg);
+    op_chan.send(msg);
 
     // if the global async handle == 0, then that means
     // the loop isn't active, so we don't need to wake it up,
@@ -167,10 +168,10 @@ crust fn high_level_wake_up_cb(async_handle: *ll::uv_async_t,
     alt (*data).active {
       true {
         let msg_po = *((*data).msg_po_ptr);
-        alt comm::peek(msg_po) {
+        alt msg_po.peek() {
           true {
             loop {
-                let msg = comm::recv(msg_po);
+                let msg = msg_po.recv();
                 alt (*data).active {
                   true {
                     alt msg {
@@ -188,7 +189,7 @@ crust fn high_level_wake_up_cb(async_handle: *ll::uv_async_t,
                     // drop msg ?
                   }
                 }
-                if !comm::peek(msg_po) { break; }
+                if !msg_po.peek() { break; }
             }
           }
           false {

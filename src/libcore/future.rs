@@ -12,6 +12,7 @@ io::println(#fmt(\"fib(5000) = %?\", delayed_fib.get()))
 "];
 
 import either::either;
+import comm::*;
 
 export future;
 export future::{};
@@ -65,7 +66,7 @@ fn from_port<A:send>(-port: comm::port<A>) -> future<A> {
     "];
 
     from_fn {||
-        comm::recv(port)
+        port.recv()
     }
 }
 
@@ -91,10 +92,10 @@ fn spawn<A:send>(+blk: fn~() -> A) -> future<A> {
     value of the future.
     "];
 
-    let mut po = comm::port();
-    let ch = comm::chan(po);
+    let po = port();
+    let ch = chan(po);
     task::spawn {||
-        comm::send(ch, blk())
+        ch.send(blk())
     };
     from_port(po)
 }
@@ -127,9 +128,8 @@ fn test_from_value() {
 
 #[test]
 fn test_from_port() {
-    let po = comm::port();
-    let ch = comm::chan(po);
-    comm::send(ch, "whale");
+    let po = port();
+    po.send("whale");
     let f = from_port(po);
     assert get(f) == "whale";
 }

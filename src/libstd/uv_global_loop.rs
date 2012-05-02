@@ -5,6 +5,7 @@ A process-wide libuv event loop for library use.
 import ll = uv_ll;
 import hl = uv_hl;
 import get_gl = get;
+import comm::*;
 
 export get, get_monitor_task_gl;
 
@@ -70,13 +71,13 @@ fn get_monitor_task_gl() -> hl::high_level_loop {
                             log(debug, #fmt("weak_exit_po recv'd msg: %?",
                                            weak_exit));
                             let ( a, loop_msg_ch )= hl_loop_data;
-                            comm::send(loop_msg_ch, hl::teardown_loop);
+                            loop_msg_ch.send(hl::teardown_loop);
                             ll::async_send(a);
                             false
                         }, {|fetch_ch|
                             log(debug, #fmt("hl_loop req recv'd: %?",
                                            fetch_ch));
-                            comm::send(fetch_ch, copy(hl_loop));
+                            fetch_ch.send(copy(hl_loop));
                             true
                         }, comm::select2(weak_exit_po, msg_po));
                     if !continue { break; }
@@ -87,10 +88,10 @@ fn get_monitor_task_gl() -> hl::high_level_loop {
         };
         // once we have a chan to the monitor loop, we ask it for
         // the libuv loop's async handle
-        let fetch_po = comm::port::<hl::high_level_loop>();
-        let fetch_ch = comm::chan(fetch_po);
-        comm::send(msg_ch, fetch_ch);
-        comm::recv(fetch_po)
+        listen {|fetch_ch|
+            msg_ch.send(fetch_ch);
+            fetch_ch.recv()
+        }
     }
 }
 
@@ -98,7 +99,7 @@ unsafe fn spawn_libuv_weak_task() -> (*ll::uv_async_t,
                                       comm::chan<hl::high_level_msg>){
     let exit_po = comm::port::<(*ll::uv_async_t,
                               comm::chan<hl::high_level_msg>)>();
-    let exit_ch = comm::chan(exit_po);
+    let exit_ch = exit_po.chan();
 
     task::spawn_sched(task::manual_threads(1u)) {||
         log(debug, "entering global libuv task");
@@ -107,7 +108,7 @@ unsafe fn spawn_libuv_weak_task() -> (*ll::uv_async_t,
             log(debug, #fmt("global libuv task is now weak %?",
                             weak_exit_po));
             let loop_msg_po = comm::port::<hl::high_level_msg>();
-            let loop_msg_ch = comm::chan(loop_msg_po);
+            let loop_msg_ch = loop_msg_po.chan();
             hl::run_high_level_loop(
                 loop_ptr,
                 loop_msg_po,
@@ -116,7 +117,7 @@ unsafe fn spawn_libuv_weak_task() -> (*ll::uv_async_t,
                     log(debug,#fmt("global libuv: before_run %?",
                                   async_handle));
                     let out_data = (async_handle, loop_msg_ch);
-                    comm::send(exit_ch, out_data);
+                    exit_ch.send(out_data);
                 },
                 // before_msg_process
                 {|async_handle, loop_active|
@@ -136,7 +137,7 @@ unsafe fn spawn_libuv_weak_task() -> (*ll::uv_async_t,
         log(debug, "global libuv task exiting");
     };
 
-    comm::recv(exit_po)
+    exit_po.recv()
 }
 
 #[cfg(test)]

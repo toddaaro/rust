@@ -8,6 +8,7 @@
 import either::either;
 import result::{ok, err};
 import io::writer_util;
+import comm::*;
 
 export test_name;
 export test_fn;
@@ -301,7 +302,7 @@ fn run_tests(opts: test_opts, tests: [test_desc],
             run_idx += 1u;
         }
 
-        let (test, result) = comm::recv(p);
+        let (test, result) = p.recv();
         if concurrency != 1u {
             callback(te_wait(test));
         }
@@ -384,7 +385,7 @@ type test_future = {test: test_desc, wait: fn@() -> test_result};
 
 fn run_test(+test: test_desc, monitor_ch: comm::chan<monitor_msg>) {
     if test.ignore {
-        comm::send(monitor_ch, (test, tr_ignored));
+        monitor_ch.send((test, tr_ignored));
         ret;
     }
 
@@ -396,7 +397,7 @@ fn run_test(+test: test_desc, monitor_ch: comm::chan<monitor_msg>) {
         task::run(builder, testfn);
         let task_result = future::get(result_future);
         let test_result = calc_result(test, task_result == task::success);
-        comm::send(monitor_ch, (test, test_result));
+        monitor_ch.send((test, test_result));
     };
 }
 

@@ -23,6 +23,7 @@ spawn {||
 "];
 
 import result::result;
+import comm::*;
 
 export task;
 export task_result;
@@ -280,16 +281,15 @@ fn future_result(builder: builder) -> future::future<task_result> {
     // registering an arbitrary number of task::on_exit handlers and
     // sending out messages.
 
-    let po = comm::port();
-    let ch = comm::chan(po);
+    let po = port();
 
     set_opts(builder, {
-        notify_chan: some(ch)
+        notify_chan: some(po.chan())
         with get_opts(builder)
     });
 
     future::from_fn {||
-        alt comm::recv(po) {
+        alt po.recv() {
           exit(_, result) { result }
         }
     }
@@ -298,11 +298,11 @@ fn future_result(builder: builder) -> future::future<task_result> {
 fn future_task(builder: builder) -> future::future<task> {
     #[doc = "Get a future representing the handle to the new task"];
 
-    let mut po = comm::port();
-    let ch = comm::chan(po);
+    let po = port();
+    let ch = po.chan();
     add_wrapper(builder) {|body|
         fn~() {
-            comm::send(ch, get_task());
+            ch.send(get_task());
             body();
         }
     }
@@ -318,6 +318,7 @@ fn unsupervise(builder: builder) {
     });
 }
 
+// FIXME: This should take a fn~(chan) not fn~(port)
 fn run_listener<A:send>(-builder: builder,
                         +f: fn~(comm::port<A>)) -> comm::chan<A> {
     #[doc = "
@@ -332,17 +333,31 @@ fn run_listener<A:send>(-builder: builder,
     to the child.
     "];
 
-    let setup_po = comm::port();
-    let setup_ch = comm::chan(setup_po);
+    listen(fn@[move f](setup_ch: chan<chan<A>>) -> chan<A> {
 
-    run(builder) {||
+        run(copy(builder)) {||
+            let po = comm::port();
+            let ch = comm::chan(po);
+            setup_ch.send(ch);
+            f(po);
+        }
+
+        setup_ch.recv()
+    })
+
+    /*
+    let setup_po = port();
+    let setup_ch = setup_po.chan();
+
+    run(copy(builder)) {||
         let po = comm::port();
-        let mut ch = comm::chan(po);
-        comm::send(setup_ch, ch);
+        let ch = comm::chan(po);
+        setup_ch.send(ch);
         f(po);
     }
 
-    comm::recv(setup_po)
+    setup_ch.recv()
+    */
 }
 
 
@@ -427,17 +442,17 @@ fn try<T:send>(+f: fn~() -> T) -> result<T,()> {
     then try returns result::err containing nil.
     "];
 
-    let po = comm::port();
-    let ch = comm::chan(po);
-    let mut builder = builder();
-    unsupervise(builder);
-    let result = future_result(builder);
-    run(builder) {||
-        comm::send(ch, f());
-    }
-    alt future::get(result) {
-      success { result::ok(comm::recv(po)) }
-      failure { result::err(()) }
+    listen {|ch|
+        let builder = builder();
+        unsupervise(builder);
+        let result = future_result(builder);
+        run(builder) {||
+            ch.send(f());
+        }
+        alt future::get(result) {
+          success { result::ok(ch.recv()) }
+          failure { result::err(()) }
+        }
     }
 }
 
@@ -571,12 +586,12 @@ native mod rustrt {
 
 #[test]
 fn test_spawn_raw_simple() {
-    let po = comm::port();
-    let ch = comm::chan(po);
-    spawn_raw(default_task_opts()) {||
-        comm::send(ch, ());
+    listen {|ch|
+        spawn_raw(default_task_opts()) {||
+            ch.send(());
+        }
+        ch.recv();
     }
-    comm::recv(po);
 }
 
 #[test]
@@ -594,58 +609,56 @@ fn test_spawn_raw_unsupervise() {
 #[test]
 #[ignore(cfg(target_os = "win32"))]
 fn test_spawn_raw_notify() {
-    let task_po = comm::port();
-    let task_ch = comm::chan(task_po);
-    let notify_po = comm::port();
-    let notify_ch = comm::chan(notify_po);
+    listen {|task_ch| listen {|notify_ch|
 
-    let opts = {
-        notify_chan: some(notify_ch)
-        with default_task_opts()
-    };
-    spawn_raw(opts) {||
-        comm::send(task_ch, get_task());
-    }
-    let task_ = comm::recv(task_po);
-    assert comm::recv(notify_po) == exit(task_, success);
+        let opts = {
+            notify_chan: some(notify_ch)
+            with default_task_opts()
+        };
+        spawn_raw(opts) {||
+            task_ch.send(get_task());
+        }
+        let task_ = task_ch.recv();
+        assert notify_ch.recv() == exit(task_, success);
 
-    let opts = {
-        supervise: false,
-        notify_chan: some(notify_ch)
-        with default_task_opts()
-    };
-    spawn_raw(opts) {||
-        comm::send(task_ch, get_task());
-        fail;
-    }
-    let task_ = comm::recv(task_po);
-    assert comm::recv(notify_po) == exit(task_, failure);
+        let opts = {
+            supervise: false,
+            notify_chan: some(notify_ch)
+            with default_task_opts()
+        };
+        spawn_raw(opts) {||
+            task_ch.send(get_task());
+            fail;
+        }
+        let task_ = task_ch.recv();
+        assert notify_ch.recv() == exit(task_, failure);
+    }}
 }
 
 #[test]
 fn test_run_basic() {
-    let po = comm::port();
-    let ch = comm::chan(po);
-    let buildr = builder();
-    run(buildr) {||
-        comm::send(ch, ());
+    listen {|ch|
+        let buildr = builder();
+        run(buildr) {||
+            ch.send(());
+        }
+        ch.recv();
     }
-    comm::recv(po);
 }
 
 #[test]
 fn test_add_wrapper() {
-    let po = comm::port();
-    let ch = comm::chan(po);
-    let buildr = builder();
-    add_wrapper(buildr) {|body|
-        fn~() {
-            body();
-            comm::send(ch, ());
+    listen {|ch|
+        let buildr = builder();
+        add_wrapper(buildr) {|body|
+            fn~() {
+                body();
+                ch.send(());
+            }
         }
+        run(buildr) {||}
+        ch.recv();
     }
-    run(buildr) {||}
-    comm::recv(po);
 }
 
 #[test]
@@ -665,29 +678,24 @@ fn test_future_result() {
 
 #[test]
 fn test_future_task() {
-    let po = comm::port();
-    let ch = comm::chan(po);
-    let buildr = builder();
-    let task1 = future_task(buildr);
-    run(buildr) {|| comm::send(ch, get_task()) }
-    assert future::get(task1) == comm::recv(po);
+    listen {|ch|
+        let buildr = builder();
+        let task1 = future_task(buildr);
+        run(buildr) {|| ch.send(get_task()) }
+        assert future::get(task1) == ch.recv();
+    }
 }
 
 #[test]
 fn test_spawn_listiner_bidi() {
-    let po = comm::port();
-    let ch = comm::chan(po);
-    let ch = spawn_listener {|po|
-        // Now the child has a port called 'po' to read from and
-        // an environment-captured channel called 'ch'.
-        let res = comm::recv(po);
-        assert res == "ping";
-        comm::send(ch, "pong");
-    };
-    // Likewise, the parent has both a 'po' and 'ch'
-    comm::send(ch, "ping");
-    let res = comm::recv(po);
-    assert res == "pong";
+    listen {|parent_ch|
+        let child_ch = spawn_listener {|child_ch|
+            assert child_ch.recv() == "ping";
+            parent_ch.send("pong");
+        };
+        child_ch.send("ping");
+        parent_ch.recv() == "pong";
+    }
 }
 
 #[test]
@@ -720,44 +728,46 @@ fn test_spawn_sched_no_threads() {
 
 #[test]
 fn test_spawn_sched() {
-    let po = comm::port();
-    let ch = comm::chan(po);
+    listen {|ch|
 
-    fn f(i: int, ch: comm::chan<()>) {
-        let parent_sched_id = rustrt::rust_get_sched_id();
+        fn f(i: int, ch: chan<()>) {
+            let parent_sched_id = rustrt::rust_get_sched_id();
 
-        spawn_sched(single_threaded) {||
-            let child_sched_id = rustrt::rust_get_sched_id();
-            assert parent_sched_id != child_sched_id;
+            spawn_sched(single_threaded) {||
+                let child_sched_id = rustrt::rust_get_sched_id();
+                assert parent_sched_id != child_sched_id;
 
-            if (i == 0) {
-                comm::send(ch, ());
-            } else {
-                f(i - 1, ch);
-            }
-        };
+                if (i == 0) {
+                    ch.send(());
+                } else {
+                    f(i - 1, ch);
+                }
+            };
 
+        }
+
+        f(10, ch);
+
+        ch.recv();
     }
-    f(10, ch);
-    comm::recv(po);
 }
 
 #[test]
 fn test_spawn_sched_childs_on_same_sched() {
-    let po = comm::port();
-    let ch = comm::chan(po);
+    listen {|ch|
 
-    spawn_sched(single_threaded) {||
-        let parent_sched_id = rustrt::rust_get_sched_id();
-        spawn {||
-            let child_sched_id = rustrt::rust_get_sched_id();
-            // This should be on the same scheduler
-            assert parent_sched_id == child_sched_id;
-            comm::send(ch, ());
+        spawn_sched(single_threaded) {||
+            let parent_sched_id = rustrt::rust_get_sched_id();
+            spawn {||
+                let child_sched_id = rustrt::rust_get_sched_id();
+                // This should be on the same scheduler
+                assert parent_sched_id == child_sched_id;
+                ch.send(());
+            };
         };
-    };
 
-    comm::recv(po);
+        ch.recv();
+    }
 }
 
 #[nolink]
@@ -778,72 +788,68 @@ fn test_spawn_sched_blocking() {
     // without affecting other schedulers
     iter::repeat(20u) {||
 
-        let start_po = comm::port();
-        let start_ch = comm::chan(start_po);
-        let fin_po = comm::port();
-        let fin_ch = comm::chan(fin_po);
+        listen {|start_ch| listen {|fin_ch|
 
-        let lock = testrt::rust_dbg_lock_create();
+            let lock = testrt::rust_dbg_lock_create();
 
-        spawn_sched(single_threaded) {||
-            testrt::rust_dbg_lock_lock(lock);
+            spawn_sched(single_threaded) {||
+                testrt::rust_dbg_lock_lock(lock);
 
-            comm::send(start_ch, ());
+                start_ch.send(());
 
-            // Block the scheduler thread
-            testrt::rust_dbg_lock_wait(lock);
-            testrt::rust_dbg_lock_unlock(lock);
+                // Block the scheduler thread
+                testrt::rust_dbg_lock_wait(lock);
+                testrt::rust_dbg_lock_unlock(lock);
 
-            comm::send(fin_ch, ());
-        };
+                fin_ch.send(());
+            };
 
-        // Wait until the other task has its lock
-        comm::recv(start_po);
+            // Wait until the other task has its lock
+            start_ch.recv();
 
-        fn pingpong(po: comm::port<int>, ch: comm::chan<int>) {
-            let mut val = 20;
-            while val > 0 {
-                val = comm::recv(po);
-                comm::send(ch, val - 1);
+            fn pingpong(in: chan<int>, out: chan<int>) {
+                let mut val = 20;
+                while val > 0 {
+                    out.send(in.recv() - 1);
+                }
             }
-        }
 
-        let setup_po = comm::port();
-        let setup_ch = comm::chan(setup_po);
-        let parent_po = comm::port();
-        let parent_ch = comm::chan(parent_po);
-        spawn {||
-            let child_po = comm::port();
-            comm::send(setup_ch, comm::chan(child_po));
-            pingpong(child_po, parent_ch);
-        };
+            listen {|setup_ch| listen {|parent_ch|
+                spawn {||
+                    listen {|child_ch|
+                        setup_ch.send(child_ch);
+                        pingpong(child_ch, parent_ch);
+                    }
+                }
 
-        let child_ch = comm::recv(setup_po);
-        comm::send(child_ch, 20);
-        pingpong(parent_po, child_ch);
-        testrt::rust_dbg_lock_lock(lock);
-        testrt::rust_dbg_lock_signal(lock);
-        testrt::rust_dbg_lock_unlock(lock);
-        comm::recv(fin_po);
-        testrt::rust_dbg_lock_destroy(lock);
+                let child_ch = setup_ch.recv();
+                child_ch.send(20);
+                pingpong(parent_ch, child_ch);
+                testrt::rust_dbg_lock_lock(lock);
+                testrt::rust_dbg_lock_signal(lock);
+                testrt::rust_dbg_lock_unlock(lock);
+                fin_ch.recv();
+                testrt::rust_dbg_lock_destroy(lock);
+            }}
+        }}
     }
 }
 
 #[cfg(test)]
 fn avoid_copying_the_body(spawnfn: fn(+fn~())) {
-    let p = comm::port::<uint>();
-    let ch = comm::chan(p);
+    listen {|ch|
 
-    let x = ~1;
-    let x_in_parent = ptr::addr_of(*x) as uint;
+        let x = ~1;
+        let x_in_parent = ptr::addr_of(*x) as uint;
 
-    spawnfn {||
-        let x_in_child = ptr::addr_of(*x) as uint;
-        comm::send(ch, x_in_child);
+        spawnfn {||
+            let x_in_child = ptr::addr_of(*x) as uint;
+            ch.send(x_in_child);
+        }
+
+        let x_in_child = ch.recv();
+        assert x_in_parent == x_in_child;
     }
-
-    let x_in_child = comm::recv(p);
-    assert x_in_parent == x_in_child;
 }
 
 #[test]
@@ -854,7 +860,7 @@ fn test_avoid_copying_the_body_spawn() {
 #[test]
 fn test_avoid_copying_the_body_spawn_listener() {
     avoid_copying_the_body {|f|
-        spawn_listener(fn~[move f](_po: comm::port<int>) {
+        spawn_listener(fn~[move f](_po: port<int>) {
             f();
         });
     }
@@ -874,7 +880,7 @@ fn test_avoid_copying_the_body_run() {
 fn test_avoid_copying_the_body_run_listener() {
     avoid_copying_the_body {|f|
         let buildr = builder();
-        run_listener(buildr, fn~[move f](_po: comm::port<int>) {
+        run_listener(buildr, fn~[move f](_po: port<int>) {
             f();
         });
     }
@@ -923,10 +929,10 @@ fn test_osmain() {
     };
     set_opts(buildr, opts);
 
-    let po = comm::port();
-    let ch = comm::chan(po);
-    run(buildr) {||
-        comm::send(ch, ());
+    listen {|ch|
+        run(copy(buildr)) {||
+            ch.send(());
+        }
+        ch.recv();
     }
-    comm::recv(po);
 }

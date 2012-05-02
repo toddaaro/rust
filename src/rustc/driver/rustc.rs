@@ -179,57 +179,60 @@ fails without recording a fatal error then we've encountered a compiler
 bug and need to present an error.
 */
 fn monitor(f: fn~(diagnostic::emitter)) {
+
+    import comm::*;
+
     enum monitor_msg {
         fatal,
         done,
     };
 
-    let p = comm::port();
-    let ch = comm::chan(p);
+    listen {|ch|
 
-    alt task::try  {||
+        alt task::try  {||
 
-        // The 'diagnostics emitter'. Every error, warning, etc. should
-        // go through this function.
-        let demitter = fn@(cmsp: option<(codemap::codemap, codemap::span)>,
-                           msg: str, lvl: diagnostic::level) {
-            if lvl == diagnostic::fatal {
-                comm::send(ch, fatal);
-            }
-            diagnostic::emit(cmsp, msg, lvl);
-        };
-
-        resource finally(ch: comm::chan<monitor_msg>) {
-            comm::send(ch, done);
-        }
-
-        let _finally = finally(ch);
-
-        f(demitter)
-    } {
-        result::ok(_) { /* fallthrough */ }
-        result::err(_) {
-            // Task failed without emitting a fatal diagnostic
-            if comm::recv(p) == done {
-                diagnostic::emit(
-                    none,
-                    diagnostic::ice_msg("unexpected failure"),
-                    diagnostic::error);
-
-                for [
-
-                    "the compiler hit an unexpected failure path. \
-                     this is a bug",
-                    "try running with RUST_LOG=rustc=0,::rt::backtrace \
-                     to get further details and report the results \
-                     to github.com/mozilla/rust/issues"
-
-                ].each {|note|
-                    diagnostic::emit(none, note, diagnostic::note)
+            // The 'diagnostics emitter'. Every error, warning, etc. should
+            // go through this function.
+            let demitter = fn@(cmsp: option<(codemap::codemap, codemap::span)>,
+                               msg: str, lvl: diagnostic::level) {
+                if lvl == diagnostic::fatal {
+                    ch.send(fatal);
                 }
+                diagnostic::emit(cmsp, msg, lvl);
+            };
+
+            resource finally(ch: comm::chan<monitor_msg>) {
+                ch.send(done);
             }
-            // Fail so the process returns a failure code
-            fail;
+
+            let _finally = finally(ch);
+
+            f(demitter)
+        } {
+            result::ok(_) { /* fallthrough */ }
+            result::err(_) {
+                // Task failed without emitting a fatal diagnostic
+                if ch.recv() == done {
+                    diagnostic::emit(
+                        none,
+                        diagnostic::ice_msg("unexpected failure"),
+                        diagnostic::error);
+
+                    for [
+
+                        "the compiler hit an unexpected failure path. \
+                         this is a bug",
+                        "try running with RUST_LOG=rustc=0,::rt::backtrace \
+                         to get further details and report the results \
+                         to github.com/mozilla/rust/issues"
+
+                    ].each {|note|
+                        diagnostic::emit(none, note, diagnostic::note)
+                    }
+                }
+                // Fail so the process returns a failure code
+                fail;
+            }
         }
     }
 }
