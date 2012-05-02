@@ -33,7 +33,7 @@ export recv;
 export peek;
 export recv_chan;
 export select2;
-export methods;
+export channel;
 export listen;
 
 
@@ -69,19 +69,28 @@ fn port<T: send>() -> port<T> {
     port_t(@port_ptr(rustrt::new_port(sys::size_of::<T>())))
 }
 
-impl methods<T: send> for port<T> {
+iface channel<T: send> {
+    fn chan() -> chan<T>;
+    fn send(+v: T);
+    fn recv() -> T;
+    fn peek() -> bool;
+}
+
+impl <T: send> of channel<T> for port<T> {
 
     fn chan() -> chan<T> { chan(self) }
     fn send(+v: T) { self.chan().send(v) }
+
     fn recv() -> T { recv(self) }
     fn peek() -> bool { peek(self) }
 
 }
 
-impl methods<T: send> for chan<T> {
+impl <T: send> of channel<T> for chan<T> {
 
     fn chan() -> chan<T> { self }
     fn send(+v: T) { send(self, v) }
+
     fn recv() -> T { recv_chan(self) }
     fn peek() -> bool { peek_chan(self) }
 
