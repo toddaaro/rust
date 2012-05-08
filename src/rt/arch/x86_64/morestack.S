@@ -38,7 +38,7 @@ MORESTACK:
 .LFB1:
 	.cfi_startproc
 
-	.cfi_personality 0x9b,DW.ref.__gcc_personality_v0
+	.cfi_personality 0x9b,DW.ref.upcall_rust_personality
 	.cfi_lsda 0x1b,.LLSDA1
         
 	pushq %rbp
@@ -143,14 +143,13 @@ MORESTACK:
 	// FIXME: I don't think these rules are necessary
 	// since the unwinder should never encounter an instruction
 	// pointer pointing here.
-	.cfi_restore %rbp
-	.cfi_def_cfa %rsp, 16
+	//.cfi_restore %rbp
+	//.cfi_def_cfa %rsp, 16
 	ret
 
 .L1:
-        .cfi_restore_state
-
 	movq %rbp, %rsp   // Swatch back to the rust stack
+        subq $184, %rsp
         movq %rax, %rbx   // Save the exception header
         call UPCALL_DEL_STACK@PLT
         movq %rbx, %rdi // Pass exception header to unwinder
@@ -172,7 +171,16 @@ MORESTACK:
         .uleb128 0             // action
 .LLSDACSE1:
 
-        .global __gcc_personality_v0
+	.hidden	DW.ref.upcall_rust_personality
+	.weak	DW.ref.upcall_rust_personality
+	.section	.data.DW.ref.upcall_rust_personality,"aGw",@progbits,DW.ref.upcall_rust_personality,comdat
+	.align	8
+	.type	DW.ref.upcall_rust_personality,@object
+	.size	DW.ref.upcall_rust_personality, 8
+DW.ref.upcall_rust_personality:
+	.quad	upcall_rust_personality
+
+/*        .global __gcc_personality_v0
         .hidden DW.ref.__gcc_personality_v0
 	.weak   DW.ref.__gcc_personality_v0
 	.section .data.DW.ref.__gcc_personality_v0,"awG",@progbits,DW.ref.__gcc_personality_v0,comdat
@@ -187,6 +195,7 @@ DW.ref.__gcc_personality_v0:
 	.size	DW.ref.__gcc_personality_v0, 8
 	.quad	__gcc_personality_v0
 #endif
+*/
 
 #else
 MORESTACK:

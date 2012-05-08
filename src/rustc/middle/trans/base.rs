@@ -2999,7 +2999,7 @@ fn get_landing_pad(bcx: block) -> BasicBlockRef {
     // Because we may have unwound across a stack boundary, we must call into
     // the runtime to figure out which stack segment we are on and place the
     // stack limit back into the TLS.
-    //Call(pad_bcx, bcx.ccx().upcalls.reset_stack_limit, []);
+    Call(pad_bcx, bcx.ccx().upcalls.reset_stack_limit, []);
 
     // We store the retval in a function-central alloca, so that calls to
     // Resume can find it.
