@@ -62,7 +62,7 @@ enum token {
     LIT_STR(str_num),
 
     /* Name components */
-    IDENT(str_num, bool),
+    IDENT(str_num),
     UNDERSCORE,
     EOF,
 
@@ -145,7 +145,7 @@ fn to_str(in: interner<str>, t: token) -> str {
       }
 
       /* Name components */
-      IDENT(s, _) {
+      IDENT(s) {
         ret interner::get::<str>(in, s);
       }
       UNDERSCORE { ret "_"; }
@@ -159,7 +159,7 @@ pure fn can_begin_expr(t: token) -> bool {
       LPAREN { true }
       LBRACE { true }
       LBRACKET { true }
-      IDENT(_, _) { true }
+      IDENT(_) { true }
       UNDERSCORE { true }
       TILDE { true }
       LIT_INT(_, _) { true }
@@ -188,12 +188,8 @@ fn is_lit(t: token::token) -> bool {
 }
 
 fn is_ident(t: token::token) -> bool {
-    alt t { token::IDENT(_, _) { ret true; } _ { } }
+    alt t { token::IDENT(_) { ret true; } _ { } }
     ret false;
-}
-
-fn is_plain_ident(t: token::token) -> bool {
-    ret alt t { token::IDENT(_, false) { true } _ { false } };
 }
 
 fn is_bar(t: token::token) -> bool {

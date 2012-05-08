@@ -1,7 +1,7 @@
 import result::result;
 import either::{either, left, right};
 import std::map::{hashmap, str_hash};
-import token::{can_begin_expr, is_ident, is_plain_ident};
+import token::{can_begin_expr, is_ident};
 import codemap::{span,fss_none};
 import util::interner;
 import ast_util::{spanned, mk_sp, ident_to_path, operator_prec};
@@ -107,7 +107,7 @@ impl parser for parser {
 fn parse_ty_fn(p: parser) -> ast::fn_decl {
     fn parse_fn_input_ty(p: parser) -> ast::arg {
         let mode = parse_arg_mode(p);
-        let name = if is_plain_ident(p.token)
+        let name = if is_ident(p.token)
             && p.look_ahead(1u) == token::COLON {
 
             let name = parse_value_ident(p);
@@ -261,7 +261,7 @@ fn region_from_name(p: parser, s: option<str>) -> @ast::region {
 fn parse_region(p: parser) -> @ast::region {
     expect(p, token::BINOP(token::AND));
     alt p.token {
-      token::IDENT(sid, _) {
+      token::IDENT(sid) {
         p.bump();
         let n = p.get_str(sid);
         region_from_name(p, some(n))
@@ -276,7 +276,7 @@ fn parse_region(p: parser) -> @ast::region {
 fn parse_region_dot(p: parser) -> @ast::region {
     let name =
         alt p.token {
-          token::IDENT(sid, _) if p.look_ahead(1u) == token::DOT {
+          token::IDENT(sid) if p.look_ahead(1u) == token::DOT {
             p.bump(); p.bump();
             some(p.get_str(sid))
           }
@@ -691,7 +691,7 @@ fn parse_bottom_expr(p: parser) -> pexpr {
     } else if p.token == token::LBRACE {
         p.bump();
         if is_keyword(p, "mut") ||
-               is_plain_ident(p.token) && p.look_ahead(1u) == token::COLON {
+               is_plain_ident(p) && p.look_ahead(1u) == token::COLON {
             let mut fields = [parse_field(p, token::COLON)];
             let mut base = none;
             while p.token != token::RBRACE {
@@ -881,9 +881,8 @@ fn parse_syntax_ext(p: parser) -> @ast::expr {
 }
 
 fn parse_syntax_ext_naked(p: parser, lo: uint) -> @ast::expr {
-    alt p.token {
-      token::IDENT(_, _) {}
-      _ { p.fatal("expected a syntax expander name"); }
+    if !is_ident(p.token) {
+      p.fatal("expected a syntax expander name");
     }
     let pth = parse_path_without_tps(p);
     //temporary for a backwards-compatible cycle:
@@ -939,7 +938,7 @@ fn parse_dot_or_call_expr_with(p: parser, e0: pexpr) -> pexpr {
         // expr.f
         if eat(p, token::DOT) {
             alt p.token {
-              token::IDENT(i, _) {
+              token::IDENT(i) {
                 hi = p.span.hi;
                 p.bump();
                 let tys = if eat(p, token::MOD_SEP) {
@@ -1409,9 +1408,9 @@ fn parse_pat(p: parser) -> @ast::pat {
                 hi = val.span.hi;
                 pat = ast::pat_lit(val);
             }
-        } else if is_plain_ident(p.token) &&
+        } else if is_ident(p.token) &&
             alt p.look_ahead(1u) {
-              token::LPAREN | token::LBRACKET | token::LT { false }
+              token::LPAREN | token::LBRACKET | token::LT | token::MOD_SEP { false }
               _ { true }
             } {
             let name = parse_value_path(p);
@@ -1490,9 +1489,6 @@ fn parse_instance_var(p:parser, pr: ast::privacy) -> @ast::class_member {
     let lo = p.span.lo;
     if eat_keyword(p, "mut") {
         is_mutbl = ast::class_mutable;
-    }
-    if !is_plain_ident(p.token) {
-        p.fatal("expecting ident");
     }
     let name = parse_ident(p);
     expect(p, token::COLON);
@@ -1693,7 +1689,7 @@ fn parse_old_skool_capture_clause(p: parser) -> [ast::capture_item] {
         let mut res = [];
         loop {
             alt p.token {
-              token::IDENT(_, _) {
+              token::IDENT(_) {
                 let id = p.get_id();
                 let sp = mk_sp(p.span.lo, p.span.hi);
                 let ident = parse_ident(p);
@@ -2332,7 +2328,7 @@ fn parse_view_path(p: parser) -> @ast::view_path {
 
             alt p.token {
 
-              token::IDENT(i, _) {
+              token::IDENT(i) {
                 p.bump();
                 path += [p.get_str(i)];
               }

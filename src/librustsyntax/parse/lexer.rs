@@ -316,11 +316,8 @@ fn next_token_inner(rdr: reader) -> token::token {
             c = rdr.curr;
         }
         if str::eq(accum_str, "_") { ret token::UNDERSCORE; }
-        let is_mod_name = c == ':' && rdr.next() == ':';
-
         // FIXME: perform NFKC normalization here. (Issue #2253)
-        ret token::IDENT(interner::intern::<str>(*rdr.interner,
-                                                 accum_str), is_mod_name);
+        ret token::IDENT(interner::intern::<str>(*rdr.interner, accum_str));
     }
     if is_dec_digit(c) {
         ret scan_number(c, rdr);
