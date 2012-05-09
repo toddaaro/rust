@@ -114,6 +114,7 @@ mod util {
     mod common;
     mod ppaux;
     mod filesearch;
+    mod depgraph;
 }
 
 mod lib {
