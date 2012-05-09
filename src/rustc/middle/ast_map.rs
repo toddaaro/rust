@@ -249,25 +249,47 @@ fn map_expr(ex: @expr, cx: ctx, v: vt) {
     visit::visit_expr(ex, cx, v);
 }
 
+fn node_id_to_path(map: map, id: node_id) -> option<path> {
+    alt map.find(id) {
+      some(node_item(item, path)) {
+        some(*path + [path_name(item.ident)])
+      }
+      some(node_native_item(item, _, path)) {
+        some(*path + [path_name(item.ident)])
+      }
+      some(node_method(_, _, path)) {
+        some(*path)
+      }
+      some(node_variant(_, _, path)) {
+        some(*path)
+      }
+      some(node_export(_, path)) {
+        some(*path)
+      }
+      _ { none }
+    }
+}
+
 fn node_id_to_str(map: map, id: node_id) -> str {
     alt map.find(id) {
       none {
         #fmt["unknown node (id=%d)", id]
       }
-      some(node_item(item, path)) {
-        #fmt["item %s (id=%?)", path_ident_to_str(*path, item.ident), id]
+      some(node_item(_, _)) {
+        #fmt["item %s (id=%?)", path_to_str(node_id_to_path(map, id).get()), id]
       }
-      some(node_native_item(item, abi, path)) {
+      some(node_native_item(_, abi, _)) {
         #fmt["native item %s with abi %? (id=%?)",
-             path_ident_to_str(*path, item.ident), abi, id]
+             path_to_str(node_id_to_path(map, id).get()), abi, id]
       }
       some(node_method(m, impl_did, path)) {
-        #fmt["method %s in %s (id=%?)",
-             m.ident, path_to_str(*path), id]
+        #fmt["method %s in %s (id=%?)", m.ident,
+             path_to_str(*path), id]
       }
       some(node_variant(variant, def_id, path)) {
         #fmt["variant %s in %s (id=%?)",
-             variant.node.name, path_to_str(*path), id]
+             variant.node.name,
+             path_to_str(*path), id]
       }
       some(node_expr(expr)) {
         #fmt["expr %s (id=%?)",
