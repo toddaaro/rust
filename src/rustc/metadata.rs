@@ -1,3 +1,16 @@
+export maps;
+
+// Auxiliary maps of things to be encoded
+type maps = {
+    mutbl_map: middle::borrowck::mutbl_map,
+    copy_map: middle::alias::copy_map,
+    last_uses: middle::last_use::last_uses,
+    impl_map: middle::resolve::impl_map,
+    method_map: middle::typeck::method_map,
+    vtable_map: middle::typeck::vtable_map,
+    spill_map: middle::last_use::spill_map
+};
+
 // Define the rustc API's that the metadata module has access to
 // Over time we will reduce these dependencies and, once metadata has
 // no dependencies on rustc it can move into its own crate.
@@ -17,12 +30,18 @@ mod middle {
     export freevars;
     import resolve = middle_::resolve;
     export resolve;
+    import borrowck = middle_::borrowck;
+    export borrowck;
+    import alias = middle_::alias;
+    export alias;
 }
 
 mod front {
 }
 
 mod back {
+    import link = back_::link;
+    export link;
 }
 
 mod driver {
