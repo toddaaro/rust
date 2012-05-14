@@ -68,6 +68,7 @@ mod middle {
     mod region;
     mod regionck;
     mod const_eval;
+    mod astencode;
 
     mod tstate {
         mod ck;
@@ -105,11 +106,14 @@ mod metadata {
     export creader;
     export cstore;
     export csearch;
+    export common;
+    export decoder;
+    export tyencode;
+    export tydecode;
 
     mod common;
     mod tyencode;
     mod tydecode;
-    mod astencode;
     mod encoder;
     mod decoder;
     mod creader;
