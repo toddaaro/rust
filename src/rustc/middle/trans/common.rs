@@ -99,7 +99,7 @@ type crate_ctxt = {
      type_short_names: hashmap<ty::t, str>,
      all_llvm_symbols: set<str>,
      tcx: ty::ctxt,
-     maps: metadata::maps,
+     maps: astencode::maps,
      stats: stats,
      upcalls: @upcall::upcalls,
      tydesc_type: TypeRef,
