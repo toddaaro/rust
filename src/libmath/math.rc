@@ -9,9 +9,6 @@
 
 #[no_core];
 
-use core(vers = "0.2");
-import core::*;
-
 export f32;
 export f64;
 export float;
@@ -39,7 +36,6 @@ mod f32 {
     export lt, le, eq, ne, ge, gt;
     export is_positive, is_negative, is_nonpositive, is_nonnegative;
     export is_zero, is_infinite, signbit, logarithm, pow_with_uint;
-    export to_str_common, to_str_exact, to_str, from_str;
     export extensions;
     export consts;
     export j0, j1, jn, y0, y1, yn;
@@ -48,10 +44,8 @@ mod f32 {
     import cmath::lib::*;
     import generic::*;
     import generic::extensions;
-    import strfun::*;
 
     mod generic;
-    mod strfun;
 
     #[path="f32.rs"]
     mod impl;
@@ -74,7 +68,6 @@ mod f64 {
     export lt, le, eq, ne, ge, gt;
     export is_positive, is_negative, is_nonpositive, is_nonnegative;
     export is_zero, is_infinite, signbit, logarithm, pow_with_uint;
-    export to_str_common, to_str_exact, to_str, from_str;
     export extensions;
     export consts;
     export j0, j1, jn, y0, y1, yn;
@@ -83,10 +76,8 @@ mod f64 {
     import cmath::lib::*;
     import generic::*;
     import generic::extensions;
-    import strfun::*;
 
     mod generic;
-    mod strfun;
 
     #[path="f64.rs"]
     mod impl;
@@ -123,7 +114,6 @@ mod float {
     export lt, le, eq, ne, ge, gt;
     export is_positive, is_negative, is_nonpositive, is_nonnegative;
     export is_zero, is_infinite, signbit, logarithm, pow_with_uint;
-    export to_str_common, to_str_exact, to_str, from_str;
     export extensions;
     export consts;
     export j0, j1, jn, y0, y1, yn;
@@ -132,10 +122,8 @@ mod float {
     import cmath::lib::*;
     import generic::*;
     import generic::extensions;
-    import strfun::*;
 
     mod generic;
-    mod strfun;
 
     #[path="float.rs"]
     mod impl;
@@ -148,3 +136,5 @@ mod float {
     #[path="c_double.rs"]
     mod cmath;
 }
+
+mod libc;

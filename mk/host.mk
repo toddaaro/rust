@@ -53,6 +53,7 @@ $$(HLIB$(2)_H_$(4))/$$(CFG_RUNTIME): \
 
 $$(HLIB$(2)_H_$(4))/$$(CFG_CORELIB): \
 	$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_CORELIB) \
+	$$(HLIB$(2)_H_$(4))/$$(CFG_MATHLIB) \
 	$$(HLIB$(2)_H_$(4))/$$(CFG_RUNTIME)
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
@@ -69,7 +70,6 @@ $$(HLIB$(2)_H_$(4))/$$(CFG_CORELIB): \
 
 $$(HLIB$(2)_H_$(4))/$$(CFG_MATHLIB): \
 	$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_MATHLIB) \
-	$$(HLIB$(2)_H_$(4))/$$(CFG_CORELIB) \
 	$$(HLIB$(2)_H_$(4))/$$(CFG_RUNTIME)
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@

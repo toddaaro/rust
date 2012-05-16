@@ -20,7 +20,6 @@ $$(TLIB$(1)_T_$(2)_H_$(3))/libmorestack.a: \
 
 $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_MATHLIB): \
 		$$(MATHLIB_CRATE) $$(MATHLIB_INPUTS) \
-	        $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CORELIB) \
 		$$(TSREQ$(1)_T_$(2)_H_$(3))
 	@$$(call E, compile_and_link: $$@)
 	$$(STAGE$(1)_T_$(2)_H_$(3)) -o $$@ $$< && touch $$@
@@ -104,6 +103,7 @@ define TARGET_CORELIB_FROM_SNAPSHOT
 
 $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CORELIB): \
 		$$(HLIB$(1)_H_$(3))/$$(CFG_CORELIB) \
+	        $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_MATHLIB) \
 		$$(CORELIB_INPUTS) \
 		$$(TSREQ$(1)_T_$(2)_H_$(3))
 	@$$(call E, cp: $$@)
@@ -117,6 +117,7 @@ define TARGET_CORELIB_FROM_WD
 
 $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CORELIB): \
 		$$(CORELIB_CRATE) $$(CORELIB_INPUTS) \
+	        $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_MATHLIB) \
 		$$(TSREQ$(1)_T_$(2)_H_$(3))
 	@$$(call E, compile_and_link: $$@)
 	$$(STAGE$(1)_T_$(2)_H_$(3)) -o $$@ $$< && touch $$@
