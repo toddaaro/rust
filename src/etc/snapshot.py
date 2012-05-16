@@ -24,6 +24,7 @@ download_unpack_base = os.path.join(download_dir_base, "unpack")
 
 snapshot_files = {
     "linux": ["bin/rustc",
+              "lib/libmath-*.so",
               "lib/libcore-*.so",
               "lib/libstd-*.so",
               "lib/librustc-*.so",
@@ -31,6 +32,7 @@ snapshot_files = {
               "lib/librustrt.so",
               "lib/librustllvm.so"],
     "macos": ["bin/rustc",
+              "lib/libmath-*.dylib",
               "lib/libcore-*.dylib",
               "lib/libstd-*.dylib",
               "lib/librustc-*.dylib",
@@ -38,6 +40,7 @@ snapshot_files = {
               "lib/librustrt.dylib",
               "lib/librustllvm.dylib"],
     "winnt": ["bin/rustc.exe",
+              "bin/math-*.dll",
               "bin/core-*.dll",
               "bin/std-*.dll",
               "bin/rustc-*.dll",
@@ -45,6 +48,7 @@ snapshot_files = {
               "bin/rustrt.dll",
               "bin/rustllvm.dll"],
     "freebsd": ["bin/rustc",
+                "lib/libmath-*.so",
                 "lib/libcore-*.so",
                 "lib/libstd-*.so",
                 "lib/librustc-*.so",
