@@ -186,3 +186,48 @@ pure fn pow_with_uint(base: uint, pow: uint) -> t {
 
 #[inline] pure fn yn(i: int, n: t) -> t
   { ret c_bessel::lib::yn(i as c_int, n as c_bessel::t) as t; }
+
+
+#[test]
+fn test_positive() {
+  assert(is_positive(infinity));
+  assert(is_positive(1. as t));
+  assert(is_positive(0. as t));
+  assert(!is_positive(-1. as t));
+  assert(!is_positive(neg_infinity));
+  assert(!is_positive((1. as t)/neg_infinity));
+  assert(!is_positive(NaN));
+}
+
+#[test]
+fn test_negative() {
+  assert(!is_negative(infinity));
+  assert(!is_negative(1. as t));
+  assert(!is_negative(0. as t));
+  assert(is_negative(-1. as t));
+  assert(is_negative(neg_infinity));
+  assert(is_negative((1. as t)/neg_infinity));
+  assert(!is_negative(NaN));
+}
+
+#[test]
+fn test_nonpositive() {
+  assert(!is_nonpositive(infinity));
+  assert(!is_nonpositive(1. as t));
+  assert(!is_nonpositive(0. as t));
+  assert(is_nonpositive(-1. as t));
+  assert(is_nonpositive(neg_infinity));
+  assert(is_nonpositive((1. as t)/neg_infinity));
+  assert(!is_nonpositive(NaN));
+}
+
+#[test]
+fn test_nonnegative() {
+  assert(is_nonnegative(infinity));
+  assert(is_nonnegative(1. as t));
+  assert(is_nonnegative(0. as t));
+  assert(!is_nonnegative(-1. as t));
+  assert(!is_nonnegative(neg_infinity));
+  assert(!is_nonnegative((1. as t)/neg_infinity));
+  assert(!is_nonnegative(NaN));
+}
