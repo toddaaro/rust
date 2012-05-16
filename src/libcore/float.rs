@@ -1,35 +1,24 @@
 #[doc = "Operations and constants for `float`"];
 
-// Even though this module exports everything defined in it,
-// because it contains re-exports, we also have to explicitly
-// export locally defined things. That's a bit annoying.
-export to_str_common, to_str_exact, to_str, from_str;
-export add, sub, mul, div, rem, lt, le, gt, eq, eq, ne;
-export is_positive, is_negative, is_nonpositive, is_nonnegative;
-export is_zero, is_infinite, is_finite;
-export NaN, is_NaN, infinity, neg_infinity;
-export consts;
-export logarithm;
+export NaN, infinity, neg_infinity;
 export acos, asin, atan, atan2, cbrt, ceil, copysign, cos, cosh, floor;
-export erf, erfc, exp, expm1, exp2, abs, abs_sub;
-export mul_add, fmax, fmin, nextafter, frexp, hypot, ldexp;
-export lgamma, ln, log_radix, ln1p, log10, log2, ilog_radix;
-export modf, pow, round, sin, sinh, sqrt, tan, tanh, tgamma, trunc;
-export signbit;
-export pow_with_uint;
-
-// export when m_float == c_double
-
+export erf, erfc, exp, expm1, exp2, abs, abs_sub, mul_add, fmax, fmin;
+export nextafter, frexp, hypot, ldexp, lgamma, ln, log_radix, ln1p;
+export log10, log2, ilog_radix, modf, pow, round, sin, sinh, sqrt, tan;
+export tanh, tgamma, trunc;
 export j0, j1, jn, y0, y1, yn;
+export is_NaN, negated, inverse, add, sub, mul, div, rem;
+export lt, le, eq, ne, ge, gt;
+export is_positive, is_negative, is_nonpositive, is_nonnegative;
+export is_zero, is_infinite, signbit, logarithm, pow_with_uint;
+// FIXME: Not working correctly
+//export extensions;
+export consts;
 
-// PORT this must match in width according to architecture
+export to_str_common, to_str_exact, to_str, from_str;
 
-import m_float = f64;
-import f64::*;
-
-/**
- * Section: String Conversions
- */
+// Import everything from the math crate
+import math::float::*;
 
 #[doc = "
 Converts a float to a string
@@ -48,6 +37,10 @@ fn to_str_common(num: float, digits: uint, exact: bool) -> str {
     let trunc = num as uint;
     let mut frac = num - (trunc as float);
     accum += uint::str(trunc);
+
+    // FIXME: Can't seem to access consts::epsilon
+    let epsilon = 0.000000001f;
+
     if (frac < epsilon && !exact) || digits == 0u { ret accum; }
     accum += ".";
     let mut i = digits;
@@ -250,130 +243,6 @@ fn from_str(num: str) -> option<float> {
      }
      ret some(total);
    }
-}
-
-/**
- * Section: Arithmetics
- */
-
-#[doc = "
-Compute the exponentiation of an integer by another integer as a float
-
-# Arguments
-
-* x - The base
-* pow - The exponent
-
-# Return value
-
-`NaN` if both `x` and `pow` are `0u`, otherwise `x^pow`
-"]
-fn pow_with_uint(base: uint, pow: uint) -> float {
-   if base == 0u {
-      if pow == 0u {
-        ret NaN;
-      }
-       ret 0.;
-   }
-   let mut my_pow     = pow;
-   let mut total      = 1f;
-   let mut multiplier = base as float;
-   while (my_pow > 0u) {
-     if my_pow % 2u == 1u {
-       total = total * multiplier;
-     }
-     my_pow     /= 2u;
-     multiplier *= multiplier;
-   }
-   ret total;
-}
-
-
-#[test]
-fn test_from_str() {
-   assert from_str("3") == some(3.);
-   assert from_str("3") == some(3.);
-   assert from_str("3.14") == some(3.14);
-   assert from_str("+3.14") == some(3.14);
-   assert from_str("-3.14") == some(-3.14);
-   assert from_str("2.5E10") == some(25000000000.);
-   assert from_str("2.5e10") == some(25000000000.);
-   assert from_str("25000000000.E-10") == some(2.5);
-   assert from_str(".") == some(0.);
-   assert from_str(".e1") == some(0.);
-   assert from_str(".e-1") == some(0.);
-   assert from_str("5.") == some(5.);
-   assert from_str(".5") == some(0.5);
-   assert from_str("0.5") == some(0.5);
-   assert from_str("0.5") == some(0.5);
-   assert from_str("0.5") == some(0.5);
-   assert from_str("-.5") == some(-0.5);
-   assert from_str("-.5") == some(-0.5);
-   assert from_str("-5") == some(-5.);
-   assert from_str("-0") == some(-0.);
-   assert from_str("0") == some(0.);
-   assert from_str("inf") == some(infinity);
-   assert from_str("-inf") == some(neg_infinity);
-   // note: NaN != NaN, hence this slightly complex test
-   alt from_str("NaN") {
-       some(f) { assert is_NaN(f); }
-       none { fail; }
-   }
-
-   assert from_str("") == none;
-   assert from_str("x") == none;
-   assert from_str(" ") == none;
-   assert from_str("   ") == none;
-   assert from_str("e") == none;
-   assert from_str("E") == none;
-   assert from_str("E1") == none;
-   assert from_str("1e1e1") == none;
-   assert from_str("1e1.1") == none;
-   assert from_str("1e1-1") == none;
-}
-
-#[test]
-fn test_positive() {
-  assert(is_positive(infinity));
-  assert(is_positive(1.));
-  assert(is_positive(0.));
-  assert(!is_positive(-1.));
-  assert(!is_positive(neg_infinity));
-  assert(!is_positive(1./neg_infinity));
-  assert(!is_positive(NaN));
-}
-
-#[test]
-fn test_negative() {
-  assert(!is_negative(infinity));
-  assert(!is_negative(1.));
-  assert(!is_negative(0.));
-  assert(is_negative(-1.));
-  assert(is_negative(neg_infinity));
-  assert(is_negative(1./neg_infinity));
-  assert(!is_negative(NaN));
-}
-
-#[test]
-fn test_nonpositive() {
-  assert(!is_nonpositive(infinity));
-  assert(!is_nonpositive(1.));
-  assert(!is_nonpositive(0.));
-  assert(is_nonpositive(-1.));
-  assert(is_nonpositive(neg_infinity));
-  assert(is_nonpositive(1./neg_infinity));
-  assert(!is_nonpositive(NaN));
-}
-
-#[test]
-fn test_nonnegative() {
-  assert(is_nonnegative(infinity));
-  assert(is_nonnegative(1.));
-  assert(is_nonnegative(0.));
-  assert(!is_nonnegative(-1.));
-  assert(!is_nonnegative(neg_infinity));
-  assert(!is_nonnegative(1./neg_infinity));
-  assert(!is_nonnegative(NaN));
 }
 
 #[test]

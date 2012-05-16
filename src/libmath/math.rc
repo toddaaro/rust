@@ -38,7 +38,6 @@ mod f32 {
     export is_zero, is_infinite, signbit, logarithm, pow_with_uint;
     export extensions;
     export consts;
-    export j0, j1, jn, y0, y1, yn;
 
     import impl::*;
     import cmath::lib::*;
@@ -70,7 +69,6 @@ mod f64 {
     export is_zero, is_infinite, signbit, logarithm, pow_with_uint;
     export extensions;
     export consts;
-    export j0, j1, jn, y0, y1, yn;
 
     import impl::*;
     import cmath::lib::*;
@@ -116,7 +114,6 @@ mod float {
     export is_zero, is_infinite, signbit, logarithm, pow_with_uint;
     export extensions;
     export consts;
-    export j0, j1, jn, y0, y1, yn;
 
     import impl::*;
     import cmath::lib::*;
