@@ -81,6 +81,10 @@ rust_task_fail(rust_task *task,
                char const *expr,
                char const *file,
                size_t line) {
+
+    // Say 'hi' to the debugger
+    BREAKPOINT_AWESOME; // <i>BREAKPOINT_AWESOME!!</i>
+
     assert(task != NULL);
     task->begin_failure(expr, file, line);
 }
