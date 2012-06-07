@@ -23,6 +23,7 @@ void context::call(void *f, void *arg, void *stack) {
 
   // set up the stack
   uint64_t *sp = (uint64_t *)stack;
+  *--sp = -1;
   sp = align_down(sp);
   // The final return address. 0 indicates the bottom of the stack
   *--sp = 0;
