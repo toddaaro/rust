@@ -185,14 +185,15 @@ class annihilator : public shape::data<annihilator,shape::ptr> {
     inline void walk_number2() { /* no-op */ }
 
 public:
-    static void do_annihilate(rust_task *task, rust_opaque_box *box);
+    static void do_annihilate(rust_task *task, rust_opaque_box *box,
+                              shape::arena &arena);
 };
 
 void
-annihilator::do_annihilate(rust_task *task, rust_opaque_box *box) {
+annihilator::do_annihilate(rust_task *task, rust_opaque_box *box,
+                           shape::arena &arena) {
     const type_desc *tydesc = box->td;
     uint8_t *p = (uint8_t*) box_body(box);
-    shape::arena arena;
 
     annihilator annihilator(task, true, tydesc->shape,
                             tydesc->shape_tables, p);
@@ -202,7 +203,8 @@ annihilator::do_annihilate(rust_task *task, rust_opaque_box *box) {
 
 void
 annihilate_box(rust_task *task, rust_opaque_box *box) {
-    annihilator::do_annihilate(task, box);
+    shape::arena arena;
+    annihilator::do_annihilate(task, box, arena);
 }
 
 void
