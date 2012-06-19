@@ -25,7 +25,7 @@ pure fn path_name(p: @path) -> str { path_name_i(p.idents) }
 
 pure fn path_name_i(idents: [ident]) -> str {
     // FIXME: Bad copies (#2543 -- same for everything else that says "bad")
-    str::connect(idents.map({|i|*i}), "::")
+    str::connect(idents.map({|i| copy *i}), "::")
 }
 
 pure fn path_to_ident(p: @path) -> ident { vec::last(p.idents) }

@@ -369,16 +369,15 @@ fn find_inline_attr(attrs: [ast::attribute]) -> inline_attr {
 
 fn require_unique_names(diagnostic: span_handler,
                         metas: [@ast::meta_item]) {
-    let map = map::str_hash();
+    let map = map::box_str_hash();
     for metas.each {|meta|
         let name = get_meta_item_name(meta);
 
-        // FIXME: How do I silence the warnings? --pcw (#2619)
-        if map.contains_key(*name) {
+        if map.contains_key(name) {
             diagnostic.span_fatal(meta.span,
                                   #fmt["duplicate meta item `%s`", *name]);
         }
-        map.insert(*name, ());
+        map.insert(name, ());
     }
 }
 
