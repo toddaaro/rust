@@ -72,7 +72,7 @@ ifneq ($(wildcard $(NON_HOST_TRIPLES)),)
 CFG_INFO := $(info cfg: non host triples $(NON_HOST_TRIPLES))
 endif
 
-CFG_RUSTC_FLAGS := $(RUSTFLAGS)
+CFG_RUSTC_FLAGS := $(RUSTFLAGS) -Z no-rt
 CFG_GCCISH_CFLAGS :=
 CFG_GCCISH_LINK_FLAGS :=
 
@@ -111,17 +111,20 @@ else
   CFG_VALGRIND_COMPILE :=
 endif
 
-CFG_RUNTIME :=$(call CFG_LIB_NAME,rustrt)
+CFG_RUNTIME :=librustrt.a
 CFG_RUSTLLVM :=$(call CFG_LIB_NAME,rustllvm)
-CFG_CORELIB :=$(call CFG_LIB_NAME,core)
-CFG_STDLIB :=$(call CFG_LIB_NAME,std)
-CFG_LIBRUSTC :=$(call CFG_LIB_NAME,rustc)
-CFG_LIBSYNTAX :=$(call CFG_LIB_NAME,syntax)
+CFG_LIBRT :=$(call CFG_LIB_NAME,rt-dummy)
+CFG_CORELIB :=$(call CFG_LIB_NAME,core-dummy)
+CFG_STDLIB :=$(call CFG_LIB_NAME,std-dummy)
+CFG_LIBRUSTC :=$(call CFG_LIB_NAME,rustc-dummy)
+CFG_LIBSYNTAX :=$(call CFG_LIB_NAME,syntax-dummy)
 
+LIBRT_GLOB :=$(call CFG_LIB_GLOB,rt)
 STDLIB_GLOB :=$(call CFG_LIB_GLOB,std)
 CORELIB_GLOB :=$(call CFG_LIB_GLOB,core)
 LIBRUSTC_GLOB :=$(call CFG_LIB_GLOB,rustc)
 LIBSYNTAX_GLOB :=$(call CFG_LIB_GLOB,syntax)
+LIBRT_DSYM_GLOB :=$(call CFG_LIB_DSYM_GLOB,rt)
 STDLIB_DSYM_GLOB :=$(call CFG_LIB_DSYM_GLOB,std)
 CORELIB_DSYM_GLOB :=$(call CFG_LIB_DSYM_GLOB,core)
 LIBRUSTC_DSYM_GLOB :=$(call CFG_LIB_DSYM_GLOB,rustc)
@@ -177,6 +180,14 @@ GENERATED :=
 %:: RCS/%
 %:: s.%
 %:: SCCS/s.%
+
+######################################################################
+# Runtime variables
+######################################################################
+
+LIBRT_CRATE := $(S)src/rt/rt.rc
+LIBRT_INPUTS := $(wildcard $(addprefix $(S)src/rt/,        \
+                                           rt.rc *.rs))
 
 ######################################################################
 # Core library variables
@@ -319,7 +330,7 @@ endif
 # Preqrequisites for using the stageN compiler
 HSREQ$(1)_H_$(3) = \
 	$$(HBIN$(1)_H_$(3))/rustc$$(X) \
-	$$(HLIB$(1)_H_$(3))/$$(CFG_RUNTIME) \
+	$$(HLIB$(1)_H_$(3))/$$(CFG_LIBRT) \
 	$$(HLIB$(1)_H_$(3))/$$(CFG_RUSTLLVM) \
 	$$(HCORELIB_DEFAULT$(1)_H_$(3)) \
 	$$(HSTDLIB_DEFAULT$(1)_H_$(3)) \
@@ -329,12 +340,12 @@ HSREQ$(1)_H_$(3) = \
 # Prerequisites for using the stageN compiler to build target artifacts
 TSREQ$(1)_T_$(2)_H_$(3) = \
 	$$(HSREQ$(1)_H_$(3)) \
-	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_RUNTIME) \
 	$$(TLIB$(1)_T_$(2)_H_$(3))/libmorestack.a
 
 # Prerequisites for complete stageN targets
 SREQ$(1)_T_$(2)_H_$(3) = \
 	$$(TSREQ$(1)_T_$(2)_H_$(3)) \
+	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_LIBRT) \
 	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CORELIB) \
 	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_STDLIB)  \
 	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_LIBRUSTC)

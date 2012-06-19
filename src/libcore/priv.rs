@@ -6,6 +6,7 @@ import compare_and_swap = rustrt::rust_compare_and_swap_ptr;
 
 type rust_port_id = uint;
 
+#[nolink]
 native mod rustrt {
     fn rust_compare_and_swap_ptr(address: *libc::uintptr_t,
                                  oldval: libc::uintptr_t,

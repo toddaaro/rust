@@ -257,7 +257,7 @@ enum rust_port {}
 
 type port_id = int;
 
-#[abi = "cdecl"]
+#[nolink]
 native mod rustrt {
     fn rust_port_id_send(target_port: port_id, data: *()) -> libc::uintptr_t;
 

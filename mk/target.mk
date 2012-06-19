@@ -60,27 +60,35 @@ endef
 # The catch is that you may not add new functions to the runtime
 # in this case!
 #
-# Arguments are the same as for TARGET_BASE_STAGE_N
+
 define TARGET_RT_FROM_SNAPSHOT
 
-$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_RUNTIME): \
-		$$(HLIB$(1)_H_$(3))/$$(CFG_RUNTIME)
-	@$$(call E, cp: $$@)
-	$$(Q)cp $$< $$@
-
-endef
-
-# This rule copies from the runtime for the working directory.  It
-# applies to targets produced by stage1 or later.  See comment on
-# previous rule.
-#
-# Arguments are the same as for TARGET_BASE_STAGE_N
-define TARGET_RT_FROM_WD
-
-$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_RUNTIME): \
+$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_LIBRT): \
+		$$(HLIB$(1)_H_$(3))/$$(CFG_LIBRT) \
+		$$(LIBRT_INPUTS) \
+		$$(TSREQ$(1)_T_$(2)_H_$(3)) \
 		rt/$(2)/$$(CFG_RUNTIME)
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
+	$$(Q)cp $$(HLIB$(1)_H_$(3))/$$(LIBRT_GLOB) \
+		$$(TLIB$(1)_T_$(2)_H_$(3))
+
+endef
+
+define TARGET_RT_FROM_WD
+
+ifeq ($(CFG_OSTYPE), apple-darwin)
+  LIBUV_OUT_DIR_$(2) := rt/$(2)/libuv/Release
+else
+  LIBUV_OUT_DIR_$(2) := rt/$(2)/libuv/Release/obj.target/src/libuv
+endif
+
+$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_LIBRT): \
+		$$(LIBRT_CRATE) $$(LIBRT_INPUTS) \
+		$$(TSREQ$(1)_T_$(2)_H_$(3)) \
+		rt/$(2)/$$(CFG_RUNTIME)
+	@$$(call E, compile_and_link: $$@)
+	$$(STAGE$(1)_T_$(2)_H_$(3)) -o $$@ $$< -L rt/$(2) -L $$(LIBUV_OUT_DIR_$(2)) && touch $$@
 
 endef
 
@@ -104,6 +112,7 @@ define TARGET_CORELIB_FROM_WD
 
 $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CORELIB): \
 		$$(CORELIB_CRATE) $$(CORELIB_INPUTS) \
+	        $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_LIBRT) \
 		$$(TSREQ$(1)_T_$(2)_H_$(3))
 	@$$(call E, compile_and_link: $$@)
 	$$(STAGE$(1)_T_$(2)_H_$(3)) -o $$@ $$< && touch $$@

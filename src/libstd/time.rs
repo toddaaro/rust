@@ -16,7 +16,7 @@ export
     at_utc,
     strptime;
 
-#[abi = "cdecl"]
+#[nolink]
 native mod rustrt {
     fn get_time(&sec: i64, &nsec: i32);
     fn precise_time_ns(&ns: u64);

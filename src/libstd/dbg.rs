@@ -11,7 +11,7 @@ export ptr_cast;
 export refcount;
 export breakpoint;
 
-#[abi = "cdecl"]
+#[nolink]
 native mod rustrt {
     fn debug_tydesc(td: *sys::type_desc);
     fn debug_opaque(td: *sys::type_desc, x: *());

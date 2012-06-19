@@ -5,7 +5,7 @@ export xorshift, seeded_xorshift;
 
 enum rctx {}
 
-#[abi = "cdecl"]
+#[nolink]
 native mod rustrt {
     fn rand_seed() -> [u8];
     fn rand_new() -> *rctx;

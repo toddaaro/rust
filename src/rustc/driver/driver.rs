@@ -157,7 +157,7 @@ fn compile_upto(sess: session, cfg: ast::crate_cfg,
 
     crate =
         time(time_passes, "core injection", {|copy crate|
-            front::core_inject::maybe_inject_libcore_ref(sess, crate)
+            front::core_inject::maybe_inject_common_refs(sess, crate)
         });
 
     time(time_passes, "building warning settings table", {|copy crate|

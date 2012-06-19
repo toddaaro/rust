@@ -132,9 +132,11 @@ rt/$(1)/$(CFG_RUNTIME): $$(RUNTIME_OBJS_$(1)) $$(MKFILE_DEPS) \
                         $$(RUNTIME_DEF_$(1)) \
                         $$(RUNTIME_LIBS_$(1))
 	@$$(call E, link: $$@)
-	$$(Q)$$(call CFG_LINK_C_$(1),$$@, $$(RUNTIME_OBJS_$(1)) \
-	  $$(CFG_GCCISH_POST_LIB_FLAGS) $$(RUNTIME_LIBS_$(1)) \
-	  $$(CFG_LIBUV_LINK_FLAGS),$$(RUNTIME_DEF_$(1)),$$(CFG_RUNTIME))
+	$$(Q)$$(AR) rcs $$@ $$(RUNTIME_OBJS_$(1))
+
+#	$$(Q)$$(call CFG_LINK_C_$(1),$$@, $$(RUNTIME_OBJS_$(1)) \
+#	  $$(CFG_GCCISH_POST_LIB_FLAGS) $$(RUNTIME_LIBS_$(1)) \
+#	  $$(CFG_LIBUV_LINK_FLAGS),$$(RUNTIME_DEF_$(1)),$$(CFG_RUNTIME))
 
 # FIXME: For some reason libuv's makefiles can't figure out the
 # correct definition of CC on the mingw I'm using, so we are

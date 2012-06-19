@@ -13,7 +13,7 @@ define CP_HOST_STAGE_N
 
 $$(HBIN$(2)_H_$(4))/rustc$$(X): \
 	$$(TBIN$(1)_T_$(4)_H_$(3))/rustc$$(X) \
-	$$(HLIB$(2)_H_$(4))/$$(CFG_RUNTIME) \
+	$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRT) \
 	$$(HLIB$(2)_H_$(4))/$$(CFG_RUSTLLVM) \
 	$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTC) \
 	$$(HCORELIB_DEFAULT$(2)_H_$(4)) \
@@ -24,7 +24,7 @@ $$(HBIN$(2)_H_$(4))/rustc$$(X): \
 $$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTC): \
 	$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_LIBRUSTC) \
 	$$(HLIB$(2)_H_$(4))/$$(CFG_LIBSYNTAX) \
-	$$(HLIB$(2)_H_$(4))/$$(CFG_RUNTIME) \
+	$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRT) \
 	$$(HLIB$(2)_H_$(4))/$$(CFG_RUSTLLVM) \
 	$$(HCORELIB_DEFAULT$(2)_H_$(3)) \
 	$$(HSTDLIB_DEFAULT$(2)_H_$(3))
@@ -36,7 +36,7 @@ $$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTC): \
 
 $$(HLIB$(2)_H_$(4))/$$(CFG_LIBSYNTAX): \
 	$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_LIBSYNTAX) \
-	$$(HLIB$(2)_H_$(4))/$$(CFG_RUNTIME) \
+	$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRT) \
 	$$(HLIB$(2)_H_$(4))/$$(CFG_RUSTLLVM) \
 	$$(HCORELIB_DEFAULT$(2)_H_$(3)) \
 	$$(HSTDLIB_DEFAULT$(2)_H_$(3))
@@ -46,14 +46,17 @@ $$(HLIB$(2)_H_$(4))/$$(CFG_LIBSYNTAX): \
 		$$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBSYNTAX_DSYM_GLOB) \
 	        $$(HLIB$(2)_H_$(4))
 
-$$(HLIB$(2)_H_$(4))/$$(CFG_RUNTIME): \
-	$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_RUNTIME)
+$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRT): \
+	$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_LIBRT)
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
+	$$(Q)cp -R $$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBRT_GLOB) \
+		$$(wildcard $$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBRT_DSYM_GLOB)) \
+	        $$(HLIB$(2)_H_$(4))
 
 $$(HLIB$(2)_H_$(4))/$$(CFG_CORELIB): \
 	$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_CORELIB) \
-	$$(HLIB$(2)_H_$(4))/$$(CFG_RUNTIME)
+	$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRT)
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
 # Subtle: We do not let the shell expand $(CORELIB_DSYM_GLOB) directly rather
@@ -70,7 +73,7 @@ $$(HLIB$(2)_H_$(4))/$$(CFG_CORELIB): \
 $$(HLIB$(2)_H_$(4))/$$(CFG_STDLIB): \
 	$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_STDLIB) \
 	$$(HLIB$(2)_H_$(4))/$$(CFG_CORELIB) \
-	$$(HLIB$(2)_H_$(4))/$$(CFG_RUNTIME)
+	$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRT)
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
 	$$(Q)cp -R $$(TLIB$(1)_T_$(4)_H_$(3))/$(STDLIB_GLOB) \

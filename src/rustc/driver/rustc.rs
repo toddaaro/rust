@@ -1,6 +1,8 @@
+#[no_rt];
 #[no_core];
 #[warn(no_vecs_not_implicitly_copyable)];
 
+use rt(vers = "0.2");
 use core(vers = "0.2");
 use std(vers = "0.2");
 use rustc(vers = "0.2");

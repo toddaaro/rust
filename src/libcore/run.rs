@@ -9,7 +9,7 @@ export program_output;
 export spawn_process;
 export waitpid;
 
-#[abi = "cdecl"]
+#[nolink]
 native mod rustrt {
     fn rust_run_program(argv: **libc::c_char, envp: *c_void,
                         dir: *libc::c_char,

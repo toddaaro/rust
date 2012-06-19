@@ -72,6 +72,7 @@ fn frame_address(f: fn(*u8)) {
     rusti::frame_address(f)
 }
 
+#[nolink]
 native mod rustrt {
     fn rust_dbg_breakpoint();
 }

@@ -568,6 +568,7 @@ fn spawn_raw(opts: task_opts, +f: fn~()) unsafe {
 
 }
 
+#[nolink]
 native mod rustrt {
     #[rust_stack]
     fn rust_task_yield(task: *rust_task, &killed: bool);

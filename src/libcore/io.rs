@@ -13,7 +13,7 @@ import libc::consts::os::extra::*;
 
 type fd_t = c_int;
 
-#[abi = "cdecl"]
+#[nolink]
 native mod rustrt {
     fn rust_get_stdin() -> *libc::FILE;
     fn rust_get_stdout() -> *libc::FILE;

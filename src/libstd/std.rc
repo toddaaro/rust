@@ -8,6 +8,7 @@
 #[crate_type = "lib"];
 #[doc = "The Rust standard library"];
 
+#[no_rt];
 #[no_core];
 
 #[warn(no_vecs_not_implicitly_copyable)];

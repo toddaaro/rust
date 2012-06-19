@@ -105,7 +105,7 @@ export
    unsafe,
    extensions;
 
-#[abi = "cdecl"]
+#[nolink]
 native mod rustrt {
     fn rust_str_push(&s: str, ch: u8);
     fn str_reserve_shared(&ss: str, nn: libc::size_t);

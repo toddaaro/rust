@@ -18,7 +18,7 @@ enum type_desc = {
 
 type rust_cond_lock = *libc::c_void;
 
-#[abi = "cdecl"]
+#[nolink]
 native mod rustrt {
     pure fn refcount(t: *()) -> libc::intptr_t;
     fn unsupervise();

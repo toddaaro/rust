@@ -27,21 +27,11 @@ fn get_rpath_flags(sess: session::session, out_filename: str) -> [str] {
     let sysroot = sess.filesearch.sysroot();
     let output = out_filename;
     let libs = cstore::get_used_crate_files(sess.cstore);
-    // We don't currently rpath native libraries, but we know
-    // where rustrt is and we know every rust program needs it
-    let libs = libs + [get_sysroot_absolute_rt_lib(sess)];
+    let libs = libs;
 
     let target_triple = sess.opts.target_triple;
     let rpaths = get_rpaths(os, cwd, sysroot, output, libs, target_triple);
     rpaths_to_flags(rpaths)
-}
-
-fn get_sysroot_absolute_rt_lib(sess: session::session) -> path::path {
-    let path = [sess.filesearch.sysroot()]
-        + filesearch::relative_target_lib_path(
-            sess.opts.target_triple)
-        + [os::dll_filename("rustrt")];
-    path::connect_many(path)
 }
 
 fn rpaths_to_flags(rpaths: [str]) -> [str] {

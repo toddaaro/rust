@@ -82,7 +82,7 @@ export unsafe;
 export u8;
 export extensions;
 
-#[abi = "cdecl"]
+#[nolink]
 native mod rustrt {
     fn vec_reserve_shared(++t: *sys::type_desc,
                           ++v: **unsafe::vec_repr,

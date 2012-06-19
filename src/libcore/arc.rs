@@ -8,7 +8,7 @@ export arc, get, clone, shared_arc, get_arc;
 
 export exclusive, methods;
 
-#[abi = "cdecl"]
+#[nolink]
 native mod rustrt {
     #[rust_stack]
     fn rust_atomic_increment(p: &mut libc::intptr_t)

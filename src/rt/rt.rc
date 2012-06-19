@@ -1,0 +1,11 @@
+#[link(name = "rt",
+       vers = "0.2",
+       uuid = "4359451f-ff17-40a0-880e-81253bbeed60",
+       url = "https://github.com/mozilla/rust/tree/master/src/rt")];
+
+#[comment = "The Rust runtime"];
+#[license = "MIT"];
+#[crate_type = "lib"];
+
+#[no_rt];
+#[no_core];

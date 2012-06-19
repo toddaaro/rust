@@ -28,10 +28,14 @@ Implicitly, all crates behave as if they included the following prologue:
 This behavior can be disabled with the `#[no_core]` crate attribute.
 "];
 
+#[warn(no_vecs_not_implicitly_copyable)];
+
+// Don't link to rt. We'll specify which rt we want.
+#[no_rt];
 // Don't link to core. We are core.
 #[no_core];
 
-#[warn(no_vecs_not_implicitly_copyable)];
+use rt(vers = "0.2");
 
 export int, i8, i16, i32, i64;
 export uint, u8, u16, u32, u64;
