@@ -172,7 +172,7 @@ fn build_reexport_path_map(srv: astsrv::srv, -def_map: def_map) -> path_map {
         let path_map = map::str_hash::<[(str,doc::itemtag)]>();
 
         for ctxt.exp_map.each {|exp_id, defs|
-            let path = alt check ctxt.ast_map.get(exp_id) {
+            let path = alt check *ctxt.ast_map.get(exp_id) {
               ast_map::node_export(_, path) { path }
             };
           // should be a constraint on the node_export constructor
@@ -228,7 +228,7 @@ fn find_reexport_impl_docs(
 
     for_each_reexported_impl(ctxt) {|mod_id, i|
         let path = alt ctxt.ast_map.find(mod_id) {
-          some(ast_map::node_item(item, path)) {
+          some(@ast_map::node_item(item, path)) {
             let path = ast_map::path_to_str(*path);
             if str::is_empty(path) {
                 *item.ident

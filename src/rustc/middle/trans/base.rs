@@ -2176,7 +2176,7 @@ fn monomorphic_fn(ccx: @crate_ctxt, fn_id: ast::def_id, real_substs: [ty::t],
         (may have attempted to monomorphize an item defined in a different \
         crate?)", fn_id)});
     // Get the path so that we can create a symbol
-    let (pt, name, span) = alt map_node {
+    let (pt, name, span) = alt *map_node {
       ast_map::node_item(i, pt) {
         alt i.node {
           ast::item_res(_, _, _, dtor_id, _, _) {
@@ -2234,7 +2234,7 @@ fn monomorphic_fn(ccx: @crate_ctxt, fn_id: ast::def_id, real_substs: [ty::t],
     };
 
     let psubsts = some({tys: substs, vtables: vtables, bounds: tpt.bounds});
-    let lldecl = alt map_node {
+    let lldecl = alt *map_node {
       ast_map::node_item(i@@{node: ast::item_fn(decl, _, body), _}, _) {
         let d = mk_lldecl();
         set_inline_hint_if_appr(i.attrs, d);
@@ -4790,7 +4790,7 @@ fn trans_const_expr(cx: @crate_ctxt, e: @ast::expr) -> ValueRef {
           some(ast::def_const(def_id)) {
             // Don't know how to handle external consts
             assert ast_util::is_local(def_id);
-            alt cx.tcx.items.get(def_id.node) {
+            alt *cx.tcx.items.get(def_id.node) {
               ast_map::node_item(@{
                 node: ast::item_const(_, subexpr), _
               }, _) {
@@ -4927,7 +4927,7 @@ fn trans_class_dtor(ccx: @crate_ctxt, path: path,
 
 fn trans_item(ccx: @crate_ctxt, item: ast::item) {
     let _icx = ccx.insn_ctxt("trans_item");
-    let path = alt check ccx.tcx.items.get(item.id) {
+    let path = alt check *ccx.tcx.items.get(item.id) {
       ast_map::node_item(_, p) { p }
     };
     alt item.node {
@@ -5153,7 +5153,7 @@ fn fill_fn_pair(bcx: block, pair: ValueRef, llfn: ValueRef,
 }
 
 fn item_path(ccx: @crate_ctxt, i: @ast::item) -> path {
-    *alt check ccx.tcx.items.get(i.id) {
+    *alt check *ccx.tcx.items.get(i.id) {
       ast_map::node_item(_, p) { p }
     } + [path_name(i.ident)]
 }
@@ -5178,7 +5178,7 @@ fn get_item_val(ccx: @crate_ctxt, id: ast::node_id) -> ValueRef {
       some(v) { v }
       none {
         let mut exprt = false;
-        let val = alt check ccx.tcx.items.get(id) {
+        let val = alt check *ccx.tcx.items.get(id) {
           ast_map::node_item(i, pth) {
             let my_path = *pth + [path_name(i.ident)];
             alt check i.node {
@@ -5476,7 +5476,7 @@ fn crate_ctxt_to_encode_parms(cx: @crate_ctxt)
         for cx.exp_map.each {|exp_id, defs|
             for defs.each {|def|
                 if !def.reexp { cont; }
-                let path = alt check cx.tcx.items.get(exp_id) {
+                let path = alt check *cx.tcx.items.get(exp_id) {
                   ast_map::node_export(_, path) {
                     ast_map::path_to_str(*path)
                   }

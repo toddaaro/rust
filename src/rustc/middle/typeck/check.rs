@@ -663,13 +663,13 @@ fn impl_self_ty(fcx: @fn_ctxt, did: ast::def_id) -> ty_param_substs_and_ty {
 
     let {n_tps, rp, raw_ty} = if did.crate == ast::local_crate {
         alt check tcx.items.find(did.node) {
-          some(ast_map::node_item(@{node: ast::item_impl(ts, rp, _, st, _),
+          some(@ast_map::node_item(@{node: ast::item_impl(ts, rp, _, st, _),
                                   _}, _)) {
             {n_tps: ts.len(),
              rp: rp,
              raw_ty: fcx.ccx.to_ty(rscope::type_rscope(rp), st)}
           }
-          some(ast_map::node_item(@{node: ast::item_class(ts,
+          some(@ast_map::node_item(@{node: ast::item_class(ts,
                                  _,_,_,_,rp), id: class_id, _},_)) {
               /* If the impl is a class, the self ty is just the class ty
                  (doing a no-op subst for the ty params; in the next step,

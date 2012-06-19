@@ -235,7 +235,7 @@ impl methods for lookup {
                     for results.eachi { |i, result|
                         let (_, _, _, did) = result;
                         let span = if did.crate == ast::local_crate {
-                            alt check self.tcx().items.get(did.node) {
+                            alt check *self.tcx().items.get(did.node) {
                               ast_map::node_method(m, _, _) { m.span }
                             }
                         } else {

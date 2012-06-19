@@ -47,7 +47,7 @@ fn fold_fn(
 
 fn get_fn_sig(srv: astsrv::srv, fn_id: doc::ast_id) -> option<str> {
     astsrv::exec(srv) {|ctxt|
-        alt check ctxt.ast_map.get(fn_id) {
+        alt check *ctxt.ast_map.get(fn_id) {
           ast_map::node_item(@{
             ident: ident,
             node: ast::item_fn(decl, tys, _), _
@@ -82,7 +82,7 @@ fn fold_const(
 
     {
         sig: some(astsrv::exec(srv) {|ctxt|
-            alt check ctxt.ast_map.get(doc.id()) {
+            alt check *ctxt.ast_map.get(doc.id()) {
               ast_map::node_item(@{
                 node: ast::item_const(ty, _), _
               }, _) {
@@ -110,7 +110,7 @@ fn fold_enum(
     {
         variants: par::anymap(doc.variants) {|variant|
             let sig = astsrv::exec(srv) {|ctxt|
-                alt check ctxt.ast_map.get(doc_id) {
+                alt check *ctxt.ast_map.get(doc_id) {
                   ast_map::node_item(@{
                     node: ast::item_enum(ast_variants, _, _), _
                   }, _) {
@@ -147,7 +147,7 @@ fn fold_res(
 
     {
         sig: some(astsrv::exec(srv) {|ctxt|
-            alt check ctxt.ast_map.get(doc.id()) {
+            alt check *ctxt.ast_map.get(doc.id()) {
               ast_map::node_item(@{
                 node: ast::item_res(decl, tys, _, _, _, rp), _
               }, _) {
@@ -195,7 +195,7 @@ fn get_method_sig(
     method_name: str
 ) -> option<str> {
     astsrv::exec(srv) {|ctxt|
-        alt check ctxt.ast_map.get(item_id) {
+        alt check *ctxt.ast_map.get(item_id) {
           ast_map::node_item(@{
             node: ast::item_iface(_, _, methods), _
           }, _) {
@@ -245,7 +245,7 @@ fn fold_impl(
     let srv = fold.ctxt;
 
     let (iface_ty, self_ty) = astsrv::exec(srv) {|ctxt|
-        alt ctxt.ast_map.get(doc.id()) {
+        alt *ctxt.ast_map.get(doc.id()) {
           ast_map::node_item(@{
             node: ast::item_impl(_, _, iface_ty, self_ty, _), _
           }, _) {
@@ -300,7 +300,7 @@ fn fold_type(
 
     {
         sig: astsrv::exec(srv) {|ctxt|
-            alt ctxt.ast_map.get(doc.id()) {
+            alt *ctxt.ast_map.get(doc.id()) {
               ast_map::node_item(@{
                 ident: ident,
                 node: ast::item_ty(ty, params, ast::rp_none), _

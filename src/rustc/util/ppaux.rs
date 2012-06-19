@@ -28,7 +28,7 @@ fn bound_region_to_str(cx: ctxt, br: bound_region) -> str {
 }
 
 fn re_scope_id_to_str(cx: ctxt, node_id: ast::node_id) -> str {
-    alt cx.items.get(node_id) {
+    alt *cx.items.get(node_id) {
       ast_map::node_block(blk) {
         #fmt("<block at %s>",
              codemap::span_to_str(blk.span, cx.sess.codemap))

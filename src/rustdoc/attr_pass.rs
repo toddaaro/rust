@@ -92,7 +92,7 @@ fn parse_item_attrs<T:send>(
     id: doc::ast_id,
     +parse_attrs: fn~([ast::attribute]) -> T) -> T {
     astsrv::exec(srv) {|ctxt|
-        let attrs = alt ctxt.ast_map.get(id) {
+        let attrs = alt *ctxt.ast_map.get(id) {
           ast_map::node_item(item, _) { item.attrs }
           ast_map::node_native_item(item, _, _) { item.attrs }
           _ {
@@ -145,7 +145,7 @@ fn fold_enum(
     {
         variants: par::anymap(doc.variants) {|variant|
             let desc = astsrv::exec(srv) {|ctxt|
-                alt check ctxt.ast_map.get(doc_id) {
+                alt check *ctxt.ast_map.get(doc_id) {
                   ast_map::node_item(@{
                     node: ast::item_enum(ast_variants, _, _), _
                   }, _) {
@@ -202,7 +202,7 @@ fn merge_method_attrs(
 
     // Create an assoc list from method name to attributes
     let attrs: [(str, option<str>)] = astsrv::exec(srv) {|ctxt|
-        alt ctxt.ast_map.get(item_id) {
+        alt *ctxt.ast_map.get(item_id) {
           ast_map::node_item(@{
             node: ast::item_iface(_, _, methods), _
           }, _) {

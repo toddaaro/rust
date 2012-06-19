@@ -397,12 +397,12 @@ fn encode_info_for_mod(ecx: @encode_ctxt, ebml_w: ebml::writer, md: _mod,
         if ast_util::is_exported(ident, md) {
             ebml_w.start_tag(tag_mod_impl);
             alt ecx.tcx.items.find(did.node) {
-              some(ast_map::node_item(it@@{node: cl@item_class(*),_},_)) {
+              some(@ast_map::node_item(it@@{node: cl@item_class(*),_},_)) {
             /* If did stands for an iface
             ref, we need to map it to its parent class */
                 ebml_w.wr_str(def_to_str(local_def(it.id)));
               }
-              some(ast_map::node_item(@{node: item_impl(_,_,
+              some(@ast_map::node_item(@{node: item_impl(_,_,
                                                    some(ifce),_,_),_},_)) {
                 ebml_w.wr_str(def_to_str(did));
               }
@@ -815,7 +815,7 @@ fn encode_info_for_items(ecx: @encode_ctxt, ebml_w: ebml::writer,
         visit_expr: {|_e, _cx, _v|},
         visit_item: {|i, cx, v, copy ebml_w|
             visit::visit_item(i, cx, v);
-            alt check ecx.tcx.items.get(i.id) {
+            alt check *ecx.tcx.items.get(i.id) {
               ast_map::node_item(_, pt) {
                 encode_info_for_item(ecx, ebml_w, i, index, *pt);
                 /* encode ctor, then encode items */
@@ -837,7 +837,7 @@ fn encode_info_for_items(ecx: @encode_ctxt, ebml_w: ebml::writer,
         },
         visit_native_item: {|ni, cx, v, copy ebml_w|
             visit::visit_native_item(ni, cx, v);
-            alt check ecx.tcx.items.get(ni.id) {
+            alt check *ecx.tcx.items.get(ni.id) {
               ast_map::node_native_item(_, abi, pt) {
                 encode_info_for_native_item(ecx, ebml_w, ni, index, *pt, abi);
               }

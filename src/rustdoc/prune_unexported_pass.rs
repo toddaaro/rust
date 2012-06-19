@@ -110,7 +110,7 @@ fn is_exported_from_mod(
     item_name: str
 ) -> bool {
     astsrv::exec(srv) {|ctxt|
-        alt ctxt.ast_map.get(mod_id) {
+        alt *ctxt.ast_map.get(mod_id) {
           ast_map::node_item(item, _) {
             alt item.node {
               ast::item_mod(m) {

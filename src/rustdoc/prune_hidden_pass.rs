@@ -37,7 +37,7 @@ fn is_hidden(srv: astsrv::srv, doc: doc::itemdoc) -> bool {
 
     let id = doc.id;
     astsrv::exec(srv) {|ctxt|
-        let attrs = alt ctxt.ast_map.get(id) {
+        let attrs = alt *ctxt.ast_map.get(id) {
           ast_map::node_item(item, _) { item.attrs }
           _ { [] }
         };

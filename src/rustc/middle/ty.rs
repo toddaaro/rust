@@ -2584,11 +2584,11 @@ fn iface_methods(cx: ctxt, id: ast::def_id) -> @[method] {
 fn impl_iface(cx: ctxt, id: ast::def_id) -> option<t> {
     if id.crate == ast::local_crate {
         alt cx.items.find(id.node) {
-           some(ast_map::node_item(@{node: ast::item_impl(
+           some(@ast_map::node_item(@{node: ast::item_impl(
               _, _, some(@{id: id, _}), _, _), _}, _)) {
               some(node_id_to_type(cx, id))
            }
-           some(ast_map::node_item(@{node: ast::item_class(_, _, _, _, _, _),
+           some(@ast_map::node_item(@{node: ast::item_class(_, _, _, _, _, _),
                            _},_)) {
              alt cx.def_map.find(id.node) {
                some(def_ty(iface_id)) {
@@ -2643,7 +2643,7 @@ fn item_path_str(cx: ctxt, id: ast::def_id) -> str {
 fn ty_dtor(cx: ctxt, class_id: def_id) -> option<def_id> {
     if is_local(class_id) {
        alt cx.items.find(class_id.node) {
-         some(ast_map::node_item(@{node: ast::item_class(_, _, _, _,
+         some(@ast_map::node_item(@{node: ast::item_class(_, _, _, _,
                                      some(dtor), _), _}, _))
              { some(local_def(dtor.node.id))  }
          _  { none }
@@ -2663,7 +2663,7 @@ fn item_path(cx: ctxt, id: ast::def_id) -> ast_map::path {
         csearch::get_item_path(cx, id)
     } else {
         let node = cx.items.get(id.node);
-        alt node {
+        alt *node {
           ast_map::node_item(item, path) {
             let item_elt = alt item.node {
               item_mod(_) | item_native_mod(_) {
@@ -2723,7 +2723,7 @@ fn enum_variants(cx: ctxt, id: ast::def_id) -> @[variant_info] {
           call eval_const_expr, it should never get called twice for the same
           expr, since check_enum_variants also updates the enum_var_cache
          */
-        alt cx.items.get(id.node) {
+        alt *cx.items.get(id.node) {
           ast_map::node_item(@{node: ast::item_enum(variants, _, _), _}, _) {
             let mut disr_val = -1;
             @vec::map(variants, {|variant|
@@ -2818,7 +2818,7 @@ fn lookup_field_type(tcx: ctxt, class_id: def_id, id: def_id,
 fn lookup_class_fields(cx: ctxt, did: ast::def_id) -> [field_ty] {
   if did.crate == ast::local_crate {
     alt cx.items.find(did.node) {
-       some(ast_map::node_item(i,_)) {
+       some(@ast_map::node_item(i,_)) {
          alt i.node {
                  ast::item_class(_, _, items, _, _, _) {
                class_field_tys(items)
@@ -2862,7 +2862,7 @@ pure fn is_public(f: field_ty) -> bool {
 fn lookup_class_method_ids(cx: ctxt, did: ast::def_id)
     : is_local(did) -> [{name: ident, id: node_id, vis: visibility}] {
     alt cx.items.find(did.node) {
-       some(ast_map::node_item(@{node: item_class(_,_,items,_,_,_), _}, _)) {
+       some(@ast_map::node_item(@{node: item_class(_,_,items,_,_,_), _}, _)) {
          let (_,ms) = split_class_items(items);
          vec::map(ms, {|m| {name: m.ident, id: m.id,
                             vis: m.vis}})

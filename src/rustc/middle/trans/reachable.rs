@@ -64,7 +64,7 @@ fn traverse_def_id(cx: ctx, did: def_id) {
         none { ret; } // This can happen for self, for example
         some(n) { n }
     };
-    alt n {
+    alt *n {
       ast_map::node_item(item, _) { traverse_public_item(cx, item); }
       ast_map::node_method(_, impl_id, _) { traverse_def_id(cx, impl_id); }
       ast_map::node_native_item(item, _, _) { cx.rmap.insert(item.id, ()); }

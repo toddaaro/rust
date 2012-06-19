@@ -79,7 +79,7 @@ fn method_from_methods(ms: [@ast::method], name: ast::ident) -> ast::def_id {
 fn method_with_name(ccx: @crate_ctxt, impl_id: ast::def_id,
                     name: ast::ident) -> ast::def_id {
     if impl_id.crate == ast::local_crate {
-        alt check ccx.tcx.items.get(impl_id.node) {
+        alt check *ccx.tcx.items.get(impl_id.node) {
           ast_map::node_item(@{node: ast::item_impl(_, _, _, _, ms), _}, _) {
             method_from_methods(ms, name)
           }
@@ -97,7 +97,7 @@ fn method_with_name(ccx: @crate_ctxt, impl_id: ast::def_id,
 fn method_ty_param_count(ccx: @crate_ctxt, m_id: ast::def_id,
                          i_id: ast::def_id) -> uint {
     if m_id.crate == ast::local_crate {
-        alt check ccx.tcx.items.get(m_id.node) {
+        alt check *ccx.tcx.items.get(m_id.node) {
           ast_map::node_method(m, _, _) { vec::len(m.tps) }
         }
     } else {

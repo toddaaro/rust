@@ -779,7 +779,7 @@ fn trans_native_mod(ccx: @crate_ctxt,
               if typarams.is_empty() {
                   let llwrapfn = get_item_val(ccx, id);
                   let path = alt ccx.tcx.items.find(id) {
-                      some(ast_map::node_native_item(_, _, pt)) { pt }
+                      some(@ast_map::node_native_item(_, _, pt)) { pt }
                       _ {
                           ccx.sess.span_bug(native_item.span,
                                             "can't find intrinsic path")
@@ -864,7 +864,7 @@ fn trans_intrinsic(ccx: @crate_ctxt, decl: ValueRef, item: @ast::native_item,
         let tp_sz = shape::llsize_of_real(ccx, lltp_ty),
             out_sz = shape::llsize_of_real(ccx, llout_ty);
         if tp_sz != out_sz {
-            let sp = alt check ccx.tcx.items.get(option::get(ref_id)) {
+            let sp = alt check *ccx.tcx.items.get(option::get(ref_id)) {
               ast_map::node_expr(e) { e.span }
             };
             ccx.sess.span_fatal(
@@ -1100,7 +1100,7 @@ fn abi_of_native_fn(ccx: @crate_ctxt, i: @ast::native_item)
     -> ast::native_abi {
     alt attr::first_attr_value_str_by_name(i.attrs, "abi") {
       none {
-        alt check ccx.tcx.items.get(i.id) {
+        alt check *ccx.tcx.items.get(i.id) {
           ast_map::node_native_item(_, abi, _) { abi }
         }
       }

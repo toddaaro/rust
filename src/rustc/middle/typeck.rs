@@ -190,7 +190,7 @@ fn check_main_fn_ty(ccx: @crate_ctxt,
       ty::ty_fn({purity: ast::impure_fn, proto: ast::proto_bare,
                  inputs, output, ret_style: ast::return_val, constraints}) {
         alt tcx.items.find(main_id) {
-         some(ast_map::node_item(it,_)) {
+         some(@ast_map::node_item(it,_)) {
              alt it.node {
                ast::item_fn(_,ps,_) if vec::is_not_empty(ps) {
                   tcx.sess.span_err(main_span,

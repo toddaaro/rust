@@ -64,7 +64,7 @@ fn type_uses_for(ccx: @crate_ctxt, fn_id: def_id, n_tps: uint)
         none    { ccx.sess.bug(#fmt("type_uses_for: unbound item ID %?",
                                     fn_id_loc)); }
     };
-    alt check map_node {
+    alt check *map_node {
       ast_map::node_item(@{node: item_fn(_, _, body), _}, _) |
       ast_map::node_item(@{node: item_res(_, _, body, _, _, _), _}, _) |
       ast_map::node_method(@{body, _}, _, _) {

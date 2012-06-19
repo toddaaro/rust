@@ -74,10 +74,10 @@ impl of ast_conv for @crate_ctxt {
             csearch::get_type(self.tcx, id)
         } else {
             alt self.tcx.items.find(id.node) {
-              some(ast_map::node_item(item, _)) {
+              some(@ast_map::node_item(item, _)) {
                 ty_of_item(self, item)
               }
-              some(ast_map::node_native_item(native_item, _, _)) {
+              some(@ast_map::node_native_item(native_item, _, _)) {
                 ty_of_native_item(self, native_item)
               }
               x {
@@ -135,7 +135,7 @@ fn ensure_iface_methods(ccx: @crate_ctxt, id: ast::node_id) {
     }
 
     let tcx = ccx.tcx;
-    alt check tcx.items.get(id) {
+    alt check *tcx.items.get(id) {
       ast_map::node_item(@{node: ast::item_iface(_, rp, ms), _}, _) {
         store_methods::<ast::ty_method>(ccx, id, ms) {|m|
             ty_of_ty_method(ccx, m, rp)
