@@ -1634,13 +1634,18 @@ class parser {
             }
         }
 
+        // The assumption is that if we are parsing attributes, then
+        // we are parsing something a block that shouldn't allow
+        // the 'unsafe' keyword, like a function.
+        let can_modify = !parse_attrs;
+
         let lo = self.span.lo;
-        if self.eat_keyword("unchecked") {
+        if can_modify && self.eat_keyword("unchecked") {
             self.expect(token::LBRACE);
             let {inner, next} = maybe_parse_inner_attrs_and_next(self,
                                                                  parse_attrs);
             ret (inner, self.parse_block_tail_(lo, unchecked_blk, next));
-        } else if self.eat_keyword("unsafe") {
+        } else if can_modify && self.eat_keyword("unsafe") {
             self.expect(token::LBRACE);
             let {inner, next} = maybe_parse_inner_attrs_and_next(self,
                                                                  parse_attrs);
