@@ -4558,6 +4558,15 @@ fn trans_closure(ccx: @crate_ctxt, path: path, decl: ast::fn_decl,
     let arg_tys = ty::ty_fn_args(node_id_type(bcx, id));
     bcx = copy_args_to_allocas(fcx, bcx, decl.inputs, arg_tys);
 
+    for arg_tys.each { |arg|
+        alt ty::arg_mode(ccx.tcx, arg) {
+          ast::by_ref | ast::by_mutbl_ref {
+            ccx.sess.span_warn(body.span, "byref");
+          }
+          _ { }
+        }
+    }
+
     maybe_load_env(fcx);
 
     // This call to trans_block is the place where we bridge between
