@@ -1838,6 +1838,7 @@ class parser {
             alt self.token {
               token::SEMI {
                 self.bump(); // empty
+                push(stmts, @spanned(self.span.lo, self.span.hi, stmt_empty));
               }
               _ {
                 let stmt = self.parse_stmt(initial_attrs);

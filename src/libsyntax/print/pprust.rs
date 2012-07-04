@@ -682,9 +682,15 @@ fn print_stmt(s: ps, st: ast::stmt) {
       ast::stmt_expr(expr, _) {
         space_if_not_bol(s);
         print_expr(s, expr);
-        if expr_requires_semi_to_be_stmt(expr) {
-            word(s.s, ";");
-        }
+      }
+      ast::stmt_empty {
+        // Empty statements are just bare semicolons. We preserve
+        // them in the AST because there are rare situations where
+        // they must be used to force the tail expression of
+        // a block to be nil: consider
+        //     fn main() {
+        //     if true { 0 } else { 1 } // need a semi here to typecheck
+        //     }
       }
     }
     if parse::classify::stmt_ends_with_semi(st) { word(s.s, ";"); }

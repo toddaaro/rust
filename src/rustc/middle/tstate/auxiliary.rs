@@ -281,6 +281,7 @@ fn stmt_to_ann(ccx: crate_ctxt, s: stmt) -> ts_ann {
       stmt_decl(_, id) | stmt_expr(_, id) {
         ret node_id_to_ts_ann(ccx, id);
       }
+      stmt_empty { empty_ann(0) }
     }
 }
 

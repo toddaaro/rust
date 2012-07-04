@@ -20,6 +20,7 @@ fn collect_ids_stmt(s: @stmt, rs: @mut ~[node_id]) {
         #debug["%s", stmt_to_str(*s)];
         vec::push(*rs, id);
       }
+      stmt_empty { }
     }
 }
 

@@ -232,6 +232,7 @@ fn simplify_ast(ii: ast::inlined_item) -> ast::inlined_item {
               ast::stmt_expr(_, _) |
               ast::stmt_decl(@{node: ast::decl_local(_), span: _}, _) { true }
               ast::stmt_decl(@{node: ast::decl_item(_), span: _}, _) { false }
+              ast::stmt_empty { true }
             }
         };
         let blk_sans_items = { stmts: stmts_sans_items with blk };

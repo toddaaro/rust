@@ -551,6 +551,7 @@ fn find_pre_post_state_stmt(fcx: fn_ctxt, pres: prestate, s: @stmt) -> bool {
 
         ret changed;
       }
+      stmt_empty { ret false; }
     }
 }
 

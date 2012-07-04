@@ -244,6 +244,8 @@ type stmt = spanned<stmt_>;
 enum stmt_ {
     stmt_decl(@decl, node_id),
     stmt_expr(@expr, node_id),
+    // Bare semi-colon.
+    stmt_empty,
 }
 
 #[auto_serialize]

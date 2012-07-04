@@ -846,6 +846,8 @@ class liveness {
           stmt_expr(expr, _) {
             ret self.propagate_through_expr(expr, succ);
           }
+
+          stmt_empty { ret succ; }
         }
     }
 

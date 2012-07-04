@@ -74,7 +74,12 @@ type wb_vt = visit::vt<wb_ctxt>;
 
 fn visit_stmt(s: @ast::stmt, wbcx: wb_ctxt, v: wb_vt) {
     if !wbcx.success { ret; }
-    resolve_type_vars_for_node(wbcx, s.span, ty::stmt_node_id(s));
+    alt ty::stmt_node_id(s) {
+      some(id) {
+        resolve_type_vars_for_node(wbcx, s.span, id);
+      }
+      none { }
+    }
     visit::visit_stmt(s, wbcx, v);
 }
 fn visit_expr(e: @ast::expr, wbcx: wb_ctxt, v: wb_vt) {

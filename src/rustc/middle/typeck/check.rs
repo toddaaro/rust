@@ -1721,6 +1721,7 @@ fn check_stmt(fcx: @fn_ctxt, stmt: @ast::stmt) -> bool {
         node_id = id;
         bot = check_expr(fcx, expr, none);
       }
+      ast::stmt_empty() { ret bot; }
     }
     fcx.write_nil(node_id);
     ret bot;

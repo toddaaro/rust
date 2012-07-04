@@ -2253,11 +2253,10 @@ fn expr_is_lval(method_map: typeck::method_map, e: @ast::expr) -> bool {
     }
 }
 
-fn stmt_node_id(s: @ast::stmt) -> ast::node_id {
+fn stmt_node_id(s: @ast::stmt) -> option<ast::node_id> {
     alt s.node {
-      ast::stmt_decl(_, id) | stmt_expr(_, id) {
-        ret id;
-      }
+      ast::stmt_decl(_, id) | stmt_expr(_, id) { some(id) }
+      ast::stmt_empty() { none }
     }
 }
 
