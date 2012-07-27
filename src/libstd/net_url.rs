@@ -1,5 +1,7 @@
 //! Types/fns concerning URLs (see RFC 3986)
 
+import send_map::linear::linear_map;
+
 export url, userinfo, query, from_str, to_str;
 
 type url = {
@@ -16,7 +18,7 @@ type userinfo = {
     pass: option<~str>
 };
 
-type query = ~[(~str, ~str)];
+type query = linear_map<~str, ~str>;
 
 fn url(-scheme: ~str, -user: option<userinfo>, -host: ~str,
        -path: ~str, -query: query, -fragment: option<~str>) -> url {
@@ -57,24 +59,33 @@ fn userinfo_to_str(-userinfo: userinfo) -> ~str {
     }
 }
 
-fn query_from_str(rawquery: ~str) -> query {
-    let mut query: query = ~[];
+
+pure fn str_hash(a: &~str) -> uint {
+    str::hash(*a)
+}
+
+pure fn str_eq(a: &~str, b: &~str) -> bool {
+    str::eq(*a, *b)
+}
+
+pure fn query_from_str(rawquery: ~str) -> query {
+    let mut query: query = linear_map(str_hash, str_eq);
     if str::len(rawquery) != 0 {
         for str::split_char(rawquery, '&').each |p| {
             let (k, v) = split_char_first(p, '=');
-            vec::push(query, (k, v));
+            (&mut query).insert(k, v);
         };
     }
     ret query;
 }
 
 fn query_to_str(query: query) -> ~str {
-    let mut strvec = ~[];
-    for query.each |kv| {
-        let (k, v) = kv;
+    /*let mut strvec = ~[];
+    for query.each |k, v| {
         strvec += ~[#fmt("%s=%s", k, v)];
     };
-    ret str::connect(strvec, ~"&");
+    ret str::connect(strvec, ~"&");*/
+    fail
 }
 
 fn get_scheme(rawurl: ~str) -> option::option<(~str, ~str)> {
@@ -154,12 +165,12 @@ fn from_str(rawurl: ~str) -> result::result<url, ~str> {
  *
  */
 fn to_str(url: url) -> ~str {
-    let user = if option::is_some(url.user) {
+    /*let user = if option::is_some(url.user) {
       userinfo_to_str(option::unwrap(copy url.user))
     } else {
        ~""
     };
-    let query = if url.query.len() == 0 {
+    let query = if url.query.size() == 0 {
         ~""
     } else {
         str::concat(~[~"?", query_to_str(url.query)])
@@ -176,7 +187,8 @@ fn to_str(url: url) -> ~str {
                       copy url.host,
                       copy url.path,
                       query,
-                      fragment]);
+                      fragment]);*/
+    fail
 }
 
 #[cfg(test)]
