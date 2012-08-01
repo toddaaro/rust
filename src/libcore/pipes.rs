@@ -76,9 +76,9 @@ class packet_header {
 
     unsafe fn unblock() {
         alt swap_state_acq(self.state, empty) {
-          empty | blocked { }
-          terminated { self.state = terminated; }
-          full { self.state = full; }
+          empty | blocked => (),
+          terminated => self.state = terminated,
+          full => self.state = full
         }
     }
 
@@ -254,27 +254,27 @@ fn send<T: send, Tbuffer: send>(-p: send_packet_buffered<T, Tbuffer>,
     p.payload <- some(payload);
     let old_state = swap_state_rel(p.header.state, full);
     alt old_state {
-      empty {
+      empty => {
         // Yay, fastpath.
 
         // The receiver will eventually clean this up.
         //unsafe { forget(p); }
       }
-      full { fail ~"duplicate send" }
-      blocked {
+      full => fail ~"duplicate send",
+      blocked => {
         debug!{"waking up task for %?", p_};
         alt p.header.blocked_task {
-          some(task) {
+          some(task) => {
             rustrt::task_signal_event(
                 task, ptr::addr_of(p.header) as *libc::c_void);
           }
-          none { fail ~"blocked packet has no task" }
+          none => fail ~"blocked packet has no task"
         }
 
         // The receiver will eventually clean this up.
         //unsafe { forget(p); }
       }
-      terminated {
+      terminated => {
         // The receiver will never receive this. Rely on drop_glue
         // to clean everything up.
       }
@@ -300,7 +300,7 @@ fn try_recv<T: send, Tbuffer: send>(-p: recv_packet_buffered<T, Tbuffer>)
         let old_state = swap_state_acq(p.header.state,
                                        blocked);
         alt old_state {
-          empty {
+          empty => {
             debug!{"no data available on %?, going to sleep.", p_};
             if count == 0 {
                 wait_event(this);
@@ -316,18 +316,16 @@ fn try_recv<T: send, Tbuffer: send>(-p: recv_packet_buffered<T, Tbuffer>)
             }
             debug!{"woke up, p.state = %?", copy p.header.state};
           }
-          blocked {
-            if first {
-                fail ~"blocking on already blocked packet"
-            }
-          }
-          full {
+          blocked => if first {
+            fail ~"blocking on already blocked packet"
+          },
+          full => {
             let mut payload = none;
             payload <-> p.payload;
             p.header.state = empty;
             ret some(option::unwrap(payload))
           }
-          terminated {
+          terminated => {
             assert old_state == terminated;
             ret none;
           }
@@ -339,9 +337,9 @@ fn try_recv<T: send, Tbuffer: send>(-p: recv_packet_buffered<T, Tbuffer>)
 /// Returns true if messages are available.
 pure fn peek<T: send, Tb: send>(p: recv_packet_buffered<T, Tb>) -> bool {
     alt unsafe {(*p.header()).state} {
-      empty { false }
-      blocked { fail ~"peeking on blocked packet" }
-      full | terminated { true }
+      empty => false,
+      blocked => fail ~"peeking on blocked packet",
+      full | terminated => true
     }
 }
 
@@ -354,11 +352,11 @@ impl peek<T: send, Tb: send> for recv_packet_buffered<T, Tb> {
 fn sender_terminate<T: send>(p: *packet<T>) {
     let p = unsafe { &*p };
     alt swap_state_rel(p.header.state, terminated) {
-      empty {
+      empty => {
         // The receiver will eventually clean up.
         //unsafe { forget(p) }
       }
-      blocked {
+      blocked => {
         // wake up the target
         let target = p.header.blocked_task.get();
         rustrt::task_signal_event(target,
@@ -367,11 +365,11 @@ fn sender_terminate<T: send>(p: *packet<T>) {
         // The receiver will eventually clean up.
         //unsafe { forget(p) }
       }
-      full {
+      full => {
         // This is impossible
         fail ~"you dun goofed"
       }
-      terminated {
+      terminated => {
         // I have to clean up, use drop_glue
       }
     }
@@ -380,15 +378,15 @@ fn sender_terminate<T: send>(p: *packet<T>) {
 fn receiver_terminate<T: send>(p: *packet<T>) {
     let p = unsafe { &*p };
     alt swap_state_rel(p.header.state, terminated) {
-      empty {
+      empty => {
         // the sender will clean up
         //unsafe { forget(p) }
       }
-      blocked {
+      blocked => {
         // this shouldn't happen.
         fail ~"terminating a blocked packet"
       }
-      terminated | full {
+      terminated | full => {
         // I have to clean up, use drop_glue
       }
     }
@@ -406,14 +404,14 @@ fn wait_many(pkts: &[*packet_header]) -> uint {
         let p = unsafe { &*p };
         let old = p.mark_blocked(this);
         alt old {
-          full | terminated {
+          full | terminated => {
             data_avail = true;
             ready_packet = i;
             (*p).state = old;
             break;
           }
-          blocked { fail ~"blocking on blocked packet" }
-          empty { }
+          blocked => fail ~"blocking on blocked packet",
+          empty => ()
         }
     }
 
@@ -423,11 +421,11 @@ fn wait_many(pkts: &[*packet_header]) -> uint {
         let pos = vec::position(pkts, |p| p == event);
 
         alt pos {
-          some(i) {
+          some(i) => {
             ready_packet = i;
             data_avail = true;
           }
-          none {
+          none => {
             debug!{"ignoring spurious event, %?", event};
           }
         }
@@ -457,9 +455,9 @@ fn select2<A: send, Ab: send, B: send, Bb: send>(
 
     unsafe {
         alt i {
-          0 { left((try_recv(a), b)) }
-          1 { right((a, try_recv(b))) }
-          _ { fail ~"select2 return an invalid packet" }
+          0 => left((try_recv(a), b)),
+          1 => right((a, try_recv(b))),
+          _ => fail ~"select2 return an invalid packet"
         }
     }
 }
@@ -474,9 +472,9 @@ fn selecti<T: selectable>(endpoints: &[T]) -> uint {
 
 fn select2i<A: selectable, B: selectable>(a: A, b: B) -> either<(), ()> {
     alt wait_many([a.header(), b.header()]/_) {
-      0 { left(()) }
-      1 { right(()) }
-      _ { fail ~"wait returned unexpected index" }
+      0 => left(()),
+      1 => right(()),
+      _ => fail ~"wait returned unexpected index"
     }
 }
 
@@ -540,15 +538,13 @@ class send_packet_buffered<T: send, Tbuffer: send> {
 
     pure fn header() -> *packet_header {
         alt self.p {
-          some(packet) {
-            unsafe {
-                let packet = &*packet;
-                let header = ptr::addr_of(packet.header);
-                //forget(packet);
-                header
-            }
-          }
-          none { fail ~"packet already consumed" }
+          some(packet) => unsafe {
+            let packet = &*packet;
+            let header = ptr::addr_of(packet.header);
+            //forget(packet);
+            header
+          },
+          none => fail ~"packet already consumed"
         }
     }
 
@@ -600,15 +596,13 @@ class recv_packet_buffered<T: send, Tbuffer: send> : selectable {
 
     pure fn header() -> *packet_header {
         alt self.p {
-          some(packet) {
-            unsafe {
-                let packet = &*packet;
-                let header = ptr::addr_of(packet.header);
-                //forget(packet);
-                header
-            }
-          }
-          none { fail ~"packet already consumed" }
+          some(packet) => unsafe {
+            let packet = &*packet;
+            let header = ptr::addr_of(packet.header);
+            //forget(packet);
+            header
+          },
+          none => fail ~"packet already consumed"
         }
     }
 

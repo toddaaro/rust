@@ -1519,6 +1519,7 @@ class parser {
             let mut guard = none;
             if self.eat_keyword(~"if") { guard = some(self.parse_expr()); }
             let blk = if self.token != token::FAT_ARROW {
+                self.warn(~"non-fatty arrow!");
                 self.parse_block()
             } else {
                 self.bump();

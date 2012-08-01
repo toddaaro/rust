@@ -95,8 +95,8 @@ fn parse_buf(buf: ~[u8], radix: uint) -> option<T> {
     let mut n = 0u as T;
     loop {
         alt char::to_digit(buf[i] as char, radix) {
-          some(d) { n += d as T * power; }
-          none { ret none; }
+          some(d) => n += d as T * power,
+          none => ret none
         }
         power *= radix as T;
         if i == 0u { ret some(n); }
@@ -143,8 +143,8 @@ fn from_str_radix(buf: ~str, radix: u64) -> option<u64> {
     let mut power = 1u64, n = 0u64;
     loop {
         alt char::to_digit(buf[i] as char, radix as uint) {
-          some(d) { n += d as u64 * power; }
-          none { ret none; }
+          some(d) => n += d as u64 * power,
+          none => ret none
         }
         power *= radix;
         if i == 0u { ret some(n); }

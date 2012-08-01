@@ -257,21 +257,21 @@ fn from_str(num: ~str) -> option<float> {
 
    //The string must start with one of the following characters.
    alt str::char_at(num, 0u) {
-      '-' | '+' | '0' to '9' | '.' {}
-      _ { ret none; }
+     '-' | '+' | '0' to '9' | '.' => { }
+      _ => ret none
    }
 
    //Determine if first char is '-'/'+'. Set [pos] and [neg] accordingly.
    let mut neg = false;               //Sign of the result
    alt str::char_at(num, 0u) {
-      '-' {
+      '-' => {
           neg = true;
           pos = 1u;
       }
-      '+' {
+      '+' => {
           pos = 1u;
       }
-      _ {}
+      _ => {}
    }
 
    //Examine the following chars until '.', 'e', 'E'
@@ -280,14 +280,14 @@ fn from_str(num: ~str) -> option<float> {
        c   = char_range.ch;
        pos = char_range.next;
        alt c {
-         '0' to '9' {
+         '0' to '9' => {
            total = total * 10f;
            total += ((c as int) - ('0' as int)) as float;
          }
-         '.' | 'e' | 'E' {
+         '.' | 'e' | 'E' => {
            break;
          }
-         _ {
+         _ => {
            ret none;
          }
        }

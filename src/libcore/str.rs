@@ -341,18 +341,17 @@ fn unshift_char(&s: ~str, ch: char) { s = from_char(ch) + s; }
 /// Returns a string with leading whitespace removed
 pure fn trim_left(s: &str) -> ~str {
     alt find(s, |c| !char::is_whitespace(c)) {
-      none { ~"" }
-      some(first) {
+      none => ~"",
+      some(first) =>
         unsafe { unsafe::slice_bytes(s, first, len(s)) }
-      }
     }
 }
 
 /// Returns a string with trailing whitespace removed
 pure fn trim_right(s: &str) -> ~str {
     alt rfind(s, |c| !char::is_whitespace(c)) {
-      none { ~"" }
-      some(last) {
+      none => ~"",
+      some(last) => {
         let {next, _} = char_range_at(s, last);
         unsafe { unsafe::slice_bytes(s, 0u, next) }
       }
@@ -2777,9 +2776,9 @@ mod tests {
         let mut i = 0;
         do chars_iter(~"x\u03c0y") |ch| {
             alt check i {
-              0 { assert ch == 'x'; }
-              1 { assert ch == '\u03c0'; }
-              2 { assert ch == 'y'; }
+              0 => assert ch == 'x',
+              1 => assert ch == '\u03c0',
+              2 => assert ch == 'y'
             }
             i += 1;
         }
@@ -2793,9 +2792,9 @@ mod tests {
 
         do bytes_iter(~"xyz") |bb| {
             alt check i {
-              0 { assert bb == 'x' as u8; }
-              1 { assert bb == 'y' as u8; }
-              2 { assert bb == 'z' as u8; }
+              0 => assert bb == 'x' as u8,
+              1 => assert bb == 'y' as u8,
+              2 => assert bb == 'z' as u8
             }
             i += 1;
         }
@@ -2811,11 +2810,11 @@ mod tests {
 
         do split_char_iter(data, ' ') |xx| {
             alt ii {
-              0 { assert ~"\nMary" == xx; }
-              1 { assert ~"had"    == xx; }
-              2 { assert ~"a"      == xx; }
-              3 { assert ~"little" == xx; }
-              _ { () }
+              0 => assert ~"\nMary" == xx,
+              1 => assert ~"had"    == xx,
+              2 => assert ~"a"      == xx,
+              3 => assert ~"little" == xx
+              _ => { }
             }
             ii += 1;
         }
