@@ -1,6 +1,6 @@
 // Issue #901
 #[nolink]
-extern mod libc {
+extern module libc {
     fn printf(x: ());
 }
 fn main() { }

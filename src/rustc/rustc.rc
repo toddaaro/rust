@@ -32,84 +32,84 @@ import driver_ = driver;
 import middle_ = middle;
 import back_ = back;
 
-mod middle {
-    mod trans {
-        mod common;
-        mod consts;
-        mod type_of;
-        mod build;
-        mod base;
-        mod alt;
-        mod uniq;
-        mod closure;
-        mod tvec;
-        mod impl;
-        mod foreign;
-        mod reflect;
-        mod shape;
-        mod debuginfo;
-        mod type_use;
-        mod reachable;
+module middle {
+    module trans {
+        module common;
+        module consts;
+        module type_of;
+        module build;
+        module base;
+        module alt;
+        module uniq;
+        module closure;
+        module tvec;
+        module impl;
+        module foreign;
+        module reflect;
+        module shape;
+        module debuginfo;
+        module type_use;
+        module reachable;
     }
-    mod ty;
-    mod resolve3;
-    mod typeck {
-        mod check {
-            mod alt;
-            mod vtable;
-            mod writeback;
-            mod regionmanip;
-            mod regionck;
-            mod demand;
-            mod method;
+    module ty;
+    module resolve3;
+    module typeck {
+        module check {
+            module alt;
+            module vtable;
+            module writeback;
+            module regionmanip;
+            module regionck;
+            module demand;
+            module method;
         }
-        mod rscope;
-        mod astconv;
-        mod infer;
-        mod collect;
-        mod coherence;
+        module rscope;
+        module astconv;
+        module infer;
+        module collect;
+        module coherence;
     }
-    mod check_loop;
-    mod check_alt;
-    mod check_const;
-    mod lint;
-    mod borrowck {
-        mod check_loans;
-        mod gather_loans;
-        mod categorization;
-        mod loan;
-        mod preserve;
+    module check_loop;
+    module check_alt;
+    module check_const;
+    module lint;
+    module borrowck {
+        module check_loans;
+        module gather_loans;
+        module categorization;
+        module loan;
+        module preserve;
     }
-    mod liveness;
-    mod block_use;
-    mod kind;
-    mod freevars;
-    mod capture;
-    mod pat_util;
-    mod region;
-    mod const_eval;
-    mod astencode;
-    mod lang_items;
+    module liveness;
+    module block_use;
+    module kind;
+    module freevars;
+    module capture;
+    module pat_util;
+    module region;
+    module const_eval;
+    module astencode;
+    module lang_items;
 }
 
-mod front {
-    mod config;
-    mod test;
-    mod core_inject;
-    mod intrinsic_inject;
+module front {
+    module config;
+    module test;
+    module core_inject;
+    module intrinsic_inject;
 }
 
-mod back {
-    mod link;
-    mod abi;
-    mod upcall;
-    mod x86;
-    mod x86_64;
-    mod rpath;
-    mod target_strs;
+module back {
+    module link;
+    module abi;
+    module upcall;
+    module x86;
+    module x86_64;
+    module rpath;
+    module target_strs;
 }
 
-mod metadata {
+module metadata {
     export encoder;
     export creader;
     export cstore;
@@ -121,30 +121,30 @@ mod metadata {
     export loader;
     export filesearch;
 
-    mod common;
-    mod tyencode;
-    mod tydecode;
-    mod encoder;
-    mod decoder;
-    mod creader;
-    mod cstore;
-    mod csearch;
-    mod loader;
-    mod filesearch;
+    module common;
+    module tyencode;
+    module tydecode;
+    module encoder;
+    module decoder;
+    module creader;
+    module cstore;
+    module csearch;
+    module loader;
+    module filesearch;
 }
 
-mod driver {
-    mod driver;
-    mod session;
+module driver {
+    module driver;
+    module session;
 }
 
-mod util {
-    mod common;
-    mod ppaux;
+module util {
+    module common;
+    module ppaux;
 }
 
-mod lib {
-    mod llvm;
+module lib {
+    module llvm;
 }
 
 // Local Variables:

@@ -3,4 +3,4 @@
 
 use b(name = "issue2196b");
 #[path = "issue-2196-d.rs"]
-mod d;
+module d;

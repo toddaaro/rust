@@ -34,13 +34,13 @@ fn eval_crate_directives_to_mod(cx: ctx, cdirs: ~[@ast::crate_directive],
 }
 
 /*
-The 'companion mod'. So .rc crates and directory mod crate directives define
-modules but not a .rs file to fill those mods with stuff. The companion mod is
+The 'companion mod'. So .rc crates and directory module crate directives define
+modules but not a .rs file to fill those mods with stuff. The companion module is
 a convention for location a .rs file to go with them.  For .rc files the
-companion mod is a .rs file with the same name; for directory mods the
-companion mod is a .rs file with the same name as the directory.
+companion module is a .rs file with the same name; for directory mods the
+companion module is a .rs file with the same name as the directory.
 
-We build the path to the companion mod by combining the prefix and the
+We build the path to the companion module by combining the prefix and the
 optional suffix then adding the .rs extension.
 */
 fn parse_companion_mod(cx: ctx, prefix: ~str, suffix: option<~str>)
@@ -63,7 +63,7 @@ fn parse_companion_mod(cx: ctx, prefix: ~str, suffix: option<~str>)
     }
 
     let modpath = companion_file(prefix, suffix);
-    debug!{"looking for companion mod %s", modpath};
+    debug!{"looking for companion module %s", modpath};
     if file_exists(modpath) {
         debug!{"found companion mod"};
         let (p0, r0) = new_parser_etc_from_file(cx.sess, cx.cfg,

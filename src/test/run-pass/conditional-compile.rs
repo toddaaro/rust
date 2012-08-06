@@ -5,14 +5,14 @@ const b: bool = true;
 
 #[cfg(bogus)]
 #[abi = "cdecl"]
-extern mod rustrt {
+extern module rustrt {
     // This symbol doesn't exist and would be a link error if this
     // module was translated
     fn bogus();
 }
 
 #[abi = "cdecl"]
-extern mod rustrt { }
+extern module rustrt { }
 
 #[cfg(bogus)]
 type t = int;
@@ -36,13 +36,13 @@ class r {
 }
 
 #[cfg(bogus)]
-mod m {
+module m {
     // This needs to parse but would fail in typeck. Since it's not in
     // the current config it should not be typechecked.
     fn bogus() { return 0; }
 }
 
-mod m {
+module m {
 
     // Submodules have slightly different code paths than the top-level
     // module, so let's make sure this jazz works here as well
@@ -79,20 +79,20 @@ fn test_in_fn_ctxt() {
     assert (i == 1);
 }
 
-mod test_foreign_items {
+module test_foreign_items {
     #[abi = "cdecl"]
-    extern mod rustrt {
+    extern module rustrt {
         #[cfg(bogus)]
         fn vec_from_buf_shared();
         fn vec_from_buf_shared();
     }
 }
 
-mod test_use_statements {
+module test_use_statements {
     #[cfg(bogus)]
     use flippity_foo;
 
-    extern mod rustrt {
+    extern module rustrt {
         #[cfg(bogus)]
         use flippity_foo;
     }

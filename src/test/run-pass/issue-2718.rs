@@ -1,4 +1,4 @@
-mod pipes {
+module pipes {
     import unsafe::{forget, reinterpret_cast};
 
     enum state {
@@ -24,7 +24,7 @@ mod pipes {
     }
 
     #[abi = "rust-intrinsic"]
-    mod rusti {
+    module rusti {
       fn atomic_xchng(&dst: int, src: int) -> int { fail; }
       fn atomic_xchng_acq(&dst: int, src: int) -> int { fail; }
       fn atomic_xchng_rel(&dst: int, src: int) -> int { fail; }
@@ -173,7 +173,7 @@ mod pipes {
     }
 }
 
-mod pingpong {
+module pingpong {
     enum ping = pipes::send_packet<pong>;
     enum pong = pipes::send_packet<ping>;
 
@@ -199,7 +199,7 @@ mod pingpong {
         pipes::entangle()
     }
 
-    mod client {
+    module client {
         type ping = pipes::send_packet<pingpong::ping>;
         type pong = pipes::recv_packet<pingpong::pong>;
 
@@ -219,7 +219,7 @@ mod pingpong {
         }
     }
 
-    mod server {
+    module server {
         type ping = pipes::recv_packet<pingpong::ping>;
         type pong = pipes::send_packet<pingpong::pong>;
 

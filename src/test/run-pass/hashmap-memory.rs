@@ -22,7 +22,7 @@ import comm;
 
 fn map(filename: ~str, emit: map_reduce::putter) { emit(filename, ~"1"); }
 
-mod map_reduce {
+module map_reduce {
     export putter;
     export mapper;
     export map_reduce;

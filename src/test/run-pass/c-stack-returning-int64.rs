@@ -3,7 +3,7 @@ import str;
 
 #[abi = "cdecl"]
 #[nolink]
-extern mod libc {
+extern module libc {
     fn atol(x: *u8) -> int;
     fn atoll(x: *u8) -> i64;
 }

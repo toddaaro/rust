@@ -2,7 +2,7 @@
 // Issue #2303
 
 #[abi = "rust-intrinsic"]
-extern mod rusti {
+extern module rusti {
     fn pref_align_of<T>() -> uint;
     fn min_align_of<T>() -> uint;
 }
@@ -21,13 +21,13 @@ type outer = {
 
 
 #[cfg(target_arch = "x86")]
-mod m {
+module m {
     fn align() -> uint { 4u }
     fn size() -> uint { 8u }
 }
 
 #[cfg(target_arch = "x86_64")]
-mod m {
+module m {
     fn align() -> uint { 4u }
     fn size() -> uint { 8u }
 }

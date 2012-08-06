@@ -1,10 +1,10 @@
 
 
-mod foo {
+module foo {
     fn x() -> int { return 1; }
 }
 
-mod bar {
+module bar {
     fn y() -> int { return 1; }
 }
 

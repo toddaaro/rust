@@ -1,6 +1,6 @@
 // error-pattern: unresolved name
 
-mod foo {
+module foo {
     export x;
 
     fn x() { }

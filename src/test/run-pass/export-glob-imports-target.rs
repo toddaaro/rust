@@ -3,9 +3,9 @@
 
 // Modified to not use export since it's going away. --pcw
 
-mod foo {
+module foo {
     import bar::*;
-    mod bar {
+    module bar {
         const a : int = 10;
     }
     fn zum() {

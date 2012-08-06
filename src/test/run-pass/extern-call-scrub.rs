@@ -2,7 +2,7 @@
 // make sure the stack pointers are maintained properly in both
 // directions
 
-extern mod rustrt {
+extern module rustrt {
     fn rust_dbg_call(cb: *u8,
                      data: libc::uintptr_t) -> libc::uintptr_t;
 }

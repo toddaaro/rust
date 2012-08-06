@@ -7,7 +7,7 @@
 
 use std;
 
-extern mod rustrt {
+extern module rustrt {
     fn last_os_error() -> ~str;
 }
 

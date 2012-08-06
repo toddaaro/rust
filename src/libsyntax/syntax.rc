@@ -15,19 +15,19 @@ use std(vers = "0.3");
 
 import core::*;
 
-mod attr;
-mod diagnostic;
-mod codemap;
-mod ast;
-mod ast_util;
-mod ast_map;
-mod visit;
-mod fold;
-mod util {
-    mod interner;
+module attr;
+module diagnostic;
+module codemap;
+module ast;
+module ast_util;
+module ast_map;
+module visit;
+module fold;
+module util {
+    module interner;
 }
 
-mod parse {
+module parse {
     export parser;
     export common;
     export lexer;
@@ -37,56 +37,56 @@ mod parse {
     export classify;
     export attr;
 
-    mod eval;
-    mod lexer;
-    mod parser;
-    mod token;
-    mod comments;
-    mod attr;
+    module eval;
+    module lexer;
+    module parser;
+    module token;
+    module comments;
+    module attr;
 
     /// Common routines shared by parser mods
-    mod common;
+    module common;
 
     /// Functions dealing with operator precedence
-    mod prec;
+    module prec;
 
     /// Routines the parser uses to classify AST nodes
-    mod classify;
+    module classify;
 }
 
-mod print {
-    mod pp;
-    mod pprust;
+module print {
+    module pp;
+    module pprust;
 }
 
-mod ext {
-    mod base;
-    mod expand;
-    mod qquote;
-    mod build;
+module ext {
+    module base;
+    module expand;
+    module qquote;
+    module build;
 
-    mod tt {
-        mod transcribe;
-        mod earley_parser;
-        mod macro_rules;
+    module tt {
+        module transcribe;
+        module earley_parser;
+        module macro_rules;
     }
 
 
-    mod simplext;
-    mod fmt;
-    mod env;
-    mod concat_idents;
-    mod ident_to_str;
-    mod log_syntax;
-    mod auto_serialize;
-    mod source_util;
+    module simplext;
+    module fmt;
+    module env;
+    module concat_idents;
+    module ident_to_str;
+    module log_syntax;
+    module auto_serialize;
+    module source_util;
 
-    mod pipes {
-        mod ast_builder;
-        mod parse_proto;
-        mod pipec;
-        mod proto;
-        mod check;
-        mod liveness;
+    module pipes {
+        module ast_builder;
+        module parse_proto;
+        module pipec;
+        module proto;
+        module check;
+        module liveness;
     }
 }

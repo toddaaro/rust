@@ -1,7 +1,7 @@
 import module_of_many_things::*;
 import dug::too::greedily::and::too::deep::*;
 
-mod module_of_many_things {
+module module_of_many_things {
     export f1;
     export f2;
     export f4;
@@ -11,12 +11,12 @@ mod module_of_many_things {
     fn f4() { debug!{"f4"}; }
 }
 
-mod dug {
-    mod too {
-        mod greedily {
-            mod and {
-                mod too {
-                    mod deep {
+module dug {
+    module too {
+        module greedily {
+            module and {
+                module too {
+                    module deep {
                         fn nameless_fear() { debug!{"Boo!"}; }
                         fn also_redstone() { debug!{"Whatever."}; }
                     }

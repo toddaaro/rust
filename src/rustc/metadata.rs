@@ -2,26 +2,26 @@
 // Over time we will reduce these dependencies and, once metadata has
 // no dependencies on rustc it can move into its own crate.
 
-mod middle {
+module middle {
     import ty = middle_::ty;
     export ty;
 }
 
-mod front {
+module front {
 }
 
-mod back {
+module back {
 }
 
-mod driver {
+module driver {
 }
 
-mod util {
+module util {
     import ppaux = util_::ppaux;
     export ppaux;
 }
 
-mod lib {
+module lib {
     import llvm = lib_::llvm;
     export llvm;
 }

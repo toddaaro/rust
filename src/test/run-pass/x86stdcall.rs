@@ -2,7 +2,7 @@
 // xfail-test
 
 #[cfg(target_os = "win32")]
-extern "stdcall" mod kernel32 {
+extern "stdcall" module kernel32 {
     fn SetLastError(err: uint);
     fn GetLastError() -> uint;
 }

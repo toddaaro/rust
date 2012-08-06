@@ -1,14 +1,14 @@
 // xfail-test
-mod a {
+module a {
     type rust_task = uint;
-    extern mod rustrt {
+    extern module rustrt {
         fn rust_task_is_unwinding(rt: *rust_task) -> bool;
     }
 }
 
-mod b {
+module b {
     type rust_task = bool;
-    extern mod rustrt {
+    extern module rustrt {
         fn rust_task_is_unwinding(rt: *rust_task) -> bool;
     }
 }

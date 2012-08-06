@@ -249,7 +249,7 @@ fn sess_os_to_meta_os(os: os) -> metadata::loader::os {
 }
 
 #[cfg(test)]
-mod test {
+module test {
     import syntax::ast_util;
 
     fn make_crate_type_attr(t: ~str) -> ast::attribute {

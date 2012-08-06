@@ -2,7 +2,7 @@
 #[deny(ctypes)];
 
 #[nolink]
-extern mod libc {
+extern module libc {
     fn malloc(size: int) -> *u8;
 }
 

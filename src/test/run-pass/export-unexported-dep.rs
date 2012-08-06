@@ -1,7 +1,7 @@
 // This tests that exports can have visible dependencies on things
 // that are not exported, allowing for a sort of poor-man's ADT
 
-mod foo {
+module foo {
     export f;
     export g;
 

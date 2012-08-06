@@ -1,8 +1,8 @@
 import foo::bar;
-mod foo {
+module foo {
     import zed::bar;
     export bar;
-    mod zed {
+    module zed {
         fn bar() { debug!{"foo"}; }
     }
 }

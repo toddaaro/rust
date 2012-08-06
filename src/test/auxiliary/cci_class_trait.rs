@@ -1,4 +1,4 @@
-mod animals {
+module animals {
 
 trait noisy {
   fn speak();

@@ -1,7 +1,7 @@
 // error-pattern:failed to resolve imports
 import x = m::f;
 
-mod m {
+module m {
 }
 
 fn main() {

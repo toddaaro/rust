@@ -1,11 +1,11 @@
 // error-pattern:import
 
-mod a {
+module a {
     import b::x;
     export x;
 }
 
-mod b {
+module b {
     import a::x;
     export x;
 

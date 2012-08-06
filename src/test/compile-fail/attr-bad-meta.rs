@@ -2,4 +2,4 @@
 
 // asterisk is bogus
 #[attr*]
-mod m { }
+module m { }

@@ -2,7 +2,7 @@
 import foo::x;
 import z = foo::x;
 
-mod foo {
+module foo {
     fn x(y: int) { log(debug, y); }
 }
 

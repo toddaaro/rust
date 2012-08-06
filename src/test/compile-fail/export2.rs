@@ -1,12 +1,12 @@
 // error-pattern: unresolved name
 
-mod foo {
+module foo {
     export x;
 
     fn x() { bar::x(); }
 }
 
-mod bar {
+module bar {
     export y;
 
     fn x() { debug!{"x"}; }

@@ -2,10 +2,10 @@
 // compile-flags:-L.
 // The -L flag is also used for linking foreign libraries
 
-// FIXME: I want to name a mod that would not link successfully
+// FIXME: I want to name a module that would not link successfully
 // wouthout providing a -L argument to the compiler, and that
 // will also be found successfully at runtime.
-extern mod WHATGOESHERE {
+extern module WHATGOESHERE {
     fn IDONTKNOW() -> u32;
 }
 

@@ -2,12 +2,12 @@
 // Test that crates and directory modules can contain code
 
 #[path = "companionmod-src"]
-mod a {
-    mod b {
-        mod x;
+module a {
+    module b {
+        module x;
     }
     #[path = "d"]
-    mod c {
-        mod x;
+    module c {
+        module x;
     }
 }

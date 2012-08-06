@@ -1,6 +1,6 @@
 // error-pattern:expected item
 
-mod m {
+module m {
   #[foo = "bar"]
   use std;
 }

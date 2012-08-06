@@ -160,7 +160,7 @@ fn should_remove_foreign_mods_from_containing_mods() {
 }
 
 #[cfg(test)]
-mod test {
+module test {
     fn mk_doc_(
         output_style: config::output_style,
         source: ~str

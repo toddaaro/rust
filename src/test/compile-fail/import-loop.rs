@@ -2,7 +2,7 @@
 
 import y::x;
 
-mod y {
+module y {
     import x;
     export x;
 }

@@ -1,4 +1,4 @@
-mod bar {
+module bar {
     enum foo {
         alpha,
         beta,

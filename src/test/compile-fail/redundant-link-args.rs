@@ -8,10 +8,10 @@
 
 #[link_name= "m"]
 #[link_args="-foo"]             // this could have been elided.
-extern mod m1 {
+extern module m1 {
 }
 
 #[link_name= "m"]
 #[link_args="-bar"]             // this is the actual error trigger.
-extern mod m2 {
+extern module m2 {
 }

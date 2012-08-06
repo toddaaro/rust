@@ -77,7 +77,7 @@ import std::map::hashmap;
 export expand;
 
 // Transitional reexports so qquote can find the paths it is looking for
-mod syntax {
+module syntax {
     import ext;
     export ext;
     import parse;

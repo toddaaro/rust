@@ -5,7 +5,7 @@ import str;
 
 #[nolink]
 #[abi = "cdecl"]
-extern mod libc {
+extern module libc {
     #[link_name = "strlen"]
     fn my_strlen(str: *u8) -> uint;
 }

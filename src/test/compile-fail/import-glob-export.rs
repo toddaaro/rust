@@ -3,7 +3,7 @@
 
 import m1::*;
 
-mod m1 {
+module m1 {
     export f1;
     fn f1() { }
     fn f2() { }

@@ -4,7 +4,7 @@ class send_packet<T: copy> {
 }
 
 
-mod pingpong {
+module pingpong {
     type ping = send_packet<pong>;
     enum pong = send_packet<ping>; //~ ERROR illegal recursive enum type; wrap the inner value in a box to make it representable
 }

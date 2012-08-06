@@ -191,7 +191,7 @@ type SectionIteratorRef = *SectionIterator_opaque;
 #[link_args = "-Lrustllvm"]
 #[link_name = "rustllvm"]
 #[abi = "cdecl"]
-extern mod llvm {
+extern module llvm {
     /* Create and destroy contexts. */
     fn LLVMContextCreate() -> ContextRef;
     fn LLVMGetGlobalContext() -> ContextRef;

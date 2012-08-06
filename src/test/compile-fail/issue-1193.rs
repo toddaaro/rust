@@ -1,5 +1,5 @@
 // error-pattern: pattern variable conflicts
-mod foo {
+module foo {
     type t = u8;
 
     const a : t = 0u8;

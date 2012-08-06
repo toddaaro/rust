@@ -12,7 +12,7 @@ proto! pingpong {
     }
 }
 
-mod test {
+module test {
     import pipes::recv;
     import pingpong::{ping, pong};
 

@@ -1,6 +1,6 @@
 import alder::*;
 
-mod alder {
+module alder {
   export burnside;
   export couch;
   export everett;

@@ -2,7 +2,7 @@ type quad = { a: u64, b: u64, c: u64, d: u64 };
 type floats = { a: f64, b: u8, c: f64 };
 
 #[nolink]
-extern mod rustrt {
+extern module rustrt {
     fn debug_abi_1(++q: quad) -> quad;
     fn debug_abi_2(++f: floats) -> floats;
 }

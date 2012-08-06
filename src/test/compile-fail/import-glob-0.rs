@@ -2,7 +2,7 @@
 
 import module_of_many_things::*;
 
-mod module_of_many_things {
+module module_of_many_things {
     export f1;
     export f2;
     export f4;

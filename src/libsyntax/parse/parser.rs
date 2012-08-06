@@ -2668,11 +2668,7 @@ class parser {
     }
 
     fn parse_item_foreign_mod() -> item_info {
-        if self.is_keyword(~"mod") {
-            self.expect_keyword(~"mod");
-        } else {
-            self.expect_keyword(~"module");
-        }
+        self.expect_keyword(~"module");
         let id = self.parse_ident();
         self.expect(token::LBRACE);
         let more_attrs = self.parse_inner_attrs_and_next();
@@ -2823,7 +2819,7 @@ class parser {
             } else {
                 self.parse_item_foreign_mod()
             }
-        } else if self.eat_keyword(~"mod") || self.eat_keyword(~"module") {
+        } else if self.eat_keyword(~"module") {
             self.parse_item_mod()
         } else if self.eat_keyword(~"type") {
             self.parse_item_type()
@@ -3026,23 +3022,18 @@ class parser {
         let expect_mod = vec::len(outer_attrs) > 0u;
 
         let lo = self.span.lo;
-        if expect_mod || self.is_keyword(~"mod") ||
-            self.is_keyword(~"module") {
+        if expect_mod || self.is_keyword(~"module") {
 
-            if self.is_keyword(~"mod") {
-                self.expect_keyword(~"mod");
-            } else {
-                self.expect_keyword(~"module");
-            }
+            self.expect_keyword(~"module");
             let id = self.parse_ident();
             match self.token {
-              // mod x = "foo.rs";
+              // module x = "foo.rs";
               token::SEMI => {
                 let mut hi = self.span.hi;
                 self.bump();
                 return spanned(lo, hi, cdir_src_mod(id, outer_attrs));
               }
-              // mod x = "foo_dir" { ...directives... }
+              // module x = "foo_dir" { ...directives... }
               token::LBRACE => {
                 self.bump();
                 let inner_attrs = self.parse_inner_attrs_and_next();
@@ -3071,11 +3062,7 @@ class parser {
         // accept seeing the terminator next, so if we do see it then fail the
         // same way parse_crate_directive would
         if vec::len(first_outer_attr) > 0u && self.token == term {
-            if self.is_keyword(~"mod") {
-                self.expect_keyword(~"mod");
-            } else {
-                self.expect_keyword(~"module");
-            }
+            self.expect_keyword(~"module");
         }
 
         let mut cdirs: ~[@crate_directive] = ~[];

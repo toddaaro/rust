@@ -436,7 +436,7 @@ fn print_item(s: ps, &&item: @ast::item) {
         print_block_with_attrs(s, body, item.attrs);
       }
       ast::item_mod(_mod) => {
-        head(s, ~"mod");
+        head(s, ~"module");
         word_nbsp(s, *item.ident);
         bopen(s);
         print_mod(s, _mod, item.attrs);
@@ -444,7 +444,7 @@ fn print_item(s: ps, &&item: @ast::item) {
       }
       ast::item_foreign_mod(nmod) => {
         head(s, ~"extern");
-        word_nbsp(s, ~"mod");
+        word_nbsp(s, ~"module");
         word_nbsp(s, *item.ident);
         bopen(s);
         print_foreign_mod(s, nmod, item.attrs);

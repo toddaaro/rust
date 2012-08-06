@@ -5,7 +5,7 @@
 
 use crateresolve2(vers = "0.1");
 
-mod m {
+module m {
     use crateresolve2(vers = "0.2");
 }
 

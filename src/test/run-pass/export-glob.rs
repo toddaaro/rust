@@ -3,10 +3,10 @@
 
 // Modified to not use export since it's going away. --pcw
 
-mod foo {
+module foo {
     import bar::*;
     export a;
-    mod bar {
+    module bar {
         const a : int = 10;
     }
 }

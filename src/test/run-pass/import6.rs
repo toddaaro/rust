@@ -1,11 +1,11 @@
 import foo::zed;
 import bar::baz;
-mod foo {
-    mod zed {
+module foo {
+    module zed {
         fn baz() { debug!{"baz"}; }
     }
 }
-mod bar {
+module bar {
     import zed::baz;
     export baz;
 }

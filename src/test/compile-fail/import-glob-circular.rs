@@ -1,6 +1,6 @@
 // error-pattern: unresolved
 
-mod circ1 {
+module circ1 {
     import circ1::*;
     export f1;
     export f2;
@@ -9,7 +9,7 @@ mod circ1 {
     fn common() -> uint { return 0u; }
 }
 
-mod circ2 {
+module circ2 {
     import circ2::*;
     export f1;
     export f2;
@@ -18,7 +18,7 @@ mod circ2 {
     fn common() -> uint { return 1u; }
 }
 
-mod test {
+module test {
     import circ1::*;
 
     fn test() { f1066(); }

@@ -2,7 +2,7 @@
 // Testing that runtime failure doesn't cause callbacks to abort abnormally.
 // Instead the failure will be delivered after the callbacks return.
 
-extern mod rustrt {
+extern module rustrt {
     fn rust_dbg_call(cb: *u8,
                      data: libc::uintptr_t) -> libc::uintptr_t;
 }

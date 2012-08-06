@@ -708,7 +708,7 @@ fn list_metadata(sess: session, path: ~str, out: io::writer) {
 }
 
 #[cfg(test)]
-mod test {
+module test {
 
     // When the user supplies --test we should implicitly supply --cfg test
     #[test]

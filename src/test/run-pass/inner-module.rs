@@ -2,8 +2,8 @@
 
 
 // -*- rust -*-
-mod inner {
-    mod inner2 {
+module inner {
+    module inner2 {
         fn hello() { debug!{"hello, modular world"}; }
     }
     fn hello() { inner2::hello(); }

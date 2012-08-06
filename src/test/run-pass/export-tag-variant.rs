@@ -1,6 +1,6 @@
 // Export the enum variants, without the enum
 
-mod foo {
+module foo {
     export t1;
     enum t { t1, }
 }

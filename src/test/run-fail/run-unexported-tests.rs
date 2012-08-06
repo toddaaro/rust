@@ -3,7 +3,7 @@
 
 use std;
 
-mod m {
+module m {
     export exported;
 
     fn exported() { }

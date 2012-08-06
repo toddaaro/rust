@@ -260,7 +260,7 @@ fn should_error_with_no_pandoc() {
 }
 
 #[cfg(test)]
-mod test {
+module test {
     fn parse_config(args: ~[~str]) -> result<config, ~str> {
         parse_config_(args, mock_program_output)
     }

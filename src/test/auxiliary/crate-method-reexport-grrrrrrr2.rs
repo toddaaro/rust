@@ -5,7 +5,7 @@ export rust;
 import name_pool::add;
 import name_pool::methods;
 
-mod name_pool {
+module name_pool {
 
     type name_pool = ();
 
@@ -19,7 +19,7 @@ mod name_pool {
     }
 }
 
-mod rust {
+module rust {
 
     import name_pool::add;
     export add;

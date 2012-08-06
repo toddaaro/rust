@@ -14,4 +14,4 @@ native "cdecl" mod rustrt {
   fn str_buf(str s) -> int;
 }
 
-mod inner = "native-mod-src/inner.rs";
+module inner = "native-mod-src/inner.rs";

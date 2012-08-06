@@ -1,12 +1,12 @@
-mod a {
-    mod b {
-        mod a {
+module a {
+    module b {
+        module a {
             fn foo() -> int { return 1; }
         }
     }
 }
 
-mod c {
+module c {
     import a::b::a;
     fn bar() { assert (a::foo() == 1); }
 }

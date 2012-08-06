@@ -757,7 +757,7 @@ fn should_write_type_signature() {
 }
 
 #[cfg(test)]
-mod test {
+module test {
     fn render(source: ~str) -> ~str {
         let (srv, doc) = create_doc_srv(source);
         let markdown = write_markdown_str_srv(srv, doc);

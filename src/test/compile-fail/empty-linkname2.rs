@@ -3,5 +3,5 @@
 
 #[link_name = ""]
 #[nolink]
-extern mod foo {
+extern module foo {
 }

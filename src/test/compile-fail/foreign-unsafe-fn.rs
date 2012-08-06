@@ -1,7 +1,7 @@
 // -*- rust -*-
 
 #[abi = "cdecl"]
-extern mod test {
+extern module test {
     unsafe fn free();
 }
 

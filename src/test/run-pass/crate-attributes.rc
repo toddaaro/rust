@@ -3,9 +3,9 @@
 
 #[attr1]
 #[path = "crate-attributes-src"]
-mod m {
+module m {
   #[attr_inner];
 
   #[attr2]
-  mod foo;
+  module foo;
 }

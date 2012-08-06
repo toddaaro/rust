@@ -1,7 +1,7 @@
 
 import zed::bar;
 
-mod zed {
+module zed {
     fn bar() { debug!{"bar"}; }
 }
 

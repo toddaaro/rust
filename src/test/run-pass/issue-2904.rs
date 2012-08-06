@@ -62,7 +62,7 @@ fn read_board_grid<rdr: owned io::reader>(+in: rdr) -> ~[~[square]] {
     grid
 }
 
-mod test {
+module test {
     #[test]
     fn trivial_to_str() {
         assert lambda.to_str() == "\\"

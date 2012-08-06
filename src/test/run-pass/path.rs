@@ -1,6 +1,6 @@
 
 
-mod foo {
+module foo {
     fn bar(offset: uint) { }
 }
 

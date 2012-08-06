@@ -1,6 +1,6 @@
 use issue_2316_a;
 
-mod cloth {
+module cloth {
 
 import issue_2316_a::*;
 

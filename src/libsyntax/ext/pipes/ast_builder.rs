@@ -8,7 +8,7 @@ import codemap::span;
 import ext::base::mk_ctxt;
 
 // Transitional reexports so qquote can find the paths it is looking for
-mod syntax {
+module syntax {
     import ext;
     export ext;
     import parse;

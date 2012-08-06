@@ -1,7 +1,7 @@
 // xfail-fast Does not work with main in a submodule
 
 #[abi = "rust-intrinsic"]
-extern mod rusti {
+extern module rusti {
     fn pref_align_of<T>() -> uint;
     fn min_align_of<T>() -> uint;
 }
@@ -9,7 +9,7 @@ extern mod rusti {
 #[cfg(target_os = "linux")]
 #[cfg(target_os = "macos")]
 #[cfg(target_os = "freebsd")]
-mod m {
+module m {
     #[cfg(target_arch = "x86")]
     fn main() {
         assert rusti::pref_align_of::<u64>() == 8u;
@@ -24,7 +24,7 @@ mod m {
 }
 
 #[cfg(target_os = "win32")]
-mod m {
+module m {
     #[cfg(target_arch = "x86")]
     fn main() {
         assert rusti::pref_align_of::<u64>() == 8u;

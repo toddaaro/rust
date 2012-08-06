@@ -5,11 +5,11 @@ trait plus {
     fn plus() -> int;
 }
 
-mod a {
+module a {
     impl foo of plus for uint { fn plus() -> int { self as int + 20 } }
 }
 
-mod b {
+module b {
     impl baz of plus for ~str { fn plus() -> int { 200 } }
 }
 

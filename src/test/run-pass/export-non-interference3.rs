@@ -1,10 +1,10 @@
-mod foo {
+module foo {
     export x;
 
     fn x() { bar::x(); }
 }
 
-mod bar {
+module bar {
     export x;
 
     fn x() { debug!{"x"}; }

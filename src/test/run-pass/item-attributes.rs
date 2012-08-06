@@ -15,9 +15,9 @@
 // These are are attributes of the following mod
 #[attr1 = "val"]
 #[attr2 = "val"]
-mod test_first_item_in_file_mod { }
+module test_first_item_in_file_module { }
 
-mod test_single_attr_outer {
+module test_single_attr_outer {
 
     #[attr = "val"]
     const x: int = 10;
@@ -26,14 +26,14 @@ mod test_single_attr_outer {
     fn f() { }
 
     #[attr = "val"]
-    mod mod1 { }
+    module mod1 { }
 
     #[attr = "val"]
     #[abi = "cdecl"]
-    extern mod rustrt { }
+    extern module rustrt { }
 }
 
-mod test_multi_attr_outer {
+module test_multi_attr_outer {
 
     #[attr1 = "val"]
     #[attr2 = "val"]
@@ -45,19 +45,19 @@ mod test_multi_attr_outer {
 
     #[attr1 = "val"]
     #[attr2 = "val"]
-    mod mod1 { }
+    module mod1 { }
 
     #[attr1 = "val"]
     #[attr2 = "val"]
     #[abi = "cdecl"]
-    extern mod rustrt { }
+    extern module rustrt { }
 
     #[attr1 = "val"]
     #[attr2 = "val"]
     type t = {x: int};
 }
 
-mod test_stmt_single_attr_outer {
+module test_stmt_single_attr_outer {
 
     fn f() {
 
@@ -69,18 +69,18 @@ mod test_stmt_single_attr_outer {
 
         /* FIXME: Issue #493
         #[attr = "val"]
-        mod mod1 {
+        module mod1 {
         }
 
         #[attr = "val"]
         #[abi = "cdecl"]
-        extern mod rustrt {
+        extern module rustrt {
         }
         */
     }
 }
 
-mod test_stmt_multi_attr_outer {
+module test_stmt_multi_attr_outer {
 
     fn f() {
 
@@ -95,30 +95,30 @@ mod test_stmt_multi_attr_outer {
         /* FIXME: Issue #493
         #[attr1 = "val"]
         #[attr2 = "val"]
-        mod mod1 {
+        module mod1 {
         }
 
         #[attr1 = "val"]
         #[attr2 = "val"]
         #[abi = "cdecl"]
-        extern mod rustrt {
+        extern module rustrt {
         }
         */
     }
 }
 
-mod test_attr_inner {
+module test_attr_inner {
 
-    mod m {
-        // This is an attribute of mod m
+    module m {
+        // This is an attribute of module m
         #[attr = "val"];
     }
 }
 
-mod test_attr_inner_then_outer {
+module test_attr_inner_then_outer {
 
-    mod m {
-        // This is an attribute of mod m
+    module m {
+        // This is an attribute of module m
         #[attr = "val"];
         // This is an attribute of fn f
         #[attr = "val"]
@@ -126,9 +126,9 @@ mod test_attr_inner_then_outer {
     }
 }
 
-mod test_attr_inner_then_outer_multi {
-    mod m {
-        // This is an attribute of mod m
+module test_attr_inner_then_outer_multi {
+    module m {
+        // This is an attribute of module m
         #[attr1 = "val"];
         #[attr2 = "val"];
         // This is an attribute of fn f
@@ -138,7 +138,7 @@ mod test_attr_inner_then_outer_multi {
     }
 }
 
-mod test_distinguish_syntax_ext {
+module test_distinguish_syntax_ext {
 
     use std;
 
@@ -149,7 +149,7 @@ mod test_distinguish_syntax_ext {
     }
 }
 
-mod test_other_forms {
+module test_other_forms {
     #[attr]
     #[attr(word)]
     #[attr(attr(word))]
@@ -157,9 +157,9 @@ mod test_other_forms {
     fn f() { }
 }
 
-mod test_foreign_items {
+module test_foreign_items {
     #[abi = "cdecl"]
-    extern mod rustrt {
+    extern module rustrt {
         #[attr];
 
         #[attr]
@@ -167,7 +167,7 @@ mod test_foreign_items {
     }
 }
 
-mod test_literals {
+module test_literals {
     #[str = "s"];
     #[char = 'c'];
     #[int = 100];
@@ -177,7 +177,7 @@ mod test_literals {
     #[mach_float = 1.0f32];
     #[nil = ()];
     #[bool = true];
-    mod m { }
+    module m { }
 }
 
 fn test_fn_inner() {

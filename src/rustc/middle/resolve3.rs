@@ -2517,9 +2517,9 @@ class Resolver {
         // NB: This one results in effects that may be somewhat surprising. It
         // means that this:
         //
-        // mod A {
+        // module A {
         //     impl foo for ... { ... }
-        //     mod B {
+        //     module B {
         //         impl foo for ... { ... }
         //         import bar = foo;
         //         ...

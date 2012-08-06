@@ -1,7 +1,7 @@
 import to_str::*;
 import to_str::to_str;
 
-mod kitty {
+module kitty {
 
 class cat : to_str {
   priv {

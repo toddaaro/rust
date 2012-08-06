@@ -2,7 +2,7 @@
 
 
 // -*- rust -*-
-mod foomod {
+module foomod {
     fn foo<T>() { }
 }
 

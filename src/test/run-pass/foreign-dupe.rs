@@ -3,13 +3,13 @@
 
 #[abi = "cdecl"]
 #[link_name = "rustrt"]
-extern mod rustrt1 {
+extern module rustrt1 {
     fn last_os_error() -> ~str;
 }
 
 #[abi = "cdecl"]
 #[link_name = "rustrt"]
-extern mod rustrt2 {
+extern module rustrt2 {
     fn last_os_error() -> ~str;
 }
 

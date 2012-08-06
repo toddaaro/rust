@@ -1,6 +1,6 @@
-mod stream {
+module stream {
     enum stream<T: send> { send(T, server::stream<T>), }
-    mod server {
+    module server {
         impl recv<T: send> for stream<T> {
             fn recv() -> extern fn(+stream<T>) -> stream::stream<T> {
               // resolve really should report just one error here.

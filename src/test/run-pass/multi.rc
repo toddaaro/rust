@@ -1,8 +1,8 @@
 #[path = "multi-src"]
-mod multi {
+module multi {
   // implicitly #[path = "foo.rs"]
-  mod foo;
+  module foo;
 
   #[path  = "bar.rs"]
-  mod bar;
+  module bar;
 }

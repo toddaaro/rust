@@ -1,7 +1,7 @@
 import m::f;
 import m::g;
 
-mod m {
+module m {
     export f, g;
 
     fn f() { }

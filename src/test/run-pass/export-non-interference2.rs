@@ -1,8 +1,8 @@
-mod foo {
+module foo {
 
     export bar;
 
-    mod bar {
+    module bar {
         fn y() { x(); }
     }
 

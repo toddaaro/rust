@@ -28,4 +28,4 @@ use syntax(vers = "0.3");
 
 import core::*;
 
-mod pgp;
+module pgp;

@@ -2,7 +2,7 @@
 
 import baz = foo::{bar};
 
-mod foo {
+module foo {
     fn bar() {}
 }
 

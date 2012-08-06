@@ -1,6 +1,6 @@
 
 
-mod m1 {
+module m1 {
     enum foo { foo1, foo2, }
 }
 

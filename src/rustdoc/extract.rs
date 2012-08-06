@@ -282,7 +282,7 @@ fn should_extract_tys() {
 }
 
 #[cfg(test)]
-mod test {
+module test {
 
     fn mk_doc(source: ~str) -> doc::doc {
         let ast = parse::from_str(source);

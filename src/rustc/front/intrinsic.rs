@@ -1,7 +1,7 @@
 // NB: this file is #include_str'ed into the compiler, re-parsed
 // and injected into each crate the compiler builds. Keep it small.
 
-mod intrinsic {
+module intrinsic {
 
     import rusti::visit_tydesc;
     export ty_visitor, get_tydesc, visit_tydesc, tydesc;
@@ -114,7 +114,7 @@ mod intrinsic {
     }
 
     #[abi = "rust-intrinsic"]
-    extern mod rusti {
+    extern module rusti {
         fn get_tydesc<T>() -> *();
         fn visit_tydesc(td: *tydesc, &&tv: ty_visitor);
     }

@@ -18,7 +18,7 @@ type crate_attrs = {
 };
 
 #[cfg(test)]
-mod test {
+module test {
 
     fn parse_attributes(source: ~str) -> ~[ast::attribute] {
         import syntax::parse;

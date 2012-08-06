@@ -48,7 +48,7 @@ fn WriteOutputFile(sess:session,
     }
 }
 
-mod write {
+module write {
     fn is_object_or_assembly_or_exe(ot: output_type) -> bool {
         if ot == output_type_assembly || ot == output_type_object ||
                ot == output_type_exe {

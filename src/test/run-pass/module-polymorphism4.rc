@@ -1,26 +1,26 @@
 
 #[path = "module-polymorphism4-files"]
-mod cat {
+module cat {
 
     import inst::*;
 
     #[path = "cat.rs"]
-    mod inst;
+    module inst;
 
     #[path = "trait.rs"]
-    mod trait;
+    module trait;
 
 }
 
 #[path = "module-polymorphism4-files"]
-mod dog {
+module dog {
 
     import inst::*;
 
     #[path = "dog.rs"]
-    mod inst;
+    module inst;
 
     #[path = "trait.rs"]
-    mod trait;
+    module trait;
 
 }

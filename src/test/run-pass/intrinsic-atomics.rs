@@ -1,5 +1,5 @@
 #[abi = "rust-intrinsic"]
-extern mod rusti {
+extern module rusti {
     fn atomic_xchng(&dst: int, src: int) -> int;
     fn atomic_xchng_acq(&dst: int, src: int) -> int;
     fn atomic_xchng_rel(&dst: int, src: int) -> int;

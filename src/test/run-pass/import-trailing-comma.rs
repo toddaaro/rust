@@ -1,7 +1,7 @@
 import foo::bar::{baz, quux,};
 
-mod foo {
-    mod bar {
+module foo {
+    module bar {
         fn baz() { }
         fn quux() { }
     }

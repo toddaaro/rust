@@ -196,7 +196,7 @@ fn minimize_rpaths(rpaths: ~[~str]) -> ~[~str] {
 }
 
 #[cfg(unix)]
-mod test {
+module test {
     #[test]
     fn test_rpaths_to_flags() {
         let flags = rpaths_to_flags(~[~"path1", ~"path2"]);

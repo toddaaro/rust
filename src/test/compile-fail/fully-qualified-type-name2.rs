@@ -1,10 +1,10 @@
 // Test that we use fully-qualified type names in error messages.
 
-mod x {
+module x {
     enum foo { }
 }
 
-mod y {
+module y {
     enum foo { }
 }
 

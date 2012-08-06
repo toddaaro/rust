@@ -168,7 +168,7 @@ fn add_test_module(cx: test_ctxt, m: ast::_mod) -> ast::_mod {
 
 We're going to be building a module that looks more or less like:
 
-mod __test {
+module __test {
 
   fn main(args: ~[str]) -> int {
     std::test::test_main(args, tests())

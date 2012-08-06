@@ -2,7 +2,7 @@
 
 fn f() -> int { return 1; }
 
-mod foo {
+module foo {
     fn f() -> int { return 2; }
     fn g() { assert (f() == 2); assert (::f() == 1); }
 }

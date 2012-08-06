@@ -1,8 +1,8 @@
 // This test is brittle!
 // xfail-pretty - the pretty tests lose path information, breaking #include
 
-mod m1 {
-    mod m2 {
+module m1 {
+    module m2 {
         fn where_am_i() -> ~str { module_path!{} }
     }
 }

@@ -6,7 +6,7 @@
 
 // This was generated initially by the pipe compiler, but it's been
 // modified in hopefully straightforward ways.
-mod pingpong {
+module pingpong {
     import pipes::*;
 
     type packets = {
@@ -32,7 +32,7 @@ mod pingpong {
     }
     enum ping = server::pong;
     enum pong = client::ping;
-    mod client {
+    module client {
         fn ping(+pipe: ping) -> pong {
             {
                 let b = pipe.reuse_buffer();
@@ -48,7 +48,7 @@ mod pingpong {
         type pong = pipes::recv_packet_buffered<pingpong::pong,
         pingpong::packets>;
     }
-    mod server {
+    module server {
         type ping = pipes::recv_packet_buffered<pingpong::ping,
         pingpong::packets>;
         fn pong(+pipe: pong) -> ping {
@@ -66,7 +66,7 @@ mod pingpong {
     }
 }
 
-mod test {
+module test {
     import pipes::recv;
     import pingpong::{ping, pong};
 

@@ -6,7 +6,7 @@ use bar(name = "core", vers = "0.3");
 
 import core::str;
 import x = zed::str;
-mod baz {
+module baz {
     import bar::str;
     import x = core::str;
 }

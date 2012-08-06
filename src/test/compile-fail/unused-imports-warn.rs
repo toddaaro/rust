@@ -2,13 +2,13 @@
 // compile-flags:-W unused-imports
 import cal = bar::c::cc;
 
-mod foo {
+module foo {
     type point = {x: int, y: int};
     type square = {p: point, h: uint, w: uint};
 }
 
-mod bar {
-    mod c {
+module bar {
+    module c {
         import foo::point;
         import foo::square;
         fn cc(p: point) -> str { return 2 * (p.x + p.y); }

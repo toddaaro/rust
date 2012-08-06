@@ -2,8 +2,8 @@
 import baz::zed;
 import zed::bar;
 
-mod baz {
-    mod zed {
+module baz {
+    module zed {
         fn bar() { debug!{"bar2"}; }
     }
 }

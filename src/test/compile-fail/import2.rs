@@ -1,7 +1,7 @@
 // error-pattern: unresolved
 import baz::zed::bar;
-mod baz { }
-mod zed {
+module baz { }
+module zed {
     fn bar() { debug!{"bar3"}; }
 }
 fn main(args: ~[str]) { bar(); }

@@ -9,7 +9,7 @@ use std;
 // stub. Kind of shocking. Might be able to make it faster still with
 // an llvm intrinsic.
 #[nolink]
-extern mod libc {
+extern module libc {
     fn sqrt(n: float) -> float;
 }
 
@@ -29,7 +29,7 @@ fn main(args: ~[~str]) {
     io::println(fmt!{"%f", NBodySystem::energy(bodies)});
 }
 
-mod NBodySystem {
+module NBodySystem {
 
     fn make() -> ~[Body::props] {
         let bodies: ~[Body::props] =
@@ -127,7 +127,7 @@ mod NBodySystem {
     }
 }
 
-mod Body {
+module Body {
 
     const PI: float = 3.141592653589793;
     const SOLAR_MASS: float = 39.478417604357432;

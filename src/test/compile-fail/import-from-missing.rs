@@ -2,7 +2,7 @@
 // xfail-test
 import spam::{ham, eggs};
 
-mod spam {
+module spam {
     fn ham() { }
 }
 

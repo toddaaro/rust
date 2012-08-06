@@ -6,6 +6,6 @@ the compiler output. */
 
 #[link_args = "aFdEfSeVEEE"]
 #[nolink]
-extern mod m1 { }
+extern module m1 { }
 
 fn main() { }

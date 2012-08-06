@@ -2,13 +2,13 @@
 // being applied to every mod
 
 #[cfg(target_os = "linux")]
-mod hello;
+module hello;
 
 #[cfg(target_os = "macos")]
-mod hello;
+module hello;
 
 #[cfg(target_os = "win32")]
-mod hello;
+module hello;
 
 #[cfg(target_os = "freebsd")]
-mod hello;
+module hello;

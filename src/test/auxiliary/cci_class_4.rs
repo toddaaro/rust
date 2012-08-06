@@ -1,4 +1,4 @@
-mod kitties {
+module kitties {
 
 class cat {
   priv {

@@ -115,7 +115,7 @@ fn test_fn() {
 
 #[abi = "cdecl"]
 #[nolink]
-extern mod test {
+extern module test {
     fn rust_get_sched_id() -> libc::intptr_t;
     fn get_task_id() -> libc::intptr_t;
 }

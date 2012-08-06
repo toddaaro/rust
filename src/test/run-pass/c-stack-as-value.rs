@@ -1,5 +1,5 @@
 #[abi = "cdecl"]
-extern mod rustrt {
+extern module rustrt {
     fn get_task_id() -> libc::intptr_t;
 }
 

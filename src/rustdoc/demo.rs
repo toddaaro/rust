@@ -62,7 +62,7 @@ fn take_my_order_please(
     fail;
 }
 
-mod fortress_of_solitude {
+module fortress_of_solitude {
     /*!
      * Superman's vacation home
      *
@@ -76,7 +76,7 @@ mod fortress_of_solitude {
 
 }
 
-mod blade_runner {
+module blade_runner {
     /*!
      * Blade Runner is probably the best movie ever
      *

@@ -1,5 +1,5 @@
 fn f() -> int {
-    mod m {
+    module m {
         fn g() -> int { 720 }
     }
 

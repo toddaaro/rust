@@ -3,7 +3,7 @@
 
 import kitty::*;
 
-mod kitty {
+module kitty {
   export cat;
   class cat {
     let meows: uint;

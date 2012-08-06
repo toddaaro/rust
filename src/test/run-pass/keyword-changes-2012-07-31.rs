@@ -1,11 +1,11 @@
 // return -> return
-// mod -> module
+// module -> module
 // match -> match
 
 fn main() {
 }
 
-mod foo {
+module foo {
 }
 
 fn bar() -> int {

@@ -1,42 +1,42 @@
 #[path = "module-polymorphism-files"]
-mod my_float {
+module my_float {
 
     // The type of the float
     import inst::T;
 
     // Define T as float
     #[path = "inst_float.rs"]
-    mod inst;
+    module inst;
 
     // Add in the implementation from a single source file
     #[path = "template.rs"]
-    mod template;
+    module template;
 
 }
 
 #[path = "module-polymorphism-files"]
-mod my_f64 {
+module my_f64 {
 
     import inst::T;
 
     // Define T as f64
     #[path = "inst_f64.rs"]
-    mod inst;
+    module inst;
 
     // Use the implementation for the same source file!
     #[path = "template.rs"]
-    mod template;
+    module template;
 
 }
 
 #[path = "module-polymorphism-files"]
-mod my_f32 {
+module my_f32 {
     import inst::T;
 
     #[path = "inst_f32.rs"]
-    mod inst;
+    module inst;
 
     #[path = "template.rs"]
-    mod template;
+    module template;
 
 }

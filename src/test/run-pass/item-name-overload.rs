@@ -2,11 +2,11 @@
 
 
 // -*- rust -*-
-mod foo {
+module foo {
     fn baz() { }
 }
 
-mod bar {
+module bar {
     fn baz() { }
 }
 

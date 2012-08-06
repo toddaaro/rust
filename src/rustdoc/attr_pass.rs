@@ -286,7 +286,7 @@ fn should_extract_impl_method_docs() {
 }
 
 #[cfg(test)]
-mod test {
+module test {
     fn mk_doc(source: ~str) -> doc::doc {
         do astsrv::from_str(source) |srv| {
             let doc = extract::from_srv(srv, ~"");

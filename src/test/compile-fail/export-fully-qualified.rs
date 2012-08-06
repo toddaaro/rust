@@ -4,7 +4,7 @@
 // it's called from inside foo. This is somewhat surprising and may
 // want to change eventually.
 
-mod foo {
+module foo {
 
     export bar;
 

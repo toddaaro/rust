@@ -1,8 +1,8 @@
-mod foo {
+module foo {
     fn x(y: int) { log(debug, y); }
 }
 
-mod bar {
+module bar {
     import foo::x;
     import z = foo::x;
     fn thing() { x(10); z(10); }

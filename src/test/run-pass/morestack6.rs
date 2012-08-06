@@ -1,7 +1,7 @@
 // This test attempts to force the dynamic linker to resolve
 // external symbols as close to the red zone as possible.
 
-extern mod rustrt {
+extern module rustrt {
     fn debug_get_stk_seg() -> *u8;
 
     fn rust_get_sched_id() -> libc::intptr_t;

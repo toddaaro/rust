@@ -4,7 +4,7 @@
 // pretty-print such view items. If that happens again, this should
 // begin failing.
 
-mod m {
+module m {
     use std;
     import vec;
     fn f() -> ~[int] { vec::from_elem(1u, 0) }

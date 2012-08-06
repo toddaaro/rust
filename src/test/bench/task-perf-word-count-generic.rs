@@ -120,7 +120,7 @@ class box<T> {
     }
 }
 
-mod map_reduce {
+module map_reduce {
     export putter;
     export getter;
     export mapper;
