@@ -93,7 +93,7 @@ export iter_trait_extensions;
 export vec_concat;
 
 #[abi = "cdecl"]
-extern mod rustrt {
+extern module rustrt {
     fn vec_reserve_shared(++t: *sys::type_desc,
                           ++v: **unsafe::vec_repr,
                           ++n: libc::size_t);
@@ -103,7 +103,7 @@ extern mod rustrt {
 }
 
 #[abi = "rust-intrinsic"]
-extern mod rusti {
+extern module rusti {
     fn move_val_init<T>(&dst: T, -src: T);
 }
 
@@ -1527,7 +1527,7 @@ impl extensions/&<T: copy> of immutable_copyable_vector<T> for &[T] {
 }
 
 /// Unsafe operations
-mod unsafe {
+module unsafe {
     // FIXME: This should have crate visibility (#1893 blocks that)
     /// The internal representation of a vector
     type vec_repr = {
@@ -1658,7 +1658,7 @@ mod unsafe {
 }
 
 /// Operations on `[u8]`
-mod u8 {
+module u8 {
     export cmp;
     export lt, le, eq, ne, ge, gt;
     export hash;
@@ -1784,7 +1784,7 @@ impl extensions/&<A:copy> of iter_trait_extensions<A> for &[A] {
 // ___________________________________________________________________________
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     fn square(n: uint) -> uint { return n * n; }
 

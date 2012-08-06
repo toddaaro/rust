@@ -132,7 +132,7 @@ unsafe fn ptr<T>(t: c_vec<T>) -> *mut T {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     import libc::*;
 
     fn malloc(n: size_t) -> c_vec<u8> {

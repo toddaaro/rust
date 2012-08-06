@@ -17,7 +17,7 @@ import libc::c_double;
 
 #[link_name = "m"]
 #[abi = "cdecl"]
-extern mod c_double {
+extern module c_double {
 
     // Alpabetically sorted by link_name
 
@@ -95,7 +95,7 @@ extern mod c_double {
 
 #[link_name = "m"]
 #[abi = "cdecl"]
-extern mod c_float {
+extern module c_float {
 
     // Alpabetically sorted by link_name
 
@@ -166,7 +166,7 @@ extern mod c_float {
 
 // FIXME obtain machine float/math constants automatically (Issue #1986)
 
-mod c_float_targ_consts {
+module c_float_targ_consts {
     const radix: uint = 2u;
     const mantissa_digits: uint = 24u;
     const digits: uint = 6u;
@@ -181,7 +181,7 @@ mod c_float_targ_consts {
     const epsilon: f32 = 0.000000_f32;
 }
 
-mod c_double_targ_consts {
+module c_double_targ_consts {
     const radix: uint = 2u;
     const mantissa_digits: uint = 53u;
     const digits: uint = 15u;
@@ -200,7 +200,7 @@ mod c_double_targ_consts {
 
 FIXME use these once they can be parsed (see Issue #1433)
 
-mod c_float_math_consts {
+module c_float_math_consts {
     const pi: c_float = 0x1.921fb6p+1_f32;
     const div_1_pi: c_float = 0x1.45f306p-2_f32;
     const div_2_pi: c_float = 0x1.45f306p-1_f32;
@@ -216,7 +216,7 @@ mod c_float_math_consts {
     const div_1_sqrt2: c_float = 0x1.6a09e6p-1_f32;
 }
 
-mod c_double_math_consts {
+module c_double_math_consts {
     const pi: c_double = 0x1.921fb54442d18p+1_f64;
     const div_1_pi: c_double = 0x1.45f306dc9c883p-2_f64;
     const div_2_pi: c_double = 0x1.45f306dc9c883p-1_f64;
@@ -232,7 +232,7 @@ mod c_double_math_consts {
     const div_1_sqrt2: c_double = 0x1.6a09e667f3bcdp-1_f64;
 }
 
-mod c_float_targ_consts {
+module c_float_targ_consts {
     const radix: uint = 2u;
     const mantissa_digits: uint = 24u;
     const digits: uint = 6u;
@@ -245,7 +245,7 @@ mod c_float_targ_consts {
     const epsilon: c_float = 0x1p-23_f32;
 }
 
-mod c_double_targ_consts {
+module c_double_targ_consts {
     const radix: uint = 2u;
     const mantissa_digits: uint = 53u;
     const digits: uint = 15u;

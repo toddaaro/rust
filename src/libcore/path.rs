@@ -17,7 +17,7 @@ export normalize;
 type path = ~str;
 
 #[cfg(unix)]
-mod consts {
+module consts {
     /**
      * The primary path separator character for the platform
      *
@@ -33,7 +33,7 @@ mod consts {
 }
 
 #[cfg(windows)]
-mod consts {
+module consts {
     const path_sep: char = '/';
     const alt_path_sep: char = '\\';
 }
@@ -300,7 +300,7 @@ fn normalize(p: path) -> path {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     #[test]
     fn test_connect() {
         let slash = path_sep();

@@ -13,14 +13,14 @@ export unsafe;
 /// contains a bunch of duplication from the code for ~-vectors.
 
 #[abi = "cdecl"]
-extern mod rustrt {
+extern module rustrt {
     fn vec_reserve_shared_actual(++t: *sys::type_desc,
                                  ++v: **vec::unsafe::vec_repr,
                                  ++n: libc::size_t);
 }
 
 #[abi = "rust-intrinsic"]
-extern mod rusti {
+extern module rusti {
     fn move_val_init<T>(&dst: T, -src: T);
 }
 
@@ -114,7 +114,7 @@ pure fn from_elem<T: copy>(n_elts: uint, t: T) -> @[T] {
 }
 
 
-mod unsafe {
+module unsafe {
     type vec_repr = vec::unsafe::vec_repr;
     type slice_repr = vec::unsafe::slice_repr;
 

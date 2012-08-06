@@ -32,7 +32,7 @@ class noncopyable {
     drop { }
 }
 
-mod tests {
+module tests {
     #[test]
     fn identity_crisis() {
         // Writing a test for the identity function. How did it come to this?

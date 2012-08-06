@@ -111,7 +111,7 @@ export
    unique_str;
 
 #[abi = "cdecl"]
-extern mod rustrt {
+extern module rustrt {
     fn rust_str_push(&s: ~str, ch: u8);
     fn str_reserve_shared(&ss: ~str, nn: libc::size_t);
 }
@@ -1762,7 +1762,7 @@ pure fn escape_unicode(s: &str) -> ~str {
 }
 
 /// Unsafe operations
-mod unsafe {
+module unsafe {
    export
       from_buf,
       from_buf_len,
@@ -2065,7 +2065,7 @@ impl extensions/& of str_slice for &str {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     import libc::c_char;
 

@@ -3,7 +3,7 @@
 export reinterpret_cast, forget, bump_box_refcount, transmute;
 
 #[abi = "rust-intrinsic"]
-extern mod rusti {
+extern module rusti {
     fn forget<T>(-x: T);
     fn reinterpret_cast<T, U>(e: T) -> U;
 }
@@ -48,7 +48,7 @@ unsafe fn transmute<L, G>(-thing: L) -> G {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     #[test]
     fn test_reinterpret_cast() {

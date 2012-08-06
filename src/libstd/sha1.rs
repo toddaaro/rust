@@ -256,7 +256,7 @@ fn sha1() -> sha1 {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     #[test]
     fn test() unsafe {

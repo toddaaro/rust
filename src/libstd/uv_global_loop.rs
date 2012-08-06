@@ -11,7 +11,7 @@ import comm::{port, chan, methods, select2, listen};
 import task::task_builder;
 import either::{left, right};
 
-extern mod rustrt {
+extern module rustrt {
     fn rust_uv_get_kernel_global_chan_ptr() -> *libc::uintptr_t;
 }
 
@@ -104,7 +104,7 @@ fn spawn_loop() -> iotask unsafe {
 }
 
 #[cfg(test)]
-mod test {
+module test {
     extern fn simple_timer_close_cb(timer_ptr: *ll::uv_timer_t) unsafe {
         let exit_ch_ptr = ll::get_data_for_uv_handle(
             timer_ptr as *libc::c_void) as *comm::chan<bool>;

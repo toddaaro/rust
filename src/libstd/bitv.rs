@@ -428,7 +428,7 @@ impl extensions of ops::index<uint,bool> for bitv {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     #[test]
     fn test_to_str() {
         let zerolen = bitv(0u, false);

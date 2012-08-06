@@ -14,7 +14,7 @@ import libc::consts::os::extra::*;
 type fd_t = c_int;
 
 #[abi = "cdecl"]
-extern mod rustrt {
+extern module rustrt {
     fn rust_get_stdin() -> *libc::FILE;
     fn rust_get_stdout() -> *libc::FILE;
     fn rust_get_stderr() -> *libc::FILE;
@@ -746,7 +746,7 @@ fn read_whole_file(file: ~str) -> result<~[u8], ~str> {
 
 // fsync related
 
-mod fsync {
+module fsync {
 
     enum level {
         // whatever fsync does on that platform
@@ -820,7 +820,7 @@ mod fsync {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     #[test]
     fn test_simple() {

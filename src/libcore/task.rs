@@ -1402,7 +1402,7 @@ unsafe fn local_data_modify<T: owned>(
     local_modify(rustrt::rust_get_task(), key, modify_fn)
 }
 
-extern mod rustrt {
+extern module rustrt {
     #[rust_stack]
     fn rust_task_yield(task: *rust_task) -> bool;
 
@@ -1764,7 +1764,7 @@ fn test_spawn_sched_childs_on_same_sched() {
 
 #[nolink]
 #[cfg(test)]
-extern mod testrt {
+extern module testrt {
     fn rust_dbg_lock_create() -> *libc::c_void;
     fn rust_dbg_lock_destroy(lock: *libc::c_void);
     fn rust_dbg_lock_lock(lock: *libc::c_void);

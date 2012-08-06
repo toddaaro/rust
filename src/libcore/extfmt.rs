@@ -40,7 +40,7 @@ import option::{some, none};
  */
 
 // Functions used by the fmt extension at compile time
-mod ct {
+module ct {
     enum signedness { signed, unsigned, }
     enum caseness { case_upper, case_lower, }
     enum ty {
@@ -265,7 +265,7 @@ mod ct {
 // decisions made a runtime. If it proves worthwhile then some of these
 // conditions can be evaluated at compile-time. For now though it's cleaner to
 // implement it 0this way, I think.
-mod rt {
+module rt {
     const flag_none : u32 = 0u32;
     const flag_left_justify   : u32 = 0b00000000000000000000000000000001u32;
     const flag_left_zero_pad  : u32 = 0b00000000000000000000000000000010u32;
@@ -435,7 +435,7 @@ mod rt {
 }
 
 #[cfg(test)]
-mod test {
+module test {
     #[test]
     fn fmt_slice() {
         let s = "abc";

@@ -7,7 +7,7 @@ import task::task_builder;
 
 type rust_port_id = uint;
 
-extern mod rustrt {
+extern module rustrt {
     fn rust_compare_and_swap_ptr(address: *libc::uintptr_t,
                                  oldval: libc::uintptr_t,
                                  newval: libc::uintptr_t) -> bool;

@@ -7,7 +7,7 @@ import libc::uintptr_t;
 
 type rust_task = c_void;
 
-extern mod rustrt {
+extern module rustrt {
     #[rust_stack]
     fn rust_upcall_fail(expr: *c_char, file: *c_char, line: size_t);
 

@@ -428,8 +428,8 @@ fn loop_leaves(rope: rope, it: fn(node::leaf) -> bool) -> bool{
    }
 }
 
-mod iterator {
-    mod leaf {
+module iterator {
+    module leaf {
         fn start(rope: rope) -> node::leaf_iterator::t {
             match (rope) {
               node::empty      => return node::leaf_iterator::empty(),
@@ -440,7 +440,7 @@ mod iterator {
             return node::leaf_iterator::next(it);
         }
     }
-    mod char {
+    module char {
         fn start(rope: rope) -> node::char_iterator::t {
             match (rope) {
               node::empty      => return node::char_iterator::empty(),
@@ -532,7 +532,7 @@ fn char_at(rope: rope, pos: uint) -> char {
 /*
  Section: Implementation
 */
-mod node {
+module node {
 
     /// Implementation of type `rope`
     enum root {
@@ -1102,7 +1102,7 @@ mod node {
         };
     }
 
-    mod leaf_iterator {
+    module leaf_iterator {
         type t = {
             stack:            ~[mut @node],
             mut stackpos: int
@@ -1139,7 +1139,7 @@ mod node {
         }
     }
 
-    mod char_iterator {
+    module char_iterator {
         type t = {
             leaf_iterator: leaf_iterator::t,
             mut leaf:  option<leaf>,
@@ -1216,7 +1216,7 @@ mod node {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     //Utility function, used for sanity check
     fn rope_to_string(r: rope) -> ~str {

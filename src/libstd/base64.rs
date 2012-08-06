@@ -131,7 +131,7 @@ impl of from_base64 for ~str {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     #[test]
     fn test_to_base64() {
         assert (~"").to_base64()       == ~"";

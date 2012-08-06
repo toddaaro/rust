@@ -28,61 +28,61 @@ export base64;
 
 // General io and system-services modules
 
-mod net;
-mod net_ip;
-mod net_tcp;
-mod net_url;
+module net;
+module net_ip;
+module net_tcp;
+module net_url;
 
 // libuv modules
-mod uv;
-mod uv_ll;
-mod uv_iotask;
-mod uv_global_loop;
+module uv;
+module uv_ll;
+module uv_iotask;
+module uv_global_loop;
 
 
 // Utility modules
 
-mod c_vec;
-mod timer;
+module c_vec;
+module timer;
 
 
 // Collections
 
-mod bitv;
-mod deque;
-mod fun_treemap;
-mod list;
-mod map;
-mod rope;
-mod smallintmap;
-mod sort;
-mod treemap;
+module bitv;
+module deque;
+module fun_treemap;
+module list;
+module map;
+module rope;
+module smallintmap;
+module sort;
+module treemap;
 
 // And ... other stuff
 
-mod ebml;
-mod dbg;
-mod getopts;
-mod json;
-mod sha1;
-mod md4;
-mod tempfile;
-mod term;
-mod time;
-mod prettyprint;
-mod arena;
-mod par;
-mod cmp;
-mod base64;
+module ebml;
+module dbg;
+module getopts;
+module json;
+module sha1;
+module md4;
+module tempfile;
+module term;
+module time;
+module prettyprint;
+module arena;
+module par;
+module cmp;
+module base64;
 
 #[cfg(unicode)]
-mod unicode;
+module unicode;
 
 
 // Compiler support modules
 
-mod test;
-mod serialization;
+module test;
+module serialization;
 
 // Local Variables:
 // mode: rust;

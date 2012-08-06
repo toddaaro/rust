@@ -14,7 +14,7 @@ type hashfn<K> = pure fn~(K) -> uint;
 type eqfn<K> = pure fn~(K, K) -> bool;
 
 /// Open addressing with linear probing.
-mod linear {
+module linear {
     export linear_map, linear_map_with_capacity, public_methods;
 
     const initial_capacity: uint = 32u; // 2^5
@@ -327,7 +327,7 @@ mod linear {
 }
 
 #[test]
-mod test {
+module test {
 
     import linear::linear_map;
 

@@ -220,7 +220,7 @@ fn entangle_buffer<T: send, Tstart: send>(
 
 #[abi = "rust-intrinsic"]
 #[doc(hidden)]
-extern mod rusti {
+extern module rusti {
     fn atomic_xchng(&dst: int, src: int) -> int;
     fn atomic_xchng_acq(&dst: int, src: int) -> int;
     fn atomic_xchng_rel(&dst: int, src: int) -> int;
@@ -261,7 +261,7 @@ fn swap_task(&dst: *rust_task, src: *rust_task) -> *rust_task {
 type rust_task = libc::c_void;
 
 #[doc(hidden)]
-extern mod rustrt {
+extern module rustrt {
     #[rust_stack]
     fn rust_get_task() -> *rust_task;
     #[rust_stack]
@@ -1064,7 +1064,7 @@ impl<T: send, U: send, Left: selectable recv<T>, Right: selectable recv<U>>
 }
 
 #[cfg(test)]
-mod test {
+module test {
     #[test]
     fn test_select2() {
         let (c1, p1) = pipes::stream();

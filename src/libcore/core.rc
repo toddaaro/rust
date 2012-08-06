@@ -68,44 +68,44 @@ export priv;
 
 /// Operations and constants for `int`
 #[path = "int-template"]
-mod int {
+module int {
     import inst::{ hash, pow };
     export hash, pow;
     #[path = "int.rs"]
-    mod inst;
+    module inst;
 }
 
 /// Operations and constants for `i8`
 #[path = "int-template"]
-mod i8 {
+module i8 {
     #[path = "i8.rs"]
-    mod inst;
+    module inst;
 }
 
 /// Operations and constants for `i16`
 #[path = "int-template"]
-mod i16 {
+module i16 {
     #[path = "i16.rs"]
-    mod inst;
+    module inst;
 }
 
 /// Operations and constants for `i32`
 #[path = "int-template"]
-mod i32 {
+module i32 {
     #[path = "i32.rs"]
-    mod inst;
+    module inst;
 }
 
 /// Operations and constants for `i64`
 #[path = "int-template"]
-mod i64 {
+module i64 {
     #[path = "i64.rs"]
-    mod inst;
+    module inst;
 }
 
 /// Operations and constants for `uint`
 #[path = "uint-template"]
-mod uint {
+module uint {
     import inst::{
         div_ceil, div_round, div_floor, hash, iterate,
         next_power_of_two
@@ -114,124 +114,124 @@ mod uint {
     next_power_of_two;
 
     #[path = "uint.rs"]
-    mod inst;
+    module inst;
 }
 
 /// Operations and constants for `u8`
 #[path = "uint-template"]
-mod u8 {
+module u8 {
     import inst::is_ascii;
     export is_ascii;
 
     #[path = "u8.rs"]
-    mod inst;
+    module inst;
 }
 
 /// Operations and constants for `u16`
 #[path = "uint-template"]
-mod u16 {
+module u16 {
     #[path = "u16.rs"]
-    mod inst;
+    module inst;
 }
 
 /// Operations and constants for `u32`
 #[path = "uint-template"]
-mod u32 {
+module u32 {
     #[path = "u32.rs"]
-    mod inst;
+    module inst;
 }
 
 /// Operations and constants for `u64`
 #[path = "uint-template"]
-mod u64 {
+module u64 {
     #[path = "u64.rs"]
-    mod inst;
+    module inst;
 }
 
 
-mod box;
-mod char;
-mod float;
-mod f32;
-mod f64;
-mod str;
-mod ptr;
-mod vec;
-mod at_vec;
-mod bool;
-mod tuple;
+module box;
+module char;
+module float;
+module f32;
+module f64;
+module str;
+module ptr;
+module vec;
+module at_vec;
+module bool;
+module tuple;
 
 // Ubiquitous-utility-type modules
 
 #[cfg(notest)]
-mod ops;
-mod cmp;
-mod num;
-mod hash;
-mod either;
-mod iter;
-mod logging;
-mod option;
+module ops;
+module cmp;
+module num;
+module hash;
+module either;
+module iter;
+module logging;
+module option;
 #[path="iter-trait"]
-mod option_iter {
+module option_iter {
     #[path = "option.rs"]
-    mod inst;
+    module inst;
 }
-mod result;
-mod to_str;
-mod to_bytes;
-mod util;
+module result;
+module to_str;
+module to_bytes;
+module util;
 
 // Data structure modules
 
-mod dvec;
+module dvec;
 #[path="iter-trait"]
-mod dvec_iter {
+module dvec_iter {
     #[path = "dvec.rs"]
-    mod inst;
+    module inst;
 }
-mod dlist;
+module dlist;
 #[path="iter-trait"]
-mod dlist_iter {
+module dlist_iter {
     #[path ="dlist.rs"]
-    mod inst;
+    module inst;
 }
-mod send_map;
+module send_map;
 
 // Concurrency
-mod arc;
-mod comm;
-mod task;
-mod future;
-mod pipes;
+module arc;
+module comm;
+module task;
+module future;
+module pipes;
 
 // Runtime and language-primitive support
 
-mod io;
-mod libc;
-mod os;
-mod path;
-mod rand;
-mod run;
-mod sys;
-mod unsafe;
+module io;
+module libc;
+module os;
+module path;
+module rand;
+module run;
+module sys;
+module unsafe;
 
 
 // Modules supporting compiler-generated code
 // Exported but not part of the public interface
 
-mod extfmt;
+module extfmt;
 // The test harness links against core, so don't include runtime in tests.
 #[cfg(notest)]
-mod rt;
+module rt;
 
 
 // For internal use, not exported
 
-mod unicode;
-mod priv;
-mod cmath;
-mod stackwalk;
+module unicode;
+module priv;
+module cmath;
+module stackwalk;
 
 // Local Variables:
 // mode: rust;

@@ -21,7 +21,7 @@ enum type_desc = {
 type rust_cond_lock = *libc::c_void;
 
 #[abi = "cdecl"]
-extern mod rustrt {
+extern module rustrt {
     pure fn shape_log_str(t: *sys::type_desc, data: *()) -> ~str;
 
     fn rust_create_cond_lock() -> rust_cond_lock;
@@ -33,7 +33,7 @@ extern mod rustrt {
 }
 
 #[abi = "rust-intrinsic"]
-extern mod rusti {
+extern module rusti {
     fn get_tydesc<T>() -> *();
     fn size_of<T>() -> uint;
     fn pref_align_of<T>() -> uint;
@@ -147,7 +147,7 @@ impl methods for condition {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     #[test]
     fn size_of_basic() {

@@ -1,5 +1,5 @@
 
-mod icu {
+module icu {
     type UBool = u8;
     type UProperty = int;
     type UChar32 = char;
@@ -148,7 +148,7 @@ mod icu {
 
     #[link_name = "icuuc"]
     #[abi = "cdecl"]
-    extern mod libicu {
+    extern module libicu {
         pure fn u_hasBinaryProperty(c: UChar32, which: UProperty) -> UBool;
         pure fn u_isdigit(c: UChar32) -> UBool;
         pure fn u_islower(c: UChar32) -> UBool;
@@ -206,7 +206,7 @@ pure fn is_upper(c: char) -> bool {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     #[test]
     fn test_is_digit() {

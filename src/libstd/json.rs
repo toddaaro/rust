@@ -634,7 +634,7 @@ impl of to_str::to_str for error {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     fn mk_dict(items: ~[(~str, json)]) -> json {
         let d = map::str_hash();
 

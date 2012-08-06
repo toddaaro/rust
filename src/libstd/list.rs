@@ -139,7 +139,7 @@ fn each<T>(l: @list<T>, f: fn(T) -> bool) {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     #[test]
     fn test_is_empty() {

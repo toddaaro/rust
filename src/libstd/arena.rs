@@ -29,7 +29,7 @@ fn arena() -> arena {
 }
 
 #[abi = "rust-intrinsic"]
-extern mod rusti {
+extern module rusti {
     fn move_val_init<T>(&dst: T, -src: T);
 }
 

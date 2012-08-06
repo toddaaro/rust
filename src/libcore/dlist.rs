@@ -443,7 +443,7 @@ impl extensions<T: copy> for dlist<T> {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     #[test]
     fn test_dlist_concat() {
         let a = from_vec(~[1,2]);

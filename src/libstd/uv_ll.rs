@@ -243,7 +243,7 @@ type sockaddr_in6 = {
 // stuck with 32 becuse of rust padding structs?
 type addr_in = addr_in_impl::addr_in;
 #[cfg(unix)]
-mod addr_in_impl {
+module addr_in_impl {
     #[cfg(target_arch="x86_64")]
     type addr_in = {
         a0: *u8, a1: *u8,
@@ -258,7 +258,7 @@ mod addr_in_impl {
     };
 }
 #[cfg(windows)]
-mod addr_in_impl {
+module addr_in_impl {
     type addr_in = {
         a0: *u8, a1: *u8,
         a2: *u8, a3: *u8
@@ -268,7 +268,7 @@ mod addr_in_impl {
 // unix size: 48, 32bit: 32
 type addrinfo = addrinfo_impl::addrinfo;
 #[cfg(target_os="linux")]
-mod addrinfo_impl {
+module addrinfo_impl {
     #[cfg(target_arch="x86_64")]
     type addrinfo = {
         a00: *u8, a01: *u8, a02: *u8, a03: *u8,
@@ -282,14 +282,14 @@ mod addrinfo_impl {
 }
 #[cfg(target_os="macos")]
 #[cfg(target_os="freebsd")]
-mod addrinfo_impl {
+module addrinfo_impl {
     type addrinfo = {
         a00: *u8, a01: *u8, a02: *u8, a03: *u8,
         a04: *u8, a05: *u8
     };
 }
 #[cfg(windows)]
-mod addrinfo_impl {
+module addrinfo_impl {
     type addrinfo = {
         a00: *u8, a01: *u8, a02: *u8, a03: *u8,
         a04: *u8, a05: *u8
@@ -302,7 +302,7 @@ type uv_getaddrinfo_t = {
     a06: *u8, a07: *u8, a08: *u8
 };
 
-mod uv_ll_struct_stubgen {
+module uv_ll_struct_stubgen {
     fn gen_stub_uv_tcp_t() -> uv_tcp_t {
         return gen_stub_os();
         #[cfg(target_os = "linux")]
@@ -557,7 +557,7 @@ mod uv_ll_struct_stubgen {
 }
 
 #[nolink]
-extern mod rustrt {
+extern module rustrt {
     // libuv public API
     fn rust_uv_loop_new() -> *libc::c_void;
     fn rust_uv_loop_delete(lp: *libc::c_void);
@@ -998,7 +998,7 @@ unsafe fn addrinfo_as_sockaddr_in6(input: *addrinfo) -> *sockaddr_in6 {
 }
 
 #[cfg(test)]
-mod test {
+module test {
     enum tcp_read_data {
         tcp_read_eof,
         tcp_read_more(~[u8]),
@@ -1499,16 +1499,16 @@ mod test {
     #[cfg(target_os="win32")]
     #[cfg(target_os="darwin")]
     #[cfg(target_os="linux")]
-    mod tcp_and_server_client_test {
+    module tcp_and_server_client_test {
         #[cfg(target_arch="x86_64")]
-        mod impl64 {
+        module impl64 {
             #[test]
             fn test_uv_ll_tcp_server_and_request() unsafe {
                 impl_uv_tcp_server_and_request();
             }
         }
         #[cfg(target_arch="x86")]
-        mod impl32 {
+        module impl32 {
             #[test]
             #[ignore(cfg(target_os = "linux"))]
             fn test_uv_ll_tcp_server_and_request() unsafe {

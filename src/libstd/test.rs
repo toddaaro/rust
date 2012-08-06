@@ -23,7 +23,7 @@ export tr_ignored;
 export run_tests_console;
 
 #[abi = "cdecl"]
-extern mod rustrt {
+extern module rustrt {
     fn sched_threads() -> libc::size_t;
 }
 
@@ -410,7 +410,7 @@ fn calc_result(test: test_desc, task_succeeded: bool) -> test_result {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     #[test]
     fn do_not_run_ignored_tests() {

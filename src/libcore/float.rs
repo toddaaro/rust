@@ -45,7 +45,7 @@ const infinity: float = 1.0/0.0;
 const neg_infinity: float = -1.0/0.0;
 
 /* Module: consts */
-mod consts {
+module consts {
 
     // FIXME (requires Issue #1433 to fix): replace with mathematical
     // constants from cmath.

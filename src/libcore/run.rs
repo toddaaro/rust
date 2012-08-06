@@ -11,7 +11,7 @@ export spawn_process;
 export waitpid;
 
 #[abi = "cdecl"]
-extern mod rustrt {
+extern module rustrt {
     fn rust_run_program(argv: **libc::c_char, envp: *c_void,
                         dir: *libc::c_char,
                         in_fd: c_int, out_fd: c_int, err_fd: c_int)
@@ -387,7 +387,7 @@ fn waitpid(pid: pid_t) -> int {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     import io::writer_util;
 

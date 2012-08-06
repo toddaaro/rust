@@ -22,7 +22,7 @@ import libc::{c_void, size_t};
 
 #[nolink]
 #[abi = "cdecl"]
-extern mod libc_ {
+extern module libc_ {
     #[rust_stack]
     fn memcpy(dest: *c_void, src: *c_void, n: libc::size_t) -> *c_void;
     #[rust_stack]
@@ -32,7 +32,7 @@ extern mod libc_ {
 }
 
 #[abi = "rust-intrinsic"]
-extern mod rusti {
+extern module rusti {
     fn addr_of<T>(val: T) -> *T;
 }
 

@@ -1,4 +1,4 @@
-mod general_category {
+module general_category {
     pure fn Cc(c: char) -> bool {
         return match c {
               '\x00' to '\x1f'
@@ -2558,7 +2558,7 @@ mod general_category {
     }
 
 }
-mod derived_property {
+module derived_property {
     /// Check if a character has the alphabetic unicode property
     pure fn Alphabetic(c: char) -> bool {
         return match c {

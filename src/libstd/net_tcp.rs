@@ -27,7 +27,7 @@ export listen, accept;
 export connect;
 
 #[nolink]
-extern mod rustrt {
+extern module rustrt {
     fn rust_uv_current_kernel_malloc(size: libc::c_uint) -> *libc::c_void;
     fn rust_uv_current_kernel_free(mem: *libc::c_void);
     fn rust_uv_helper_uv_tcp_t_size() -> libc::c_uint;
@@ -1215,14 +1215,14 @@ type tcp_buffered_socket_data = {
 };
 
 //#[cfg(test)]
-mod test {
+module test {
     // FIXME don't run on fbsd or linux 32 bit (#2064)
     #[cfg(target_os="win32")]
     #[cfg(target_os="darwin")]
     #[cfg(target_os="linux")]
-    mod tcp_ipv4_server_and_client_test {
+    module tcp_ipv4_server_and_client_test {
         #[cfg(target_arch="x86_64")]
-        mod impl64 {
+        module impl64 {
             #[test]
             fn test_gl_tcp_server_and_client_ipv4() unsafe {
                 impl_gl_tcp_ipv4_server_and_client();
@@ -1246,7 +1246,7 @@ mod test {
 
         }
         #[cfg(target_arch="x86")]
-        mod impl32 {
+        module impl32 {
             #[test]
             #[ignore(cfg(target_os = "linux"))]
             fn test_gl_tcp_server_and_client_ipv4() unsafe {

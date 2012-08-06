@@ -402,7 +402,7 @@ fn opt_default(m: matches, nm: ~str, def: ~str) -> option<~str> {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     import opt = getopts;
     import result::{err, ok};
 

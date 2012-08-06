@@ -100,7 +100,7 @@ pure fn is_finite(x: f32) -> bool {
 // FIXME (#1999): add is_normal, is_subnormal, and fpclassify.
 
 /* Module: consts */
-mod consts {
+module consts {
 
     // FIXME (requires Issue #1433 to fix): replace with mathematical
     // constants from cmath.

@@ -87,7 +87,7 @@ trait map<K: copy, V: copy> {
     fn each_value_ref(fn(value: &V) -> bool);
 }
 
-mod util {
+module util {
     type rational = {num: int, den: int}; // : int::positive(*.den);
 
     pure fn rational_leq(x: rational, y: rational) -> bool {
@@ -100,7 +100,7 @@ mod util {
 
 // FIXME (#2344): package this up and export it as a datatype usable for
 // external code that doesn't want to pay the cost of a box.
-mod chained {
+module chained {
     export t, mk, hashmap;
 
     const initial_capacity: uint = 32u; // 2^5
@@ -464,7 +464,7 @@ fn hash_from_uints<V: copy>(items: &[(uint, V)]) -> hashmap<uint, V> {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     #[test]
     fn test_simple() {

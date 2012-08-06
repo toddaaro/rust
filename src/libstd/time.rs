@@ -17,7 +17,7 @@ export
     strptime;
 
 #[abi = "cdecl"]
-extern mod rustrt {
+extern module rustrt {
     fn get_time(&sec: i64, &nsec: i32);
     fn precise_time_ns(&ns: u64);
 
@@ -806,7 +806,7 @@ impl tm for tm {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     import task;
 
     #[test]

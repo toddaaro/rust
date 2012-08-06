@@ -77,7 +77,7 @@ impl <A: to_str> of to_str for ~A {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     #[test]
     fn test_simple_types() {
         assert 1.to_str() == ~"1";

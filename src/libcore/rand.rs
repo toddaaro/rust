@@ -6,7 +6,7 @@ export xorshift, seeded_xorshift;
 enum rctx {}
 
 #[abi = "cdecl"]
-extern mod rustrt {
+extern module rustrt {
     fn rand_seed() -> ~[u8];
     fn rand_new() -> *rctx;
     fn rand_new_seeded(seed: ~[u8]) -> *rctx;
@@ -302,7 +302,7 @@ fn seeded_xorshift(x: u32, y: u32, z: u32, w: u32) -> rng {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     #[test]
     fn rng_seeded() {

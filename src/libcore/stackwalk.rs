@@ -72,11 +72,11 @@ fn frame_address(f: fn(*u8)) {
     rusti::frame_address(f)
 }
 
-extern mod rustrt {
+extern module rustrt {
     fn rust_dbg_breakpoint();
 }
 
 #[abi = "rust-intrinsic"]
-extern mod rusti {
+extern module rusti {
     fn frame_address(f: fn(*u8));
 }

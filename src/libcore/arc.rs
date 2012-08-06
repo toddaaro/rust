@@ -10,7 +10,7 @@ export arc, get, clone;
 export exclusive, methods;
 
 #[abi = "cdecl"]
-extern mod rustrt {
+extern module rustrt {
     #[rust_stack]
     fn rust_atomic_increment(p: &mut libc::intptr_t)
         -> libc::intptr_t;
@@ -140,7 +140,7 @@ impl methods<T: send> for exclusive<T> {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     import comm::*;
     import future::extensions;
 

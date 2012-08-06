@@ -40,7 +40,7 @@ export walk_dir;
 // FIXME: move these to str perhaps? #2620
 export as_c_charp, fill_charp_buf;
 
-extern mod rustrt {
+extern module rustrt {
     fn rust_getcwd() -> ~str;
     fn rust_path_is_dir(path: *libc::c_char) -> c_int;
     fn rust_path_exists(path: *libc::c_char) -> c_int;
@@ -70,7 +70,7 @@ fn fill_charp_buf(f: fn(*mut c_char, size_t) -> bool)
 }
 
 #[cfg(windows)]
-mod win32 {
+module win32 {
     import dword = libc::types::os::arch::extra::DWORD;
 
     fn fill_utf16_buf_and_decode(f: fn(*mut u16, dword) -> dword)
@@ -123,14 +123,14 @@ fn env() -> ~[(~str,~str)] {
     global_env::env()
 }
 
-mod global_env {
+module global_env {
     //! Internal module for serializing access to getenv/setenv
 
     export getenv;
     export setenv;
     export env;
 
-    extern mod rustrt {
+    extern module rustrt {
         fn rust_global_env_chan_ptr() -> *libc::uintptr_t;
     }
 
@@ -195,8 +195,8 @@ mod global_env {
         }
     }
 
-    mod impl {
-        extern mod rustrt {
+    module impl {
+        extern module rustrt {
             fn rust_env_pairs() -> ~[~str];
         }
 
@@ -748,28 +748,28 @@ fn family() -> ~str { ~"unix" }
 fn family() -> ~str { ~"windows" }
 
 #[cfg(target_os = "macos")]
-mod consts {
+module consts {
     fn sysname() -> ~str { ~"macos" }
     fn exe_suffix() -> ~str { ~"" }
     fn dll_suffix() -> ~str { ~".dylib" }
 }
 
 #[cfg(target_os = "freebsd")]
-mod consts {
+module consts {
     fn sysname() -> ~str { ~"freebsd" }
     fn exe_suffix() -> ~str { ~"" }
     fn dll_suffix() -> ~str { ~".so" }
 }
 
 #[cfg(target_os = "linux")]
-mod consts {
+module consts {
     fn sysname() -> ~str { ~"linux" }
     fn exe_suffix() -> ~str { ~"" }
     fn dll_suffix() -> ~str { ~".so" }
 }
 
 #[cfg(target_os = "win32")]
-mod consts {
+module consts {
     fn sysname() -> ~str { ~"win32" }
     fn exe_suffix() -> ~str { ~".exe" }
     fn dll_suffix() -> ~str { ~".dll" }
@@ -785,7 +785,7 @@ fn arch() -> ~str { ~"x86_64" }
 fn arch() -> str { ~"arm" }
 
 #[cfg(test)]
-mod tests {
+module tests {
 
     #[test]
     fn last_os_error() {

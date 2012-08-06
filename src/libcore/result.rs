@@ -337,7 +337,7 @@ fn unwrap<T, U>(-res: result<T, U>) -> T {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     fn op1() -> result::result<int, ~str> { result::ok(666) }
 
     fn op2(&&i: int) -> result::result<uint, ~str> {

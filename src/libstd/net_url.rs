@@ -680,7 +680,7 @@ impl of to_str::to_str for url {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     #[test]
     fn test_split_char_first() {
         let (u,v) = split_char_first(~"hello, sweet world", ',');

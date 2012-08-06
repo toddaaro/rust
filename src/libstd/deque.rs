@@ -115,7 +115,7 @@ fn create<T: copy>() -> t<T> {
 }
 
 #[cfg(test)]
-mod tests {
+module tests {
     #[test]
     fn test_simple() {
         let d: deque::t<int> = deque::create::<int>();
