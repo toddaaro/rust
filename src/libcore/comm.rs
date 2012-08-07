@@ -24,9 +24,11 @@
  * ~~~
  */
 
-import either::either;
+import either::Either;
 import libc::size_t;
 
+export Port;
+export Chan;
 export port;
 export chan;
 export send;
@@ -45,8 +47,8 @@ export listen;
  * transmitted. If a port value is copied, both copies refer to the same
  * port.  Ports may be associated with multiple `chan`s.
  */
-enum port<T: send> {
-    port_t(@port_ptr<T>)
+enum Port<T: send> {
+    Port_(@PortPtr<T>)
 }
 
 // It's critical that this only have one variant, so it has a record
@@ -61,27 +63,27 @@ enum port<T: send> {
  * data will be silently dropped.  Channels may be duplicated and
  * themselves transmitted over other channels.
  */
-enum chan<T: send> {
-    chan_t(port_id)
+enum Chan<T: send> {
+    Chan_(port_id)
 }
 
 /// Constructs a port
-fn port<T: send>() -> port<T> {
-    port_t(@port_ptr(rustrt::new_port(sys::size_of::<T>() as size_t)))
+fn port<T: send>() -> Port<T> {
+    Port_(@PortPtr(rustrt::new_port(sys::size_of::<T>() as size_t)))
 }
 
-impl methods<T: send> for port<T> {
+impl Methods<T: send> for Port<T> {
 
-    fn chan() -> chan<T> { chan(self) }
+    fn chan() -> Chan<T> { chan(self) }
     fn send(+v: T) { self.chan().send(v) }
     fn recv() -> T { recv(self) }
     fn peek() -> bool { peek(self) }
 
 }
 
-impl methods<T: send> for chan<T> {
+impl Methods<T: send> for Chan<T> {
 
-    fn chan() -> chan<T> { self }
+    fn chan() -> Chan<T> { self }
     fn send(+v: T) { send(self, v) }
     fn recv() -> T { recv_chan(self) }
     fn peek() -> bool { peek_chan(self) }
@@ -89,12 +91,12 @@ impl methods<T: send> for chan<T> {
 }
 
 /// Open a new receiving channel for the duration of a function
-fn listen<T: send, U>(f: fn(chan<T>) -> U) -> U {
+fn listen<T: send, U>(f: fn(Chan<T>) -> U) -> U {
     let po = port();
     f(po.chan())
 }
 
-class port_ptr<T:send> {
+class PortPtr<T:send> {
   let po: *rust_port;
   new(po: *rust_port) { self.po = po; }
   drop unsafe {
@@ -127,9 +129,9 @@ class port_ptr<T:send> {
  * Fails if the port is detached or dead. Fails if the port
  * is owned by a different task.
  */
-fn as_raw_port<T: send, U>(ch: comm::chan<T>, f: fn(*rust_port) -> U) -> U {
+fn as_raw_port<T: send, U>(ch: comm::Chan<T>, f: fn(*rust_port) -> U) -> U {
 
-    class portref {
+    class PortRef {
        let p: *rust_port;
        new(p: *rust_port) { self.p = p; }
        drop {
@@ -139,7 +141,7 @@ fn as_raw_port<T: send, U>(ch: comm::chan<T>, f: fn(*rust_port) -> U) -> U {
        }
     }
 
-    let p = portref(rustrt::rust_port_take(*ch));
+    let p = PortRef(rustrt::rust_port_take(*ch));
 
     if ptr::is_null(p.p) {
         fail ~"unable to locate port for channel"
@@ -154,16 +156,16 @@ fn as_raw_port<T: send, U>(ch: comm::chan<T>, f: fn(*rust_port) -> U) -> U {
  * Constructs a channel. The channel is bound to the port used to
  * construct it.
  */
-fn chan<T: send>(p: port<T>) -> chan<T> {
-    chan_t(rustrt::get_port_id((**p).po))
+fn chan<T: send>(p: Port<T>) -> Chan<T> {
+    Chan_(rustrt::get_port_id((**p).po))
 }
 
 /**
  * Sends data over a channel. The sent data is moved into the channel,
  * whereupon the caller loses access to it.
  */
-fn send<T: send>(ch: chan<T>, -data: T) {
-    let chan_t(p) = ch;
+fn send<T: send>(ch: Chan<T>, -data: T) {
+    let Chan_(p) = ch;
     let data_ptr = ptr::addr_of(data) as *();
     let res = rustrt::rust_port_id_send(p, data_ptr);
     if res != 0u unsafe {
@@ -177,17 +179,17 @@ fn send<T: send>(ch: chan<T>, -data: T) {
  * Receive from a port.  If no data is available on the port then the
  * task will block until data becomes available.
  */
-fn recv<T: send>(p: port<T>) -> T { recv_((**p).po) }
+fn recv<T: send>(p: Port<T>) -> T { recv_((**p).po) }
 
 /// Returns true if there are messages available
-fn peek<T: send>(p: port<T>) -> bool { peek_((**p).po) }
+fn peek<T: send>(p: Port<T>) -> bool { peek_((**p).po) }
 
 #[doc(hidden)]
-fn recv_chan<T: send>(ch: comm::chan<T>) -> T {
+fn recv_chan<T: send>(ch: comm::Chan<T>) -> T {
     as_raw_port(ch, |x|recv_(x))
 }
 
-fn peek_chan<T: send>(ch: comm::chan<T>) -> bool {
+fn peek_chan<T: send>(ch: comm::Chan<T>) -> bool {
     as_raw_port(ch, |x|peek_(x))
 }
 
@@ -218,8 +220,8 @@ fn peek_(p: *rust_port) -> bool {
 }
 
 /// Receive on one of two ports
-fn select2<A: send, B: send>(p_a: port<A>, p_b: port<B>)
-    -> either<A, B> {
+fn select2<A: send, B: send>(p_a: Port<A>, p_b: Port<B>)
+    -> Either<A, B> {
     let ports = ~[(**p_a).po, (**p_b).po];
     let yield = 0u, yieldp = ptr::addr_of(yield);
 
@@ -243,9 +245,9 @@ fn select2<A: send, B: send>(p_a: port<A>, p_b: port<B>)
     assert resport != ptr::null();
 
     if resport == (**p_a).po {
-        either::left(recv(p_a))
+        either::Left(recv(p_a))
     } else if resport == (**p_b).po {
-        either::right(recv(p_b))
+        either::Right(recv(p_b))
     } else {
         fail ~"unexpected result from rust_port_select";
     }
@@ -254,9 +256,10 @@ fn select2<A: send, B: send>(p_a: port<A>, p_b: port<B>)
 
 /* Implementation details */
 
-
+#[allow(non_camel_case_types)]
 enum rust_port {}
 
+#[allow(non_camel_case_types)]
 type port_id = int;
 
 #[abi = "cdecl"]

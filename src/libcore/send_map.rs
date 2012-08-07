@@ -10,28 +10,28 @@ Sendable hash maps.  Very much a work in progress.
  *
  * The hash should concentrate entropy in the lower bits.
  */
-type hashfn<K> = pure fn~(K) -> uint;
-type eqfn<K> = pure fn~(K, K) -> bool;
+type HashFn<K> = pure fn~(K) -> uint;
+type EqFn<K> = pure fn~(K, K) -> bool;
 
 /// Open addressing with linear probing.
 mod linear {
-    export linear_map, linear_map_with_capacity, public_methods;
+    export LinearMap, linear_map, linear_map_with_capacity, PublicMethods;
 
     const initial_capacity: uint = 32u; // 2^5
-    type bucket<K,V> = {hash: uint, key: K, value: V};
-    enum linear_map<K,V> {
-        linear_map_({
+    type Bucket<K,V> = {hash: uint, key: K, value: V};
+    enum LinearMap<K,V> {
+        LinearMap_({
             hashfn: pure fn~(x: &K) -> uint,
             eqfn: pure fn~(x: &K, y: &K) -> bool,
             resize_at: uint,
             size: uint,
-            buckets: ~[option<bucket<K,V>>]})
+            buckets: ~[option<Bucket<K,V>>]})
     }
 
     // FIXME(#2979) -- with #2979 we could rewrite found_entry
     // to have type option<&bucket<K,V>> which would be nifty
-    enum search_result {
-        found_entry(uint), found_hole(uint), table_full
+    enum SearchResult {
+        FoundEntry(uint), FoundHole(uint), TableFull
     }
 
     fn resize_at(capacity: uint) -> uint {
@@ -40,7 +40,7 @@ mod linear {
 
     fn linear_map<K,V>(
         +hashfn: pure fn~(x: &K) -> uint,
-        +eqfn: pure fn~(x: &K, y: &K) -> bool) -> linear_map<K,V> {
+        +eqfn: pure fn~(x: &K, y: &K) -> bool) -> LinearMap<K,V> {
 
         linear_map_with_capacity(hashfn, eqfn, 32)
     }
@@ -48,9 +48,9 @@ mod linear {
     fn linear_map_with_capacity<K,V>(
         +hashfn: pure fn~(x: &K) -> uint,
         +eqfn: pure fn~(x: &K, y: &K) -> bool,
-        initial_capacity: uint) -> linear_map<K,V> {
+        initial_capacity: uint) -> LinearMap<K,V> {
 
-        linear_map_({
+        LinearMap_({
             hashfn: hashfn,
             eqfn: eqfn,
             resize_at: resize_at(initial_capacity),
@@ -64,7 +64,7 @@ mod linear {
         unsafe::reinterpret_cast(p)
     }
 
-    impl private_methods<K,V> for &const linear_map<K,V> {
+    impl PrivateMethods<K,V> for &const LinearMap<K,V> {
         #[inline(always)]
         pure fn to_bucket(h: uint) -> uint {
             // FIXME(#3041) borrow a more sophisticated technique here from
@@ -101,8 +101,8 @@ mod linear {
 
         #[inline(always)]
         pure fn bucket_for_key(
-            buckets: &[option<bucket<K,V>>],
-            k: &K) -> search_result {
+            buckets: &[option<Bucket<K,V>>],
+            k: &K) -> SearchResult {
 
             let hash = self.hashfn(k);
             self.bucket_for_key_with_hash(buckets, hash, k)
@@ -110,23 +110,23 @@ mod linear {
 
         #[inline(always)]
         pure fn bucket_for_key_with_hash(
-            buckets: &[option<bucket<K,V>>],
+            buckets: &[option<Bucket<K,V>>],
             hash: uint,
-            k: &K) -> search_result {
+            k: &K) -> SearchResult {
 
             let _ = for self.bucket_sequence(hash) |i| {
                 match buckets[i] {
                   some(bkt) => if bkt.hash == hash && self.eqfn(k, &bkt.key) {
-                    return found_entry(i);
+                    return FoundEntry(i);
                   },
-                  none => return found_hole(i)
+                  none => return FoundHole(i)
                 }
             };
-            return table_full;
+            return TableFull;
         }
     }
 
-    impl private_methods<K,V> for &mut linear_map<K,V> {
+    impl PrivateMethods<K,V> for &mut LinearMap<K,V> {
         /// Expands the capacity of the array and re-inserts each
         /// of the existing buckets.
         fn expand() {
@@ -146,7 +146,7 @@ mod linear {
             }
         }
 
-        fn insert_bucket(+bucket: option<bucket<K,V>>) {
+        fn insert_bucket(+bucket: option<Bucket<K,V>>) {
             let {hash, key, value} <- option::unwrap(bucket);
             let _ = self.insert_internal(hash, key, value);
         }
@@ -157,15 +157,15 @@ mod linear {
         fn insert_internal(hash: uint, +k: K, +v: V) -> bool {
             match self.bucket_for_key_with_hash(self.buckets, hash,
                                               unsafe{borrow(k)}) {
-              table_full => {fail ~"Internal logic error";}
-              found_hole(idx) => {
+              TableFull => {fail ~"Internal logic error";}
+              FoundHole(idx) => {
                 debug!{"insert fresh (%?->%?) at idx %?, hash %?",
                        k, v, idx, hash};
                 self.buckets[idx] = some({hash: hash, key: k, value: v});
                 self.size += 1;
                 return true;
               }
-              found_entry(idx) => {
+              FoundEntry(idx) => {
                 debug!{"insert overwrite (%?->%?) at idx %?, hash %?",
                        k, v, idx, hash};
                 self.buckets[idx] = some({hash: hash, key: k, value: v});
@@ -175,7 +175,7 @@ mod linear {
         }
     }
 
-    impl public_methods<K,V> for &mut linear_map<K,V> {
+    impl PublicMethods<K,V> for &mut LinearMap<K,V> {
         fn insert(+k: K, +v: V) -> bool {
             if self.size >= self.resize_at {
                 // n.b.: We could also do this after searching, so
@@ -208,10 +208,10 @@ mod linear {
             // http://www.maths.lse.ac.uk/Courses/MA407/del-hash.pdf
 
             let mut idx = match self.bucket_for_key(self.buckets, k) {
-              table_full | found_hole(_) => {
+              TableFull | FoundHole(_) => {
                 return false;
               }
-              found_entry(idx) => {
+              FoundEntry(idx) => {
                 idx
               }
             };
@@ -230,13 +230,13 @@ mod linear {
         }
     }
 
-    impl private_methods<K,V> for &linear_map<K,V> {
-        fn search(hash: uint, op: fn(x: &option<bucket<K,V>>) -> bool) {
+    impl PrivateMethods<K,V> for &LinearMap<K,V> {
+        fn search(hash: uint, op: fn(x: &option<Bucket<K,V>>) -> bool) {
             let _ = self.bucket_sequence(hash, |i| op(&self.buckets[i]));
         }
     }
 
-    impl public_methods<K,V> for &const linear_map<K,V> {
+    impl PublicMethods<K,V> for &const LinearMap<K,V> {
         fn len() -> uint {
             self.size
         }
@@ -247,21 +247,21 @@ mod linear {
 
         fn contains_key(k: &K) -> bool {
             match self.bucket_for_key(self.buckets, k) {
-              found_entry(_) => {true}
-              table_full | found_hole(_) => {false}
+              FoundEntry(_) => {true}
+              TableFull | FoundHole(_) => {false}
             }
         }
     }
 
-    impl public_methods<K,V: copy> for &const linear_map<K,V> {
+    impl PublicMethods<K,V: copy> for &const LinearMap<K,V> {
         fn find(k: &K) -> option<V> {
             match self.bucket_for_key(self.buckets, k) {
-              found_entry(idx) => {
+              FoundEntry(idx) => {
                 match check self.buckets[idx] {
                   some(bkt) => {some(copy bkt.value)}
                 }
               }
-              table_full | found_hole(_) => {
+              TableFull | FoundHole(_) => {
                 none
               }
             }
@@ -280,7 +280,7 @@ mod linear {
         }
     }
 
-    impl imm_methods<K,V> for &linear_map<K,V> {
+    impl ImmMethods<K,V> for &LinearMap<K,V> {
         /*
         FIXME --- #2979 must be fixed to typecheck this
         fn find_ptr(k: K) -> option<&V> {
@@ -309,17 +309,17 @@ mod linear {
         }
     }
 
-    impl public_methods<K: copy, V: copy> for &linear_map<K,V> {
+    impl PublicMethods<K: copy, V: copy> for &LinearMap<K,V> {
         fn each(blk: fn(+K,+V) -> bool) {
             self.each_ref(|k,v| blk(copy *k, copy *v));
         }
     }
-    impl public_methods<K: copy, V> for &linear_map<K,V> {
+    impl PublicMethods<K: copy, V> for &LinearMap<K,V> {
         fn each_key(blk: fn(+K) -> bool) {
             self.each_key_ref(|k| blk(copy *k));
         }
     }
-    impl public_methods<K, V: copy> for &linear_map<K,V> {
+    impl PublicMethods<K, V: copy> for &LinearMap<K,V> {
         fn each_value(blk: fn(+V) -> bool) {
             self.each_value_ref(|v| blk(copy *v));
         }

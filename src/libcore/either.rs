@@ -1,15 +1,15 @@
 //! A type that represents one of two alternatives
 
-import result::result;
+import result::Result;
 
 /// The either type
-enum either<T, U> {
-    left(T),
-    right(U)
+enum Either<T, U> {
+    Left(T),
+    Right(U)
 }
 
 fn either<T, U, V>(f_left: fn(T) -> V,
-                   f_right: fn(U) -> V, value: either<T, U>) -> V {
+                   f_right: fn(U) -> V, value: Either<T, U>) -> V {
     /*!
      * Applies a function based on the given either value
      *
@@ -19,38 +19,38 @@ fn either<T, U, V>(f_left: fn(T) -> V,
      */
 
     match value {
-      left(l) => f_left(l),
-      right(r) => f_right(r)
+      Left(l) => f_left(l),
+      Right(r) => f_right(r)
     }
 }
 
-fn lefts<T: copy, U>(eithers: ~[either<T, U>]) -> ~[T] {
+fn lefts<T: copy, U>(eithers: ~[Either<T, U>]) -> ~[T] {
     //! Extracts from a vector of either all the left values
 
     let mut result: ~[T] = ~[];
     for vec::each(eithers) |elt| {
         match elt {
-          left(l) => vec::push(result, l),
+          Left(l) => vec::push(result, l),
           _ => { /* fallthrough */ }
         }
     }
     return result;
 }
 
-fn rights<T, U: copy>(eithers: ~[either<T, U>]) -> ~[U] {
+fn rights<T, U: copy>(eithers: ~[Either<T, U>]) -> ~[U] {
     //! Extracts from a vector of either all the right values
 
     let mut result: ~[U] = ~[];
     for vec::each(eithers) |elt| {
         match elt {
-          right(r) => vec::push(result, r),
+          Right(r) => vec::push(result, r),
           _ => { /* fallthrough */ }
         }
     }
     return result;
 }
 
-fn partition<T: copy, U: copy>(eithers: ~[either<T, U>])
+fn partition<T: copy, U: copy>(eithers: ~[Either<T, U>])
     -> {lefts: ~[T], rights: ~[U]} {
     /*!
      * Extracts from a vector of either all the left values and right values
@@ -63,24 +63,24 @@ fn partition<T: copy, U: copy>(eithers: ~[either<T, U>])
     let mut rights: ~[U] = ~[];
     for vec::each(eithers) |elt| {
         match elt {
-          left(l) => vec::push(lefts, l),
-          right(r) => vec::push(rights, r)
+          Left(l) => vec::push(lefts, l),
+          Right(r) => vec::push(rights, r)
         }
     }
     return {lefts: lefts, rights: rights};
 }
 
-pure fn flip<T: copy, U: copy>(eith: either<T, U>) -> either<U, T> {
+pure fn flip<T: copy, U: copy>(eith: Either<T, U>) -> Either<U, T> {
     //! Flips between left and right of a given either
 
     match eith {
-      right(r) => left(r),
-      left(l) => right(l)
+      Right(r) => Left(r),
+      Left(l) => Right(l)
     }
 }
 
 pure fn to_result<T: copy, U: copy>(
-    eith: either<T, U>) -> result<U, T> {
+    eith: Either<T, U>) -> Result<U, T> {
     /*!
      * Converts either::t to a result::t
      *
@@ -89,21 +89,21 @@ pure fn to_result<T: copy, U: copy>(
      */
 
     match eith {
-      right(r) => result::ok(r),
-      left(l) => result::err(l)
+      Right(r) => result::Ok(r),
+      Left(l) => result::Err(l)
     }
 }
 
-pure fn is_left<T, U>(eith: either<T, U>) -> bool {
+pure fn is_left<T, U>(eith: Either<T, U>) -> bool {
     //! Checks whether the given value is a left
 
-    match eith { left(_) => true, _ => false }
+    match eith { Left(_) => true, _ => false }
 }
 
-pure fn is_right<T, U>(eith: either<T, U>) -> bool {
+pure fn is_right<T, U>(eith: Either<T, U>) -> bool {
     //! Checks whether the given value is a right
 
-    match eith { right(_) => true, _ => false }
+    match eith { Right(_) => true, _ => false }
 }
 
 #[test]

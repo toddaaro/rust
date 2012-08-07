@@ -24,7 +24,7 @@ export epsilon;
 
 export j0, j1, jn, y0, y1, yn;
 
-export num;
+export Num;
 
 // These are not defined inside consts:: for consistency with
 // the integer types
@@ -194,7 +194,7 @@ pure fn log2(n: f64) -> f64 {
     return ln(n) / consts::ln_2;
 }
 
-impl num of num::num for f64 {
+impl Num of num::Num for f64 {
     pure fn add(&&other: f64)    -> f64 { return self + other; }
     pure fn sub(&&other: f64)    -> f64 { return self - other; }
     pure fn mul(&&other: f64)    -> f64 { return self * other; }

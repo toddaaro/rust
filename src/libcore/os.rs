@@ -24,7 +24,7 @@ import option::{some, none};
 
 import getcwd = rustrt::rust_getcwd;
 import consts::*;
-import task::task_builder;
+import task::TaskBuilder;
 
 export close, fclose, fsync_fd, waitpid;
 export env, getenv, setenv, fdopen, pipe;
@@ -135,9 +135,9 @@ mod global_env {
     }
 
     enum msg {
-        msg_getenv(~str, comm::chan<option<~str>>),
-        msg_setenv(~str, ~str, comm::chan<()>),
-        msg_env(comm::chan<~[(~str,~str)]>)
+        msg_getenv(~str, comm::Chan<option<~str>>),
+        msg_setenv(~str, ~str, comm::Chan<()>),
+        msg_env(comm::Chan<~[(~str,~str)]>)
     }
 
     fn getenv(n: ~str) -> option<~str> {
@@ -161,12 +161,12 @@ mod global_env {
         comm::recv(po)
     }
 
-    fn get_global_env_chan() -> comm::chan<msg> {
+    fn get_global_env_chan() -> comm::Chan<msg> {
         let global_ptr = rustrt::rust_global_env_chan_ptr();
         let task_build_fn = || {
             // FIXME (#2621): This would be a good place to use a very small
             // foreign stack
-            task::task().sched_mode(task::single_threaded).unlinked()
+            task::task().sched_mode(task::SingleThreaded).unlinked()
         };
         unsafe {
             priv::chan_from_global_ptr(
@@ -174,21 +174,21 @@ mod global_env {
         }
     }
 
-    fn global_env_task(msg_po: comm::port<msg>) {
+    fn global_env_task(msg_po: comm::Port<msg>) {
         unsafe {
             do priv::weaken_task |weak_po| {
                 loop {
                     match comm::select2(msg_po, weak_po) {
-                      either::left(msg_getenv(n, resp_ch)) => {
+                      either::Left(msg_getenv(n, resp_ch)) => {
                         comm::send(resp_ch, impl::getenv(n))
                       }
-                      either::left(msg_setenv(n, v, resp_ch)) => {
+                      either::Left(msg_setenv(n, v, resp_ch)) => {
                         comm::send(resp_ch, impl::setenv(n, v))
                       }
-                      either::left(msg_env(resp_ch)) => {
+                      either::Left(msg_env(resp_ch)) => {
                         comm::send(resp_ch, impl::env())
                       }
-                      either::right(_) => break
+                      either::Right(_) => break
                     }
                 }
             }

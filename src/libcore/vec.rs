@@ -7,7 +7,7 @@ import libc::size_t;
 export append;
 export append_one;
 export consume, consume_mut;
-export init_op;
+export InitOp;
 export is_empty;
 export is_not_empty;
 export same_length;
@@ -84,22 +84,22 @@ export as_mut_buf;
 export as_const_buf;
 export unsafe;
 export u8;
-export extensions;
-export const_vector;
-export copyable_vector;
-export immutable_vector;
-export immutable_copyable_vector;
-export iter_trait_extensions;
-export vec_concat;
+export Extensions;
+export ConstVector;
+export CopyableVector;
+export ImmutableVector;
+export ImmutableCopyableVector;
+export IterTraitExtensions;
+export VecConcat;
 
 #[abi = "cdecl"]
 extern mod rustrt {
     fn vec_reserve_shared(++t: *sys::type_desc,
-                          ++v: **unsafe::vec_repr,
+                          ++v: **unsafe::VecRepr,
                           ++n: libc::size_t);
     fn vec_from_buf_shared(++t: *sys::type_desc,
                            ++ptr: *(),
-                           ++count: libc::size_t) -> *unsafe::vec_repr;
+                           ++count: libc::size_t) -> *unsafe::VecRepr;
 }
 
 #[abi = "rust-intrinsic"]
@@ -108,7 +108,7 @@ extern mod rusti {
 }
 
 /// A function used to initialize the elements of a vector
-type init_op<T> = fn(uint) -> T;
+type InitOp<T> = fn(uint) -> T;
 
 /// Returns true if a vector contains no elements
 pure fn is_empty<T>(v: &[const T]) -> bool {
@@ -139,7 +139,7 @@ pure fn same_length<T, U>(xs: &[const T], ys: &[const U]) -> bool {
 fn reserve<T>(&v: ~[const T], n: uint) {
     // Only make the (slow) call into the runtime if we have to
     if capacity(v) < n {
-        let ptr = ptr::addr_of(v) as **unsafe::vec_repr;
+        let ptr = ptr::addr_of(v) as **unsafe::VecRepr;
         rustrt::vec_reserve_shared(sys::get_type_desc::<T>(),
                                    ptr, n as size_t);
     }
@@ -168,7 +168,7 @@ fn reserve_at_least<T>(&v: ~[const T], n: uint) {
 #[inline(always)]
 pure fn capacity<T>(&&v: ~[const T]) -> uint {
     unsafe {
-        let repr: **unsafe::vec_repr = ::unsafe::reinterpret_cast(addr_of(v));
+        let repr: **unsafe::VecRepr = ::unsafe::reinterpret_cast(addr_of(v));
         (**repr).alloc / sys::size_of::<T>()
     }
 }
@@ -185,7 +185,7 @@ pure fn len<T>(&&v: &[const T]) -> uint {
  * Creates an immutable vector of size `n_elts` and initializes the elements
  * to the value returned by the function `op`.
  */
-pure fn from_fn<T>(n_elts: uint, op: init_op<T>) -> ~[T] {
+pure fn from_fn<T>(n_elts: uint, op: InitOp<T>) -> ~[T] {
     let mut v = ~[];
     unchecked{reserve(v, n_elts);}
     let mut i: uint = 0u;
@@ -517,7 +517,7 @@ fn pop<T>(&v: ~[const T]) -> T {
 #[inline(always)]
 fn push<T>(&v: ~[const T], +initval: T) {
     unsafe {
-        let repr: **unsafe::vec_repr = ::unsafe::reinterpret_cast(addr_of(v));
+        let repr: **unsafe::VecRepr = ::unsafe::reinterpret_cast(addr_of(v));
         let fill = (**repr).fill;
         if (**repr).alloc > fill {
             push_fast(v, initval);
@@ -531,7 +531,7 @@ fn push<T>(&v: ~[const T], +initval: T) {
 // This doesn't bother to make sure we have space.
 #[inline(always)] // really pretty please
 unsafe fn push_fast<T>(&v: ~[const T], +initval: T) {
-    let repr: **unsafe::vec_repr = ::unsafe::reinterpret_cast(addr_of(v));
+    let repr: **unsafe::VecRepr = ::unsafe::reinterpret_cast(addr_of(v));
     let fill = (**repr).fill;
     (**repr).fill += sys::size_of::<T>();
     let p = ptr::addr_of((**repr).data);
@@ -634,7 +634,7 @@ fn grow<T: copy>(&v: ~[const T], n: uint, initval: T) {
  * * init_op - A function to call to retreive each appended element's
  *             value
  */
-fn grow_fn<T>(&v: ~[const T], n: uint, op: init_op<T>) {
+fn grow_fn<T>(&v: ~[const T], n: uint, op: InitOp<T>) {
     reserve_at_least(v, len(v) + n);
     let mut i: uint = 0u;
     while i < n { push(v, op(i)); i += 1u; }
@@ -1283,11 +1283,11 @@ pure fn as_mut_buf<T,U>(s: &[mut T],
     }
 }
 
-trait vec_concat<T> {
+trait VecConcat<T> {
     pure fn +(rhs: &[const T]) -> self;
 }
 
-impl extensions<T: copy> of vec_concat<T> for ~[T] {
+impl Extensions<T: copy> of VecConcat<T> for ~[T] {
     #[inline(always)]
     pure fn +(rhs: &[const T]) -> ~[T] {
         append(self, rhs)
@@ -1295,35 +1295,35 @@ impl extensions<T: copy> of vec_concat<T> for ~[T] {
 }
 
 #[cfg(notest)]
-impl extensions<T: copy> of add<&[const T],~[T]> for ~[T] {
+impl Extensions<T: copy> of add<&[const T],~[T]> for ~[T] {
     #[inline(always)]
     pure fn add(rhs: &[const T]) -> ~[T] {
         append(self, rhs)
     }
 }
 
-impl extensions<T: copy> of vec_concat<T> for ~[mut T] {
+impl Extensions<T: copy> of VecConcat<T> for ~[mut T] {
     #[inline(always)]
     pure fn +(rhs: &[const T]) -> ~[mut T] {
         append_mut(self, rhs)
     }
 }
 
-impl extensions<T: copy> of add<&[const T],~[mut T]> for ~[mut T] {
+impl Extensions<T: copy> of add<&[const T],~[mut T]> for ~[mut T] {
     #[inline(always)]
     pure fn add(rhs: &[const T]) -> ~[mut T] {
         append_mut(self, rhs)
     }
 }
 
-trait const_vector {
+trait ConstVector {
     pure fn is_empty() -> bool;
     pure fn is_not_empty() -> bool;
     pure fn len() -> uint;
 }
 
 /// Extension methods for vectors
-impl extensions/&<T> of const_vector for &[const T] {
+impl Extensions/&<T> of ConstVector for &[const T] {
     /// Returns true if a vector contains no elements
     #[inline]
     pure fn is_empty() -> bool { is_empty(self) }
@@ -1335,7 +1335,7 @@ impl extensions/&<T> of const_vector for &[const T] {
     pure fn len() -> uint { len(self) }
 }
 
-trait copyable_vector<T> {
+trait CopyableVector<T> {
     pure fn head() -> T;
     pure fn init() -> ~[T];
     pure fn last() -> T;
@@ -1344,7 +1344,7 @@ trait copyable_vector<T> {
 }
 
 /// Extension methods for vectors
-impl extensions/&<T: copy> of copyable_vector<T> for &[const T] {
+impl Extensions/&<T: copy> of CopyableVector<T> for &[const T] {
     /// Returns the first element of a vector
     #[inline]
     pure fn head() -> T { head(self) }
@@ -1362,7 +1362,7 @@ impl extensions/&<T: copy> of copyable_vector<T> for &[const T] {
     pure fn tail() -> ~[T] { tail(self) }
 }
 
-trait immutable_vector<T> {
+trait ImmutableVector<T> {
     pure fn foldr<U: copy>(z: U, p: fn(T, U) -> U) -> U;
     pure fn iter(f: fn(T));
     pure fn iteri(f: fn(uint, T));
@@ -1381,7 +1381,7 @@ trait immutable_vector<T> {
 }
 
 /// Extension methods for vectors
-impl extensions/&<T> of immutable_vector<T> for &[T] {
+impl Extensions/&<T> of ImmutableVector<T> for &[T] {
     /// Reduce a vector from right to left
     #[inline]
     pure fn foldr<U: copy>(z: U, p: fn(T, U) -> U) -> U { foldr(self, z, p) }
@@ -1489,14 +1489,14 @@ impl extensions/&<T> of immutable_vector<T> for &[T] {
     }
 }
 
-trait immutable_copyable_vector<T> {
+trait ImmutableCopyableVector<T> {
     pure fn filter(f: fn(T) -> bool) -> ~[T];
     pure fn find(f: fn(T) -> bool) -> option<T>;
     pure fn rfind(f: fn(T) -> bool) -> option<T>;
 }
 
 /// Extension methods for vectors
-impl extensions/&<T: copy> of immutable_copyable_vector<T> for &[T] {
+impl Extensions/&<T: copy> of ImmutableCopyableVector<T> for &[T] {
     /**
      * Construct a new vector from the elements of a vector for which some
      * predicate holds.
@@ -1530,14 +1530,14 @@ impl extensions/&<T: copy> of immutable_copyable_vector<T> for &[T] {
 mod unsafe {
     // FIXME: This should have crate visibility (#1893 blocks that)
     /// The internal representation of a vector
-    type vec_repr = {
+    type VecRepr = {
         box_header: (uint, uint, uint, uint),
         mut fill: uint,
         mut alloc: uint,
         data: u8
     };
 
-    type slice_repr = {
+    type SliceRepr = {
         mut data: *u8,
         mut len: uint
     };
@@ -1567,7 +1567,7 @@ mod unsafe {
      */
     #[inline(always)]
     unsafe fn set_len<T>(&&v: ~[const T], new_len: uint) {
-        let repr: **vec_repr = ::unsafe::reinterpret_cast(addr_of(v));
+        let repr: **VecRepr = ::unsafe::reinterpret_cast(addr_of(v));
         (**repr).fill = new_len * sys::size_of::<T>();
     }
 
@@ -1582,14 +1582,14 @@ mod unsafe {
      */
     #[inline(always)]
     unsafe fn to_ptr<T>(v: ~[const T]) -> *T {
-        let repr: **vec_repr = ::unsafe::reinterpret_cast(addr_of(v));
+        let repr: **VecRepr = ::unsafe::reinterpret_cast(addr_of(v));
         return ::unsafe::reinterpret_cast(addr_of((**repr).data));
     }
 
 
     #[inline(always)]
     unsafe fn to_ptr_slice<T>(v: &[const T]) -> *T {
-        let repr: **slice_repr = ::unsafe::reinterpret_cast(addr_of(v));
+        let repr: **SliceRepr = ::unsafe::reinterpret_cast(addr_of(v));
         return ::unsafe::reinterpret_cast(addr_of((**repr).data));
     }
 
@@ -1741,12 +1741,12 @@ mod u8 {
 // This cannot be used with iter-trait.rs because of the region pointer
 // required in the slice.
 
-impl extensions/&<A> of iter::base_iter<A> for &[A] {
+impl Extensions/&<A> of iter::BaseIter<A> for &[A] {
     fn each(blk: fn(A) -> bool) { each(self, blk) }
     fn size_hint() -> option<uint> { some(len(self)) }
 }
 
-impl extensions/&<A> of iter::extended_iter<A> for &[A] {
+impl Extensions/&<A> of iter::ExtendedIter<A> for &[A] {
     fn eachi(blk: fn(uint, A) -> bool) { iter::eachi(self, blk) }
     fn all(blk: fn(A) -> bool) -> bool { iter::all(self, blk) }
     fn any(blk: fn(A) -> bool) -> bool { iter::any(self, blk) }
@@ -1758,7 +1758,7 @@ impl extensions/&<A> of iter::extended_iter<A> for &[A] {
     fn position(f: fn(A) -> bool) -> option<uint> { iter::position(self, f) }
 }
 
-trait iter_trait_extensions<A> {
+trait IterTraitExtensions<A> {
     fn filter_to_vec(pred: fn(A) -> bool) -> ~[A];
     fn map_to_vec<B>(op: fn(A) -> B) -> ~[B];
     fn to_vec() -> ~[A];
@@ -1766,7 +1766,7 @@ trait iter_trait_extensions<A> {
     fn max() -> A;
 }
 
-impl extensions/&<A:copy> of iter_trait_extensions<A> for &[A] {
+impl Extensions/&<A:copy> of IterTraitExtensions<A> for &[A] {
     fn filter_to_vec(pred: fn(A) -> bool) -> ~[A] {
         iter::filter_to_vec(self, pred)
     }

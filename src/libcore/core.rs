@@ -5,31 +5,31 @@
 import option::{some, none};
 import option = option::option;
 import path = path::path;
-import tuple::{extensions, tuple_ops, extended_tuple_ops};
-import str::{extensions, str_slice, unique_str};
-import vec::extensions;
-import vec::{const_vector, copyable_vector, immutable_vector};
-import vec::{immutable_copyable_vector, iter_trait_extensions, vec_concat};
-import iter::{base_iter, extended_iter, copyable_iter, times, timesi};
-import option::extensions;
-import option_iter::extensions;
-import ptr::{extensions, ptr};
+import tuple::{Extensions, TupleOps, ExtendedTupleOps};
+import str::{Extensions, StrSlice, UniqueStr};
+import vec::Extensions;
+import vec::{ConstVector, CopyableVector, ImmutableVector};
+import vec::{ImmutableCopyableVector, IterTraitExtensions, VecConcat};
+import iter::{BaseIter, ExtendedIter, CopyableIter, Times, TimesIx};
+import option::Extensions;
+import option_iter::Extensions;
+import ptr::{Extensions, Ptr};
 import rand::extensions;
 import result::extensions;
-import int::{num, times, timesi};
-import i8::{num, times, timesi};
-import i16::{num, times, timesi};
-import i32::{num, times, timesi};
-import i64::{num, times, timesi};
-import uint::{num, times, timesi};
-import u8::{num, times, timesi};
-import u16::{num, times, timesi};
-import u32::{num, times, timesi};
-import u64::{num, times, timesi};
-import float::num;
-import f32::num;
-import f64::num;
-import num::num;
+import int::{Num, Times, TimesIx};
+import i8::{Num, Times, TimesIx};
+import i16::{Num, Times, TimesIx};
+import i32::{Num, Times, TimesIx};
+import i64::{Num, Times, TimesIx};
+import uint::{Num, Times, TimesIx};
+import u8::{Num, Times, TimesIx};
+import u16::{Num, Times, TimesIx};
+import u32::{Num, Times, TimesIx};
+import u64::{Num, Times, TimesIx};
+import float::Num;
+import f32::Num;
+import f64::Num;
+import num::Num;
 
 export path, option, some, none, unreachable;
 export extensions;
@@ -96,7 +96,7 @@ mod core {
     const debug : u32 = 3_u32;
 }
 
-// Similar to above. Some magic to make core testable.
+// Similar to above. some magic to make core testable.
 #[cfg(test)]
 mod std {
     use std(vers = "0.3");

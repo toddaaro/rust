@@ -15,8 +15,8 @@ export memset;
 export to_uint;
 export buf_len;
 export position;
-export extensions;
-export ptr;
+export Extensions;
+export Ptr;
 
 import libc::{c_void, size_t};
 
@@ -150,13 +150,13 @@ fn to_uint<T>(thing: &T) -> uint unsafe {
     unsafe::reinterpret_cast(thing)
 }
 
-trait ptr {
+trait Ptr {
     pure fn is_null() -> bool;
     pure fn is_not_null() -> bool;
 }
 
 /// Extension methods for pointers
-impl extensions<T> of ptr for *T {
+impl Extensions<T> of Ptr for *T {
     /// Returns true if the pointer is equal to the null pointer.
     pure fn is_null() -> bool { is_null(self) }
 

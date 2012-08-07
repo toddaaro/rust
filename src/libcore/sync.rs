@@ -5,41 +5,41 @@
  * in std.
  */
 
-export semaphore, new_semaphore;
+export Semaphore, new_semaphore;
 
 // FIXME (#3119) This shouldn't be a thing exported from core.
-import arc::exclusive;
+import arc::{Exclusive, exclusive};
 
 // Each waiting task receives on one of these. FIXME #3125 make these oneshot.
-type wait_end = pipes::port<()>;
-type signal_end = pipes::chan<()>;
+type WaitEnd = pipes::port<()>;
+type SignalEnd = pipes::chan<()>;
 // A doubly-ended queue of waiting tasks.
-type waitqueue = { head: pipes::port<signal_end>,
-                   tail: pipes::chan<signal_end> };
+type WaitQueue = { head: pipes::port<SignalEnd>,
+                   tail: pipes::chan<SignalEnd> };
 
-fn waitqueue() -> waitqueue {
+fn waitqueue() -> WaitQueue {
     let (tail, head) = pipes::stream();
     { head: head, tail: tail }
 }
 
 /// A counting, blocking, bounded-waiting semaphore.
-enum semaphore = exclusive<semaphore_inner>;
-type semaphore_inner = {
+enum Semaphore = Exclusive<SemaphoreInner>;
+type SemaphoreInner = {
     mut count: int,
-    waiters:   waitqueue,
+    waiters:   WaitQueue,
     //blocked:   waitqueue,
 };
 
 /// Create a new semaphore with the specified count.
-fn new_semaphore(count: int) -> semaphore {
-    semaphore(exclusive({ mut count: count,
+fn new_semaphore(count: int) -> Semaphore {
+    Semaphore(exclusive({ mut count: count,
                           waiters: waitqueue(), /* blocked: waitqueue() */ }))
 }
 
-impl semaphore for &semaphore {
+impl semaphore for &Semaphore {
     /// Creates a new handle to the semaphore.
-    fn clone() -> semaphore {
-        semaphore((**self).clone())
+    fn clone() -> Semaphore {
+        Semaphore((**self).clone())
     }
 
     /**
@@ -98,8 +98,8 @@ impl semaphore for &semaphore {
 
 // FIXME(#3136) should go inside of access()
 struct sem_release {
-    sem: &semaphore;
-    new(sem: &semaphore) { self.sem = sem; }
+    sem: &Semaphore;
+    new(sem: &Semaphore) { self.sem = sem; }
     drop { self.sem.release(); }
 }
 

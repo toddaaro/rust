@@ -1,5 +1,5 @@
 import T = inst::T;
-import cmp::{eq, ord};
+import cmp::{Eq, Ord};
 
 export min_value, max_value;
 export min, max;
@@ -11,7 +11,7 @@ export range;
 export compl;
 export to_str, to_str_bytes;
 export from_str, from_str_radix, str, parse_buf;
-export num, ord, eq, times, timesi;
+export Num, Ord, Eq, Times, TimesIx;
 export bits, bytes;
 
 const bits : uint = inst::bits;
@@ -56,19 +56,19 @@ pure fn compl(i: T) -> T {
     max_value ^ i
 }
 
-impl ord of ord for T {
+impl Ord of Ord for T {
     pure fn lt(&&other: T) -> bool {
         return self < other;
     }
 }
 
-impl eq of eq for T {
+impl Eq of Eq for T {
     pure fn eq(&&other: T) -> bool {
         return self == other;
     }
 }
 
-impl num of num::num for T {
+impl Num of num::Num for T {
     pure fn add(&&other: T)    -> T { return self + other; }
     pure fn sub(&&other: T)    -> T { return self - other; }
     pure fn mul(&&other: T)    -> T { return self * other; }
@@ -80,7 +80,7 @@ impl num of num::num for T {
     pure fn from_int(n: int) -> T   { return n as T;      }
 }
 
-impl times of iter::times for T {
+impl Times of iter::Times for T {
     #[inline(always)]
     #[doc = "A convenience form for basic iteration. Given a variable `x` \
         of any numeric type, the expression `for x.times { /* anything */ }` \
@@ -96,7 +96,7 @@ impl times of iter::times for T {
     }
 }
 
-impl timesi of iter::timesi for T {
+impl TimesIx of iter::TimesIx for T {
     #[inline(always)]
     /// Like `times`, but with an index, `eachi`-style.
     fn timesi(it: fn(uint) -> bool) {

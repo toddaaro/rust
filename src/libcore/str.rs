@@ -106,9 +106,9 @@ export
    escape_unicode,
 
    unsafe,
-   extensions,
-   str_slice,
-   unique_str;
+   Extensions,
+   StrSlice,
+   UniqueStr;
 
 #[abi = "cdecl"]
 extern mod rustrt {
@@ -1876,7 +1876,7 @@ mod unsafe {
 
     /// Sets the length of the string and adds the null terminator
     unsafe fn set_len(&v: ~str, new_len: uint) {
-        let repr: *vec::unsafe::vec_repr = ::unsafe::reinterpret_cast(v);
+        let repr: *vec::unsafe::VecRepr = ::unsafe::reinterpret_cast(v);
         (*repr).fill = new_len + 1u;
         let null = ptr::mut_offset(ptr::mut_addr_of((*repr).data), new_len);
         *null = 0u8;
@@ -1894,14 +1894,14 @@ mod unsafe {
 
 }
 
-trait unique_str {
+trait UniqueStr {
     fn trim() -> self;
     fn trim_left() -> self;
     fn trim_right() -> self;
 }
 
 /// Extension methods for strings
-impl extensions of unique_str for ~str {
+impl Extensions of UniqueStr for ~str {
     /// Returns a string with leading and trailing whitespace removed
     #[inline]
     fn trim() -> ~str { trim(self) }
@@ -1920,14 +1920,14 @@ impl extensions of unique_str for ~str {
 }
 
 #[cfg(notest)]
-impl extensions of add<&str,~str> for ~str {
+impl Extensions of add<&str,~str> for ~str {
     #[inline(always)]
     pure fn add(rhs: &str) -> ~str {
         append(self, rhs)
     }
 }
 
-trait str_slice {
+trait StrSlice {
     fn all(it: fn(char) -> bool) -> bool;
     fn any(it: fn(char) -> bool) -> bool;
     fn contains(needle: &a/str) -> bool;
@@ -1956,7 +1956,7 @@ trait str_slice {
 }
 
 /// Extension methods for strings
-impl extensions/& of str_slice for &str {
+impl Extensions/& of StrSlice for &str {
     /**
      * Return true if a predicate matches all characters or if the string
      * contains no characters

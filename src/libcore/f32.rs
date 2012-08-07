@@ -18,7 +18,7 @@ export lgamma, ln, log_radix, ln1p, log10, log2, ilog_radix;
 export modf, pow, round, sin, sinh, sqrt, tan, tanh, tgamma, trunc;
 export signbit;
 
-export num;
+export Num;
 
 // These are not defined inside consts:: for consistency with
 // the integer types
@@ -167,7 +167,7 @@ pure fn log2(n: f32) -> f32 {
     return ln(n) / consts::ln_2;
 }
 
-impl num of num::num for f32 {
+impl Num of num::Num for f32 {
     pure fn add(&&other: f32)    -> f32 { return self + other; }
     pure fn sub(&&other: f32)    -> f32 { return self - other; }
     pure fn mul(&&other: f32)    -> f32 { return self * other; }

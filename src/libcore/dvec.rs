@@ -5,14 +5,15 @@
 //
 // Note that recursive use is not permitted.
 
-import dvec_iter::extensions;
+import dvec_iter::Extensions;
 import unsafe::reinterpret_cast;
-import ptr::{null, extensions};
+import ptr::{null, Extensions};
 
+export DVec;
 export dvec;
 export from_elem;
 export from_vec;
-export extensions;
+export Extensions;
 export unwrap;
 
 /**
@@ -46,36 +47,36 @@ export unwrap;
  * pointers achieved about 103 million pushes/second.  Using an option
  * type could only produce 47 million pushes/second.
  */
-type dvec_<A> = {
+type DVec_<A> = {
     mut data: ~[mut A]
 };
 
-enum dvec<A> {
-    dvec_(dvec_<A>)
+enum DVec<A> {
+    DVec_(DVec_<A>)
 }
 
 /// Creates a new, empty dvec
-fn dvec<A>() -> dvec<A> {
-    dvec_({mut data: ~[mut]})
+fn dvec<A>() -> DVec<A> {
+    DVec_({mut data: ~[mut]})
 }
 
 /// Creates a new dvec with a single element
-fn from_elem<A>(+e: A) -> dvec<A> {
-    dvec_({mut data: ~[mut e]})
+fn from_elem<A>(+e: A) -> DVec<A> {
+    DVec_({mut data: ~[mut e]})
 }
 
 /// Creates a new dvec with the contents of a vector
-fn from_vec<A>(+v: ~[mut A]) -> dvec<A> {
-    dvec_({mut data: v})
+fn from_vec<A>(+v: ~[mut A]) -> DVec<A> {
+    DVec_({mut data: v})
 }
 
 /// Consumes the vector and returns its contents
-fn unwrap<A>(-d: dvec<A>) -> ~[mut A] {
-    let dvec_({data: v}) <- d;
+fn unwrap<A>(-d: DVec<A>) -> ~[mut A] {
+    let DVec_({data: v}) <- d;
     return v;
 }
 
-impl private_methods<A> for dvec<A> {
+impl PrivateMethods<A> for DVec<A> {
     pure fn check_not_borrowed() {
         unsafe {
             let data: *() = unsafe::reinterpret_cast(self.data);
@@ -107,7 +108,7 @@ impl private_methods<A> for dvec<A> {
 // In theory, most everything should work with any A, but in practice
 // almost nothing works without the copy bound due to limitations
 // around closures.
-impl extensions<A> for dvec<A> {
+impl Extensions<A> for DVec<A> {
     /// Reserves space for N elements
     fn reserve(count: uint) {
         vec::reserve(self.data, count)
@@ -188,7 +189,7 @@ impl extensions<A> for dvec<A> {
     }
 }
 
-impl extensions<A:copy> for dvec<A> {
+impl Extensions<A:copy> for DVec<A> {
     /**
      * Append all elements of a vector to the end of the list
      *
@@ -311,7 +312,7 @@ impl extensions<A:copy> for dvec<A> {
     }
 }
 
-impl extensions<A:copy> of index<uint,A> for dvec<A> {
+impl Extensions<A:copy> of index<uint,A> for DVec<A> {
     pure fn index(&&idx: uint) -> A {
         self.get_elt(idx)
     }

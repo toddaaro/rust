@@ -11,11 +11,11 @@
  * ~~~
  */
 
-import either::either;
+import either::Either;
 import pipes::recv;
 
-export future;
-export extensions;
+export Future;
+export Extensions;
 export from_value;
 export from_port;
 export from_fn;
@@ -27,12 +27,12 @@ export spawn;
 export future_pipe;
 
 #[doc = "The future type"]
-enum future<A> = {
-    mut v: either<@A, fn@() -> A>
+enum Future<A> = {
+    mut v: Either<@A, fn@() -> A>
 };
 
 /// Methods on the `future` type
-impl extensions<A:copy send> for future<A> {
+impl Extensions<A:copy send> for Future<A> {
 
     fn get() -> A {
         //! Get the value of the future
@@ -47,7 +47,7 @@ impl extensions<A:copy send> for future<A> {
     }
 }
 
-fn from_value<A>(+val: A) -> future<A> {
+fn from_value<A>(+val: A) -> Future<A> {
     /*!
      * Create a future from a value
      *
@@ -55,8 +55,8 @@ fn from_value<A>(+val: A) -> future<A> {
      * not block.
      */
 
-    future({
-        mut v: either::left(@val)
+    Future({
+        mut v: either::Left(@val)
     })
 }
 
@@ -64,7 +64,7 @@ macro_rules! move_it {
     {$x:expr} => { unsafe { let y <- *ptr::addr_of($x); y } }
 }
 
-fn from_port<A:send>(-port: future_pipe::client::waiting<A>) -> future<A> {
+fn from_port<A:send>(-port: future_pipe::client::waiting<A>) -> Future<A> {
     #[doc = "
     Create a future from a port
 
@@ -83,7 +83,7 @@ fn from_port<A:send>(-port: future_pipe::client::waiting<A>) -> future<A> {
     }
 }
 
-fn from_fn<A>(f: fn@() -> A) -> future<A> {
+fn from_fn<A>(f: fn@() -> A) -> Future<A> {
     /*!
      * Create a future from a function.
      *
@@ -92,12 +92,12 @@ fn from_fn<A>(f: fn@() -> A) -> future<A> {
      * function. It is not spawned into another task.
      */
 
-    future({
-        mut v: either::right(f)
+    Future({
+        mut v: either::Right(f)
     })
 }
 
-fn spawn<A:send>(+blk: fn~() -> A) -> future<A> {
+fn spawn<A:send>(+blk: fn~() -> A) -> Future<A> {
     /*!
      * Create a future from a unique closure.
      *
@@ -110,20 +110,20 @@ fn spawn<A:send>(+blk: fn~() -> A) -> future<A> {
     }))
 }
 
-fn get<A:copy>(future: future<A>) -> A {
+fn get<A:copy>(future: Future<A>) -> A {
     //! Get the value of the future
 
     do with(future) |v| { v }
 }
 
-fn with<A,B>(future: future<A>, blk: fn(A) -> B) -> B {
+fn with<A,B>(future: Future<A>, blk: fn(A) -> B) -> B {
     //! Work with the value without copying it
 
     let v = match copy future.v {
-      either::left(v) => v,
-      either::right(f) => {
+      either::Left(v) => v,
+      either::Right(f) => {
         let v = @f();
-        future.v = either::left(v);
+        future.v = either::Left(v);
         v
       }
     };

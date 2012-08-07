@@ -4,13 +4,14 @@ Module: io
 Basic input/output
 */
 
-import result::result;
+import result::Result;
 
-import dvec::{dvec, extensions};
+import dvec::{DVec, dvec, Extensions};
 import libc::{c_int, c_long, c_uint, c_void, size_t, ssize_t};
 import libc::consts::os::posix88::*;
 import libc::consts::os::extra::*;
 
+#[allow(non_camel_case_types)] // C type
 type fd_t = c_int;
 
 #[abi = "cdecl"]
@@ -24,11 +25,11 @@ extern mod rustrt {
 
 // FIXME (#2004): This is all buffered. We might need an unbuffered variant
 // as well
-enum seek_style { seek_set, seek_end, seek_cur, }
+enum SeekStyle { SeekSet, SeekEnd, SeekCur, }
 
 
 // The raw underlying reader trait. All readers must implement this.
-trait reader {
+trait Reader {
     // FIXME (#2004): Seekable really should be orthogonal.
 
     // FIXME (#2982): This should probably return an error.
@@ -42,7 +43,7 @@ trait reader {
 
 // Generic utility functions defined on readers
 
-impl reader_util for reader {
+impl reader_util for Reader {
     fn read_bytes(len: uint) -> ~[u8] {
         let mut buf = ~[mut];
         vec::reserve(buf, len);
@@ -256,15 +257,15 @@ fn FILE_reader(f: *libc::FILE, cleanup: bool) -> reader {
 
 fn stdin() -> reader { rustrt::rust_get_stdin() as reader }
 
-fn file_reader(path: ~str) -> result<reader, ~str> {
+fn file_reader(path: ~str) -> Result<reader, ~str> {
     let f = os::as_c_charp(path, |pathbuf| {
         os::as_c_charp(~"r", |modebuf|
             libc::fopen(pathbuf, modebuf)
         )
     });
-    return if f as uint == 0u { result::err(~"error opening " + path) }
+    return if f as uint == 0u { result::Err(~"error opening " + path) }
     else {
-        result::ok(FILE_reader(f, true))
+        result::Ok(FILE_reader(f, true))
     }
 }
 
@@ -430,7 +431,7 @@ fn fd_writer(fd: fd_t, cleanup: bool) -> writer {
 
 
 fn mk_file_writer(path: ~str, flags: ~[fileflag])
-    -> result<writer, ~str> {
+    -> Result<writer, ~str> {
 
     #[cfg(windows)]
     fn wb() -> c_int { (O_WRONLY | O_BINARY) as c_int }
@@ -452,9 +453,9 @@ fn mk_file_writer(path: ~str, flags: ~[fileflag])
                    (S_IRUSR | S_IWUSR) as c_int)
     };
     if fd < (0 as c_int) {
-        result::err(fmt!{"error opening %s: %s", path, os::last_os_error()})
+        result::Err(fmt!{"error opening %s: %s", path, os::last_os_error()})
     } else {
-        result::ok(fd_writer(fd, true))
+        result::Ok(fd_writer(fd, true))
     }
 }
 
@@ -631,20 +632,20 @@ impl<T:writer> T : writer_util {
     fn write_u8(n: u8) { self.write(&[n]) }
 }
 
-fn file_writer(path: ~str, flags: ~[fileflag]) -> result<writer, ~str> {
-    result::chain(mk_file_writer(path, flags), |w| result::ok(w))
+fn file_writer(path: ~str, flags: ~[fileflag]) -> Result<writer, ~str> {
+    result::chain(mk_file_writer(path, flags), |w| result::Ok(w))
 }
 
 
 // FIXME: fileflags // #2004
-fn buffered_file_writer(path: ~str) -> result<writer, ~str> {
+fn buffered_file_writer(path: ~str) -> Result<writer, ~str> {
     let f = do os::as_c_charp(path) |pathbuf| {
         do os::as_c_charp(~"w") |modebuf| {
             libc::fopen(pathbuf, modebuf)
         }
     };
-    return if f as uint == 0u { result::err(~"error opening " + path) }
-    else { result::ok(FILE_writer(f, true)) }
+    return if f as uint == 0u { result::Err(~"error opening " + path) }
+    else { result::Ok(FILE_writer(f, true)) }
 }
 
 // FIXME (#2004) it would be great if this could be a const
@@ -656,7 +657,7 @@ fn stderr() -> writer { fd_writer(libc::STDERR_FILENO as c_int, false) }
 fn print(s: &str) { stdout().write_str(s); }
 fn println(s: &str) { stdout().write_line(s); }
 
-type mem_buffer = @{buf: dvec<u8>, mut pos: uint};
+type mem_buffer = @{buf: DVec<u8>, mut pos: uint};
 
 impl of writer for mem_buffer {
     fn write(v: &[const u8]) {
@@ -726,21 +727,21 @@ fn seek_in_buf(offset: int, pos: uint, len: uint, whence: seek_style) ->
     return bpos as uint;
 }
 
-fn read_whole_file_str(file: ~str) -> result<~str, ~str> {
+fn read_whole_file_str(file: ~str) -> Result<~str, ~str> {
     result::chain(read_whole_file(file), |bytes| {
         if str::is_utf8(bytes) {
-            result::ok(str::from_bytes(bytes))
+            result::Ok(str::from_bytes(bytes))
        } else {
-           result::err(file + ~" is not UTF-8")
+           result::Err(file + ~" is not UTF-8")
        }
     })
 }
 
 // FIXME (#2004): implement this in a low-level way. Going through the
 // abstractions is pointless.
-fn read_whole_file(file: ~str) -> result<~[u8], ~str> {
+fn read_whole_file(file: ~str) -> Result<~[u8], ~str> {
     result::chain(file_reader(file), |rdr| {
-        result::ok(rdr.read_whole_stream())
+        result::Ok(rdr.read_whole_stream())
     })
 }
 

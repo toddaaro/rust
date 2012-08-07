@@ -5,9 +5,9 @@
 
 import sys::methods;
 
-export arc, get, clone;
+export Arc, arc, get, clone;
 
-export exclusive, methods;
+export Exclusive, exclusive, Methods;
 
 #[abi = "cdecl"]
 extern mod rustrt {
@@ -20,16 +20,16 @@ extern mod rustrt {
         -> libc::intptr_t;
 }
 
-type arc_data<T> = {
+type ArcData<T> = {
     mut count: libc::intptr_t,
     data: T
 };
 
-class arc_destruct<T> {
+class ArcDestruct<T> {
   let data: *libc::c_void;
   new(data: *libc::c_void) { self.data = data; }
   drop unsafe {
-     let data: ~arc_data<T> = unsafe::reinterpret_cast(self.data);
+     let data: ~ArcData<T> = unsafe::reinterpret_cast(self.data);
      let new_count = rustrt::rust_atomic_decrement(&mut data.count);
      assert new_count >= 0;
      if new_count == 0 {
@@ -40,14 +40,14 @@ class arc_destruct<T> {
   }
 }
 
-type arc<T: const send> = arc_destruct<T>;
+type Arc<T: const send> = ArcDestruct<T>;
 
 /// Create an atomically reference counted wrapper.
-fn arc<T: const send>(-data: T) -> arc<T> {
+fn arc<T: const send>(-data: T) -> Arc<T> {
     let data = ~{mut count: 1, data: data};
     unsafe {
         let ptr = unsafe::transmute(data);
-        arc_destruct(ptr)
+        ArcDestruct(ptr)
     }
 }
 
@@ -55,9 +55,9 @@ fn arc<T: const send>(-data: T) -> arc<T> {
  * Access the underlying data in an atomically reference counted
  * wrapper.
  */
-fn get<T: const send>(rc: &arc<T>) -> &T {
+fn get<T: const send>(rc: &Arc<T>) -> &T {
     unsafe {
-        let ptr: ~arc_data<T> = unsafe::reinterpret_cast((*rc).data);
+        let ptr: ~ArcData<T> = unsafe::reinterpret_cast((*rc).data);
         // Cast us back into the correct region
         let r = unsafe::reinterpret_cast(&ptr.data);
         unsafe::forget(ptr);
@@ -72,42 +72,42 @@ fn get<T: const send>(rc: &arc<T>) -> &T {
  * object. However, one of the `arc` objects can be sent to another task,
  * allowing them to share the underlying data.
  */
-fn clone<T: const send>(rc: &arc<T>) -> arc<T> {
+fn clone<T: const send>(rc: &Arc<T>) -> Arc<T> {
     unsafe {
-        let ptr: ~arc_data<T> = unsafe::reinterpret_cast((*rc).data);
+        let ptr: ~ArcData<T> = unsafe::reinterpret_cast((*rc).data);
         let new_count = rustrt::rust_atomic_increment(&mut ptr.count);
         assert new_count >= 2;
         unsafe::forget(ptr);
     }
-    arc_destruct((*rc).data)
+    ArcDestruct((*rc).data)
 }
 
 // An arc over mutable data that is protected by a lock.
-type ex_data<T: send> = {lock: sys::little_lock, mut data: T};
-type exclusive<T: send> = arc_destruct<ex_data<T>>;
+type ExData<T: send> = {lock: sys::little_lock, mut data: T};
+type Exclusive<T: send> = ArcDestruct<ExData<T>>;
 
-fn exclusive<T:send >(-data: T) -> exclusive<T> {
+fn exclusive<T:send >(-data: T) -> Exclusive<T> {
     let data = ~{mut count: 1, data: {lock: sys::little_lock(),
                                       data: data}};
     unsafe {
         let ptr = unsafe::reinterpret_cast(data);
         unsafe::forget(data);
-        arc_destruct(ptr)
+        ArcDestruct(ptr)
     }
 }
 
-impl methods<T: send> for exclusive<T> {
+impl Methods<T: send> for Exclusive<T> {
     /// Duplicate an exclusive ARC. See arc::clone.
-    fn clone() -> exclusive<T> {
+    fn clone() -> Exclusive<T> {
         unsafe {
             // this makes me nervous...
-            let ptr: ~arc_data<ex_data<T>> =
+            let ptr: ~ArcData<ExData<T>> =
                   unsafe::reinterpret_cast(self.data);
             let new_count = rustrt::rust_atomic_increment(&mut ptr.count);
             assert new_count > 1;
             unsafe::forget(ptr);
         }
-        arc_destruct(self.data)
+        ArcDestruct(self.data)
     }
 
     /**
@@ -127,11 +127,11 @@ impl methods<T: send> for exclusive<T> {
      * ARCs inside of other ARCs is safe in absence of circular references.
      */
     unsafe fn with<U>(f: fn(x: &mut T) -> U) -> U {
-        let ptr: ~arc_data<ex_data<T>> =
+        let ptr: ~ArcData<ExData<T>> =
             unsafe::reinterpret_cast(self.data);
         assert ptr.count > 0;
         let r = {
-            let rec: &ex_data<T> = &(*ptr).data;
+            let rec: &ExData<T> = &(*ptr).data;
             do rec.lock.lock { f(&mut rec.data) }
         };
         unsafe::forget(ptr);
