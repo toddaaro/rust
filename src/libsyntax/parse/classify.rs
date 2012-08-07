@@ -13,6 +13,13 @@ fn expr_requires_semi_to_be_stmt(e: @ast::expr) -> bool {
     }
 }
 
+fn expr_is_simple_block(e: @ast::expr) -> bool {
+    alt e.node {
+      ast::expr_block({node: {rules: ast::default_blk, _}, _}) => true,
+      _ => false
+    }
+}
+
 fn stmt_ends_with_semi(stmt: ast::stmt) -> bool {
     match stmt.node {
       ast::stmt_decl(d, _) => {

@@ -1573,7 +1573,7 @@ class parser {
             let expr = self.parse_expr_res(RESTRICT_STMT_EXPR);
 
             let require_comma =
-                classify::expr_requires_semi_to_be_stmt(expr)
+                !classify::expr_is_simple_block(expr)
                 && self.token != token::RBRACE;
 
             if require_comma {

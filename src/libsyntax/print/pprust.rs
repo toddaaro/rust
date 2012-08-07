@@ -1091,7 +1091,7 @@ fn print_expr(s: ps, &&expr: @ast::expr) {
               some(expr) => {
                 end(s); // close the ibox for the pattern
                 print_expr(s, expr);
-                if expr_requires_semi_to_be_stmt(expr)
+                if !expr_is_simple_block(expr)
                     && i < len - 1 {
                     word(s.s, ~",");
                 }
