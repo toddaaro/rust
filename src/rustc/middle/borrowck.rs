@@ -224,12 +224,12 @@ import util::ppaux::{ty_to_str, region_to_str};
 import std::map::{int_hash, hashmap, set};
 import std::list;
 import std::list::{list, cons, nil};
-import result::{result, ok, err, extensions};
+import result::{result, ok, err};
 import syntax::print::pprust;
 import util::common::indenter;
 import ty::to_str;
 import driver::session::session;
-import dvec::{dvec, extensions};
+import dvec::dvec;
 
 export check_crate, root_map, mutbl_map;
 
@@ -434,12 +434,12 @@ trait ast_node {
     fn span() -> span;
 }
 
-impl of ast_node for @ast::expr {
+impl @ast::expr: ast_node {
     fn id() -> ast::node_id { self.id }
     fn span() -> span { self.span }
 }
 
-impl of ast_node for @ast::pat {
+impl @ast::pat: ast_node {
     fn id() -> ast::node_id { self.id }
     fn span() -> span { self.span }
 }
@@ -448,7 +448,7 @@ trait get_type_for_node {
     fn ty<N: ast_node>(node: N) -> ty::t;
 }
 
-impl methods of get_type_for_node for ty::ctxt {
+impl ty::ctxt: get_type_for_node {
     fn ty<N: ast_node>(node: N) -> ty::t {
         ty::node_id_to_type(self, node.id())
     }
@@ -460,7 +460,7 @@ impl borrowck_ctxt {
     }
 }
 
-impl error_methods for borrowck_ctxt {
+impl borrowck_ctxt {
     fn report_if_err(bres: bckres<()>) {
         match bres {
           ok(()) => (),
@@ -496,7 +496,7 @@ impl error_methods for borrowck_ctxt {
     }
 }
 
-impl to_str_methods for borrowck_ctxt {
+impl borrowck_ctxt {
     fn cat_to_repr(cat: categorization) -> ~str {
         match cat {
           cat_special(sk_method) => ~"method",

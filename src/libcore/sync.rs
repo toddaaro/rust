@@ -36,7 +36,7 @@ fn new_semaphore(count: int) -> semaphore {
                           waiters: waitqueue(), /* blocked: waitqueue() */ }))
 }
 
-impl semaphore for &semaphore {
+impl &semaphore {
     /// Creates a new handle to the semaphore.
     fn clone() -> semaphore {
         semaphore((**self).clone())

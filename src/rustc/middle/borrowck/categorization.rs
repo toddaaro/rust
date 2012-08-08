@@ -93,7 +93,7 @@ fn deref_kind(tcx: ty::ctxt, t: ty::t) -> deref_kind {
     }
 }
 
-impl public_methods for borrowck_ctxt {
+impl borrowck_ctxt {
     fn cat_borrow_of_expr(expr: @ast::expr) -> cmt {
         // a borrowed expression must be either an @, ~, or a @vec, ~vec
         let expr_ty = ty::expr_ty(self.tcx, expr);
@@ -448,7 +448,7 @@ impl public_methods for borrowck_ctxt {
     }
 }
 
-impl private_methods for borrowck_ctxt {
+priv impl borrowck_ctxt {
     fn cat_method_ref(expr: @ast::expr, expr_ty: ty::t) -> cmt {
         @{id:expr.id, span:expr.span,
           cat:cat_special(sk_method), lp:none,

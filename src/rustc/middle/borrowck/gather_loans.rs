@@ -6,9 +6,8 @@
 // their associated scopes.  In phase two, checking loans, we will then make
 // sure that all of these loans are honored.
 
-import categorization::{public_methods, opt_deref_kind};
-import loan::public_methods;
-import preserve::{public_methods, preserve_condition, pc_ok, pc_if_pure};
+import categorization::opt_deref_kind;
+import preserve::{preserve_condition, pc_ok, pc_if_pure};
 import ty::ty_region;
 
 export gather_loans;
@@ -243,7 +242,7 @@ fn req_loans_in_expr(ex: @ast::expr,
     self.root_ub = old_root_ub;
 }
 
-impl methods for gather_loan_ctxt {
+impl gather_loan_ctxt {
     fn tcx() -> ty::ctxt { self.bccx.tcx }
 
     // guarantees that addr_of(cmt) will be valid for the duration of
