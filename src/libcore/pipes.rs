@@ -94,7 +94,7 @@ export send_packet, recv_packet, send, recv, try_recv, peek;
 export select, select2, selecti, select2i, selectable;
 export spawn_service, spawn_service_recv;
 export stream, port, chan, SharedChan, PortSet, channel;
-export oneshot, chan_one, port_one;
+export oneshot, ChanOne, PortOne;
 export recv_one, try_recv_one, send_one, try_send_one;
 
 // Functions used by the protocol compiler
@@ -1160,12 +1160,12 @@ proto! oneshot {
 }
 
 /// The send end of a oneshot pipe.
-type chan_one<T: send> = oneshot::client::oneshot<T>;
+type ChanOne<T: send> = oneshot::client::oneshot<T>;
 /// The receive end of a oneshot pipe.
-type port_one<T: send> = oneshot::server::oneshot<T>;
+type PortOne<T: send> = oneshot::server::oneshot<T>;
 
 /// Initialiase a (send-endpoint, recv-endpoint) oneshot pipe pair.
-fn oneshot<T: send>() -> (chan_one<T>, port_one<T>) {
+fn oneshot<T: send>() -> (ChanOne<T>, PortOne<T>) {
     oneshot::init()
 }
 
@@ -1173,13 +1173,13 @@ fn oneshot<T: send>() -> (chan_one<T>, port_one<T>) {
  * Receive a message from a oneshot pipe, failing if the connection was
  * closed.
  */
-fn recv_one<T: send>(+port: port_one<T>) -> T {
+fn recv_one<T: send>(+port: PortOne<T>) -> T {
     let oneshot::send(message) = recv(port);
     message
 }
 
 /// Receive a message from a oneshot pipe unless the connection was closed.
-fn try_recv_one<T: send> (+port: port_one<T>) -> option<T> {
+fn try_recv_one<T: send> (+port: PortOne<T>) -> option<T> {
     let message = try_recv(port);
 
     if message == none { none }
@@ -1190,7 +1190,7 @@ fn try_recv_one<T: send> (+port: port_one<T>) -> option<T> {
 }
 
 /// Send a message on a oneshot pipe, failing if the connection was closed.
-fn send_one<T: send>(+chan: chan_one<T>, +data: T) {
+fn send_one<T: send>(+chan: ChanOne<T>, +data: T) {
     oneshot::client::send(chan, data);
 }
 
@@ -1198,7 +1198,7 @@ fn send_one<T: send>(+chan: chan_one<T>, +data: T) {
  * Send a message on a oneshot pipe, or return false if the connection was
  * closed.
  */
-fn try_send_one<T: send>(+chan: chan_one<T>, +data: T)
+fn try_send_one<T: send>(+chan: ChanOne<T>, +data: T)
         -> bool {
     oneshot::client::try_send(chan, data).is_some()
 }

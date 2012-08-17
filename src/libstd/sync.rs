@@ -20,9 +20,9 @@ import unsafe::{Exclusive, exclusive};
 
 // Each waiting task receives on one of these.
 #[doc(hidden)]
-type wait_end = pipes::port_one<()>;
+type wait_end = pipes::PortOne<()>;
 #[doc(hidden)]
-type signal_end = pipes::chan_one<()>;
+type signal_end = pipes::ChanOne<()>;
 // A doubly-ended queue of waiting tasks.
 #[doc(hidden)]
 struct waitqueue { head: pipes::port<signal_end>;
