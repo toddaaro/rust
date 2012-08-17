@@ -93,7 +93,7 @@ export atomic_add_acq, atomic_sub_rel;
 export send_packet, recv_packet, send, recv, try_recv, peek;
 export select, select2, selecti, select2i, selectable;
 export spawn_service, spawn_service_recv;
-export stream, port, chan, SharedChan, PortSet, channel;
+export stream, Port, Chan, SharedChan, PortSet, channel;
 export oneshot, ChanOne, PortOne;
 export recv_one, try_recv_one, send_one, try_send_one;
 
@@ -943,7 +943,7 @@ trait recv<T: send> {
 type chan_<T:send> = { mut endp: option<streamp::client::open<T>> };
 
 /// An endpoint that can send many messages.
-enum chan<T:send> {
+enum Chan<T:send> {
     chan_(chan_<T>)
 }
 
@@ -951,7 +951,7 @@ enum chan<T:send> {
 type port_<T:send> = { mut endp: option<streamp::server::open<T>> };
 
 /// An endpoint that can receive many messages.
-enum port<T:send> {
+enum Port<T:send> {
     port_(port_<T>)
 }
 
@@ -960,13 +960,13 @@ enum port<T:send> {
 These allow sending or receiving an unlimited number of messages.
 
 */
-fn stream<T:send>() -> (chan<T>, port<T>) {
+fn stream<T:send>() -> (Chan<T>, Port<T>) {
     let (c, s) = streamp::init();
 
     (chan_({ mut endp: some(c) }), port_({ mut endp: some(s) }))
 }
 
-impl<T: send> chan<T>: channel<T> {
+impl<T: send> Chan<T>: channel<T> {
     fn send(+x: T) {
         let mut endp = none;
         endp <-> self.endp;
@@ -987,7 +987,7 @@ impl<T: send> chan<T>: channel<T> {
     }
 }
 
-impl<T: send> port<T>: recv<T> {
+impl<T: send> Port<T>: recv<T> {
     fn recv() -> T {
         let mut endp = none;
         endp <-> self.endp;
@@ -1022,15 +1022,15 @@ impl<T: send> port<T>: recv<T> {
 
 /// Treat many ports as one.
 struct PortSet<T: send> : recv<T> {
-    let mut ports: ~[pipes::port<T>];
+    let mut ports: ~[pipes::Port<T>];
 
     new() { self.ports = ~[]; }
 
-    fn add(+port: pipes::port<T>) {
+    fn add(+port: pipes::Port<T>) {
         vec::push(self.ports, port)
     }
 
-    fn chan() -> chan<T> {
+    fn chan() -> Chan<T> {
         let (ch, po) = stream();
         self.add(po);
         ch
@@ -1086,7 +1086,7 @@ struct PortSet<T: send> : recv<T> {
     }
 }
 
-impl<T: send> port<T>: selectable {
+impl<T: send> Port<T>: selectable {
     pure fn header() -> *packet_header unchecked {
         match self.endp {
           some(endp) => endp.header(),
@@ -1096,7 +1096,7 @@ impl<T: send> port<T>: selectable {
 }
 
 /// A channel that can be shared between many senders.
-type SharedChan<T: send> = unsafe::Exclusive<chan<T>>;
+type SharedChan<T: send> = unsafe::Exclusive<Chan<T>>;
 
 impl<T: send> SharedChan<T>: channel<T> {
     fn send(+x: T) {
@@ -1119,7 +1119,7 @@ impl<T: send> SharedChan<T>: channel<T> {
 }
 
 /// Converts a `chan` into a `shared_chan`.
-fn SharedChan<T:send>(+c: chan<T>) -> SharedChan<T> {
+fn SharedChan<T:send>(+c: Chan<T>) -> SharedChan<T> {
     unsafe::exclusive(c)
 }
 

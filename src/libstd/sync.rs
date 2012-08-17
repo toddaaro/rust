@@ -25,8 +25,8 @@ type wait_end = pipes::PortOne<()>;
 type signal_end = pipes::ChanOne<()>;
 // A doubly-ended queue of waiting tasks.
 #[doc(hidden)]
-struct waitqueue { head: pipes::port<signal_end>;
-                   tail: pipes::chan<signal_end>; }
+struct waitqueue { head: pipes::Port<signal_end>;
+                   tail: pipes::Chan<signal_end>; }
 
 fn new_waitqueue() -> waitqueue {
     let (block_tail, block_head) = pipes::stream();
