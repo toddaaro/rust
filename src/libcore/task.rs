@@ -28,6 +28,7 @@
  */
 
 import result::result;
+import pipes::{stream, Chan, Port};
 
 export Task;
 export TaskResult;
@@ -75,6 +76,10 @@ export ThreadPerCore;
 export ThreadPerTask;
 export ManualThreads;
 export PlatformThread;
+
+macro_rules! move_it {
+    { $x:expr } => { unsafe { let y <- *ptr::addr_of($x); y } }
+}
 
 /* Data types */
 
@@ -172,7 +177,7 @@ type SchedOpts = {
 type TaskOpts = {
     linked: bool,
     supervised: bool,
-    notify_chan: option<comm::Chan<Notification>>,
+    mut notify_chan: option<Chan<Notification>>,
     sched: option<SchedOpts>,
 };
 
@@ -217,7 +222,22 @@ priv impl TaskBuilder {
             fail ~"Cannot copy a task_builder"; // Fake move mode on self
         }
         self.consumed = true;
-        TaskBuilder({ can_not_copy: none, mut consumed: false, with *self })
+        let notify_chan = if self.opts.notify_chan == none {
+            none
+        } else {
+            some(option::swap_unwrap(&mut self.opts.notify_chan))
+        };
+        TaskBuilder({
+            opts: {
+                linked: self.opts.linked,
+                supervised: self.opts.supervised,
+                mut notify_chan: notify_chan,
+                sched: self.opts.sched
+            },
+            gen_body: self.gen_body,
+            can_not_copy: none,
+            mut consumed: false
+        })
     }
 }
 
@@ -227,8 +247,18 @@ impl TaskBuilder {
      * the other will not be killed.
      */
     fn unlinked() -> TaskBuilder {
+        let notify_chan = if self.opts.notify_chan == none {
+            none
+        } else {
+            some(option::swap_unwrap(&mut self.opts.notify_chan))
+        };
         TaskBuilder({
-            opts: { linked: false with self.opts },
+            opts: {
+                linked: false,
+                supervised: self.opts.supervised,
+                mut notify_chan: notify_chan,
+                sched: self.opts.sched
+            },
             can_not_copy: none,
             with *self.consume()
         })
@@ -239,8 +269,18 @@ impl TaskBuilder {
      * the child.
      */
     fn supervised() -> TaskBuilder {
+        let notify_chan = if self.opts.notify_chan == none {
+            none
+        } else {
+            some(option::swap_unwrap(&mut self.opts.notify_chan))
+        };
         TaskBuilder({
-            opts: { linked: false, supervised: true with self.opts },
+            opts: {
+                linked: false,
+                supervised: true,
+                mut notify_chan: notify_chan,
+                sched: self.opts.sched
+            },
             can_not_copy: none,
             with *self.consume()
         })
@@ -250,8 +290,18 @@ impl TaskBuilder {
      * other will be killed.
      */
     fn linked() -> TaskBuilder {
+        let notify_chan = if self.opts.notify_chan == none {
+            none
+        } else {
+            some(option::swap_unwrap(&mut self.opts.notify_chan))
+        };
         TaskBuilder({
-            opts: { linked: true, supervised: false with self.opts },
+            opts: {
+                linked: true,
+                supervised: false,
+                mut notify_chan: notify_chan,
+                sched: self.opts.sched
+            },
             can_not_copy: none,
             with *self.consume()
         })
@@ -285,11 +335,10 @@ impl TaskBuilder {
         }
 
         // Construct the future and give it to the caller.
-        let po = comm::port::<Notification>();
-        let ch = comm::chan(po);
+        let (ch, po) = stream::<Notification>();
 
         blk(do future::from_fn {
-            match comm::recv(po) {
+            match po.recv() {
               Exit(_, result) => result
             }
         });
@@ -303,9 +352,18 @@ impl TaskBuilder {
     }
     /// Configure a custom scheduler mode for the task.
     fn sched_mode(mode: SchedMode) -> TaskBuilder {
+        let notify_chan = if self.opts.notify_chan == none {
+            none
+        } else {
+            some(option::swap_unwrap(&mut self.opts.notify_chan))
+        };
         TaskBuilder({
-            opts: { sched: some({ mode: mode, foreign_stack_size: none})
-                    with self.opts },
+            opts: {
+                linked: self.opts.linked,
+                supervised: self.opts.supervised,
+                mut notify_chan: notify_chan,
+                sched: some({ mode: mode, foreign_stack_size: none})
+            },
             can_not_copy: none,
             with *self.consume()
         })
@@ -325,7 +383,18 @@ impl TaskBuilder {
      */
     fn add_wrapper(wrapper: fn@(+fn~()) -> fn~()) -> TaskBuilder {
         let prev_gen_body = self.gen_body;
+        let notify_chan = if self.opts.notify_chan == none {
+            none
+        } else {
+            some(option::swap_unwrap(&mut self.opts.notify_chan))
+        };
         TaskBuilder({
+            opts: {
+                linked: self.opts.linked,
+                supervised: self.opts.supervised,
+                mut notify_chan: notify_chan,
+                sched: self.opts.sched
+            },
             gen_body: |body| { wrapper(prev_gen_body(body)) },
             can_not_copy: none,
             with *self.consume()
@@ -346,7 +415,18 @@ impl TaskBuilder {
      */
     fn spawn(+f: fn~()) {
         let x = self.consume();
-        spawn_raw(x.opts, x.gen_body(f));
+        let notify_chan = if self.opts.notify_chan == none {
+            none
+        } else {
+            some(option::swap_unwrap(&mut self.opts.notify_chan))
+        };
+        let opts = {
+            linked: x.opts.linked,
+            supervised: x.opts.supervised,
+            mut notify_chan: notify_chan,
+            sched: x.opts.sched
+        };
+        spawn_raw(opts, x.gen_body(f));
     }
     /// Runs a task, while transfering ownership of one argument to the child.
     fn spawn_with<A: send>(+arg: A, +f: fn~(+A)) {
@@ -435,7 +515,7 @@ fn default_task_opts() -> TaskOpts {
     {
         linked: true,
         supervised: false,
-        notify_chan: none,
+        mut notify_chan: none,
         sched: none
     }
 }
@@ -953,15 +1033,15 @@ struct Tcb {
 }
 
 struct AutoNotify {
-    let notify_chan: comm::Chan<Notification>;
+    let notify_chan: Chan<Notification>;
     let mut failed:  bool;
-    new(chan: comm::Chan<Notification>) {
+    new(+chan: Chan<Notification>) {
         self.notify_chan = chan;
         self.failed = true; // Un-set above when taskgroup successfully made.
     }
     drop {
         let result = if self.failed { Failure } else { Success };
-        comm::send(self.notify_chan, Exit(get_task(), result));
+        self.notify_chan.send(Exit(get_task(), result));
     }
 }
 
@@ -1130,10 +1210,15 @@ fn spawn_raw(+opts: TaskOpts, +f: fn~()) {
             };
             assert !new_task.is_null();
             // Getting killed after here would leak the task.
+            let mut notify_chan = if opts.notify_chan == none {
+                none
+            } else {
+                some(option::swap_unwrap(&mut opts.notify_chan))
+            };
 
             let child_wrapper =
                 make_child_wrapper(new_task, child_tg, ancestors, is_main,
-                                   opts.notify_chan, f);
+                                   notify_chan, f);
             let fptr = ptr::addr_of(child_wrapper);
             let closure: *rust_closure = unsafe::reinterpret_cast(fptr);
 
@@ -1153,17 +1238,25 @@ fn spawn_raw(+opts: TaskOpts, +f: fn~()) {
     // (4) ...and runs the provided body function.
     fn make_child_wrapper(child: *rust_task, +child_arc: TaskGroupArc,
                           +ancestors: AncestorList, is_main: bool,
-                          notify_chan: option<comm::Chan<Notification>>,
+                          +notify_chan: option<Chan<Notification>>,
                           +f: fn~()) -> fn~() {
         let child_data = ~mut some((child_arc, ancestors));
-        return fn~() {
+        return fn~(move notify_chan) {
             // Agh. Get move-mode items into the closure. FIXME (#2829)
             let mut (child_arc, ancestors) = option::swap_unwrap(child_data);
             // Child task runs this code.
 
             // Even if the below code fails to kick the child off, we must
             // send something on the notify channel.
-            let notifier = notify_chan.map(|c| AutoNotify(c));
+
+            //let mut notifier = none;//notify_chan.map(|c| AutoNotify(c));
+            let notifier = match notify_chan {
+                some(notify_chan_value) => {
+                    let moved_ncv = move_it!{notify_chan_value};
+                    some(AutoNotify(moved_ncv))
+                }
+                _ => none
+            };
 
             if enlist_many(child, &child_arc, &mut ancestors) {
                 let group = @Tcb(child, child_arc, ancestors,
