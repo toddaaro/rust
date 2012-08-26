@@ -62,7 +62,7 @@
  *     }
  */
 
-import core::result::{err, ok};
+import core::result::{Err, Ok};
 import core::option;
 import core::option::{Some, None};
 export opt;
@@ -179,7 +179,7 @@ fn fail_str(f: fail_) -> ~str {
  * The result of parsing a command line with a set of options
  * (result::t<matches, fail_>)
  */
-type result = result::result<matches, fail_>;
+type result = result::Result<matches, fail_>;
 
 /**
  * Parse command line arguments according to the provided options
@@ -261,12 +261,12 @@ fn getopts(args: ~[~str], opts: ~[opt]) -> result unsafe {
                 name_pos += 1u;
                 let optid = match find_opt(opts, nm) {
                   Some(id) => id,
-                  None => return err(unrecognized_option(name_str(nm)))
+                  None => return Err(unrecognized_option(name_str(nm)))
                 };
                 match opts[optid].hasarg {
                   no => {
                     if !option::is_none::<~str>(i_arg) {
-                        return err(unexpected_argument(name_str(nm)));
+                        return Err(unexpected_argument(name_str(nm)));
                     }
                     vec::push(vals[optid], given);
                   }
@@ -283,7 +283,7 @@ fn getopts(args: ~[~str], opts: ~[opt]) -> result unsafe {
                         vec::push(vals[optid],
                                   val(option::get::<~str>(i_arg)));
                     } else if i + 1u == l {
-                        return err(argument_missing(name_str(nm)));
+                        return Err(argument_missing(name_str(nm)));
                     } else { i += 1u; vec::push(vals[optid], val(args[i])); }
                   }
                 }
@@ -297,17 +297,17 @@ fn getopts(args: ~[~str], opts: ~[opt]) -> result unsafe {
         let occ = opts[i].occur;
         if occ == req {
             if n == 0u {
-                return err(option_missing(name_str(opts[i].name)));
+                return Err(option_missing(name_str(opts[i].name)));
             }
         }
         if occ != multi {
             if n > 1u {
-                return err(option_duplicated(name_str(opts[i].name)));
+                return Err(option_duplicated(name_str(opts[i].name)));
             }
         }
         i += 1u;
     }
-    return ok({opts: opts, vals: vec::from_mut(vals), free: free});
+    return Ok({opts: opts, vals: vec::from_mut(vals), free: free});
 }
 
 fn opt_vals(m: matches, nm: ~str) -> ~[optval] {

@@ -8,7 +8,7 @@ import middle::{trans, freevars, kind, ty, typeck, lint};
 import syntax::print::{pp, pprust};
 import util::ppaux;
 import back::link;
-import result::{ok, err};
+import result::{Ok, Err};
 import std::getopts;
 import io::WriterUtil;
 import getopts::{optopt, optmulti, optflag, optflagopt, opt_present};
