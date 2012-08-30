@@ -325,20 +325,21 @@ impl Parser {
     fn parse_str() -> Result<@~str, Error> {
         let mut escape = false;
         let mut res = ~"";
+        let resp = &mut res;
 
         while !self.eof() {
             self.bump();
 
             if (escape) {
                 match self.ch {
-                  '"' => str::push_char(res, '"'),
-                  '\\' => str::push_char(res, '\\'),
-                  '/' => str::push_char(res, '/'),
-                  'b' => str::push_char(res, '\x08'),
-                  'f' => str::push_char(res, '\x0c'),
-                  'n' => str::push_char(res, '\n'),
-                  'r' => str::push_char(res, '\r'),
-                  't' => str::push_char(res, '\t'),
+                  '"' => str::push_char(resp, '"'),
+                  '\\' => str::push_char(resp, '\\'),
+                  '/' => str::push_char(resp, '/'),
+                  'b' => str::push_char(resp, '\x08'),
+                  'f' => str::push_char(resp, '\x0c'),
+                  'n' => str::push_char(resp, '\n'),
+                  'r' => str::push_char(resp, '\r'),
+                  't' => str::push_char(resp, '\t'),
                   'u' => {
                       // Parse \u1234.
                       let mut i = 0u;
@@ -359,7 +360,7 @@ impl Parser {
                           return self.error(~"invalid \\u escape");
                       }
 
-                      str::push_char(res, n as char);
+                      str::push_char(resp, n as char);
                   }
                   _ => return self.error(~"invalid escape")
                 }
@@ -371,7 +372,7 @@ impl Parser {
                     self.bump();
                     return Ok(@res);
                 }
-                str::push_char(res, self.ch);
+                str::push_char(resp, self.ch);
             }
         }
 

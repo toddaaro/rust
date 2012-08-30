@@ -462,10 +462,10 @@ fn sanitize(s: ~str) -> ~str {
           'a' to 'z'
           | 'A' to 'Z'
           | '0' to '9'
-          | '_' => str::push_char(result,c),
+          | '_' => str::push_char(&mut result,c),
           _ => {
             if c > 'z' && char::is_XID_continue(c) {
-                str::push_char(result,c);
+                str::push_char(&mut result,c);
             }
           }
         }

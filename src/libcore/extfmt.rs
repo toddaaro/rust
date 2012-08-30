@@ -291,9 +291,9 @@ mod rt {
         let mut s : ~str = int_to_str_prec(i, radix, prec);
         if 0 <= i {
             if have_flag(cv.flags, flag_sign_always) {
-                unchecked { str::unshift_char(s, '+') };
+                unchecked { str::unshift_char(&mut s, '+') };
             } else if have_flag(cv.flags, flag_space_for_sign) {
-                unchecked { str::unshift_char(s, ' ') };
+                unchecked { str::unshift_char(&mut s, ' ') };
             }
         }
         return unchecked { pad(cv, s, pad_signed) };
@@ -425,13 +425,13 @@ mod rt {
         // instead.
 
         if signed && zero_padding && str::len(s) > 0u {
-            let head = str::shift_char(s);
+            let head = str::shift_char(&mut s);
             if head == '+' || head == '-' || head == ' ' {
                 let headstr = str::from_chars(vec::from_elem(1u, head));
                 return headstr + padstr + s;
             }
             else {
-                str::unshift_char(s, head);
+                str::unshift_char(&mut s, head);
             }
         }
         return padstr + s;
