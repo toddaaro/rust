@@ -815,7 +815,7 @@ pure fn filter_map<T, U: Copy>(v: &[T], f: fn(T) -> Option<U>)
     for each(v) |elem| {
         match f(*elem) {
           None => {/* no-op */ }
-          Some(result_elem) => unsafe { result.push(result_elem); }
+          Some(move result_elem) => unsafe { result.push(result_elem); }
         }
     }
     move result

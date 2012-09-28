@@ -41,6 +41,7 @@ Implicitly, all crates behave as if they included the following prologue:
 
 #[warn(vecs_implicitly_copyable)];
 #[deny(non_camel_case_types)];
+#[deny(deprecated_pattern)];
 
 export int, i8, i16, i32, i64;
 export uint, u8, u16, u32, u64;

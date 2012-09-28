@@ -72,7 +72,7 @@ impl<A: Eq, B: Eq> (A, B) : Eq {
         // XXX: This would be a lot less wordy with ref bindings, but I don't
         // trust that they work yet.
         match self {
-            (self_a, self_b) => {
+            (ref self_a, ref self_b) => {
                 match (*other) {
                     (ref other_a, ref other_b) => {
                         self_a.eq(other_a) && self_b.eq(other_b)
@@ -109,7 +109,7 @@ impl<A: Eq, B: Eq, C: Eq> (A, B, C) : Eq {
         // XXX: This would be a lot less wordy with ref bindings, but I don't
         // trust that they work yet.
         match self {
-            (self_a, self_b, self_c) => {
+            (ref self_a, ref self_b, ref self_c) => {
                 match (*other) {
                     (ref other_a, ref other_b, ref other_c) => {
                         self_a.eq(other_a) &&
