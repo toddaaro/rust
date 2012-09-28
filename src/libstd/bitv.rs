@@ -139,10 +139,10 @@ impl BigBitv {
     }
 
     #[inline(always)]
-     fn each_storage(op: fn(&v: uint) -> bool) {
+     fn each_storage(op: fn(v: &mut uint) -> bool) {
         for uint::range(0, self.storage.len()) |i| {
             let mut w = self.storage[i];
-            let b = !op(w);
+            let b = !op(&mut w);
             self.storage[i] = w;
             if !b { break; }
         }
@@ -339,7 +339,7 @@ impl Bitv {
      * bitvectors contain identical elements.
      */
     #[inline(always)]
-    fn equal(v1: Bitv) -> bool {
+    fn equal(v1: &Bitv) -> bool {
       if self.nbits != v1.nbits { return false; }
       match self.rep {
         Small(ref b) => match v1.rep {
@@ -388,7 +388,7 @@ impl Bitv {
      * Returns `true` if `v0` was changed.
      */
     #[inline(always)]
-    fn difference(v: ~Bitv) -> bool { self.do_op(Difference, v) }
+    fn difference(v: &Bitv) -> bool { self.do_op(Difference, v) }
 
     /// Returns true if all bits are 1
     #[inline(always)]

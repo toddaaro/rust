@@ -55,7 +55,7 @@ fn create<T: Copy>() -> Deque<T> {
 
     impl <T: Copy> Repr<T>: Deque<T> {
         fn size() -> uint { return self.nelts; }
-        fn add_front(t: T) {
+        fn add_front(+t: T) {
             let oldlo: uint = self.lo;
             if self.lo == 0u {
                 self.lo = self.elts.len() - 1u;
@@ -68,7 +68,7 @@ fn create<T: Copy>() -> Deque<T> {
             self.elts.set_elt(self.lo, Some(t));
             self.nelts += 1u;
         }
-        fn add_back(t: T) {
+        fn add_back(+t: T) {
             if self.lo == self.hi && self.nelts != 0u {
                 self.elts.swap(|v| grow(self.nelts, self.lo, move v));
                 self.lo = 0u;
