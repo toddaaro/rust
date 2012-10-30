@@ -180,6 +180,7 @@ impl ImportDirectiveNS : cmp::Eq {
 /// Contains data for specific types of import directives.
 enum ImportDirectiveSubclass {
     SingleImport(ident /* target */, ident /* source */, ImportDirectiveNS),
+    TypedefImport(ident /* target */, ident /* source */),
     GlobImport
 }
 
@@ -383,7 +384,7 @@ struct ImportResolution {
     mut value_target: Option<Target>,
     mut type_target: Option<Target>,
 
-    mut used: bool,
+    mut used: bool
 }
 
 fn ImportResolution(privacy: Privacy, span: span) -> ImportResolution {
@@ -396,6 +397,18 @@ fn ImportResolution(privacy: Privacy, span: span) -> ImportResolution {
         used: false
     }
 }
+
+fn optional_import_resolution(privacy: Privacy, span: span) -> ImportResolution {
+    ImportResolution {
+        privacy: privacy,
+        span: span,
+        outstanding_references: 0u,
+        value_target: None,
+        type_target: None,
+        used: false
+    }
+}
+
 
 impl ImportResolution {
     fn target_for_namespace(namespace: Namespace) -> Option<Target> {
@@ -1153,12 +1166,39 @@ impl Resolver {
             }
 
             // These items live in the type namespace.
-            item_ty(*) => {
+            item_ty(ty, _) => {
                 let (name_bindings, _) =
                     self.add_child(ident, parent, ForbidDuplicateTypes, sp);
 
                 (*name_bindings).define_type
                     (privacy, def_ty(local_def(item.id)), sp);
+
+                // Typedefs are basically import directives because they
+                // need to pull in any definitions from the type's impl
+                match ty.node {
+                    ty_path(path, _) => {
+                        let is_primitive_type = {
+                            path.idents.len() == 1
+                                && self.primitive_type_table.primitive_types
+                                .contains_key(path.idents.last())
+                        };
+                        if !is_primitive_type {
+                            let module_ = self.get_module_from_parent(parent);
+                            let module_path = @DVec();
+                            for path.idents.init().each |ident| {
+                                module_path.push(*ident);
+                            }
+                            let subclass = @TypedefImport(ident,
+                                                          path.idents.last());
+                            self.build_import_directive(privacy,
+                                                        module_,
+                                                        module_path,
+                                                        subclass,
+                                                        sp);
+                        }
+                    }
+                    _ => ()
+                }
             }
 
             item_enum(enum_definition, _) => {
@@ -1874,7 +1914,7 @@ impl Resolver {
         // the appropriate flag.
 
         match *subclass {
-            SingleImport(target, _, _) => {
+            SingleImport(target, _, _) | TypedefImport(target, _) => {
                 debug!("(building import directive) building import \
                         directive: privacy %? %s::%s",
                        privacy,
@@ -2043,6 +2083,10 @@ impl Resolver {
                 self.resolve_one_level_renaming_import(module_,
                                                        import_directive);
         } else {
+            match *import_directive.subclass {
+                TypedefImport(*) => {debug!("HEHEHEHEH")}
+                _ => {}
+            }
             // First, resolve the module path for the directive, if necessary.
             match self.resolve_module_path_for_import(module_,
                                                     module_path,
@@ -2073,6 +2117,13 @@ impl Resolver {
                                     (module_, containing_module, target,
                                      source);
                         }
+                        TypedefImport(target, source) => {
+                            resolution_result =
+                                self.resolve_single_module_typedef_import
+                                    (module_, containing_module, target,
+                                     source);
+
+                        }
                         GlobImport => {
                             let span = import_directive.span;
                             let p = import_directive.privacy;
@@ -2082,6 +2133,75 @@ impl Resolver {
                                                          span);
                         }
                     }
+                }
+            }
+        }
+
+        match (import_directive.subclass, &resolution_result) {
+            (@TypedefImport(name, _), &Success(())) => {
+                match module_.children.find(name) {
+                    Some(child_name_bindings) => {
+                        match child_name_bindings.type_def {
+                            Some(copy type_def) => {
+                                assert module_.import_resolutions.contains_key(name);
+                                let import_resolution = module_.import_resolutions.get(name);
+                                match import_resolution.type_target {
+                                    Some(copy target) => {
+                                        assert type_def.module_def.is_none();
+                                        type_def.module_def = Some(target.target_module);
+                                    }
+                                    None => { /* no module binding for this typedef */ }
+                                }
+                            }
+                            None => {
+                                self.session.span_bug(
+                                    import_directive.span,
+                                    ~"typedef binding without type def")
+                            }
+                        }
+                    }
+                    None => {
+                        self.session.span_bug(
+                            import_directive.span,
+                            ~"typedef import w/o typedef");
+                    }
+                }
+            }
+            _ => ()
+        }
+
+        match resolution_result {
+            Failed => {
+                match *import_directive.subclass {
+                    TypedefImport(*) => {
+                        debug!("F!!!! import `%s::...` in \
+                                `%s`",
+                               self.idents_to_str((*module_path).get()),
+                               self.module_to_str(module_));
+                    }
+                    _ => ()
+                }
+            }
+            Indeterminate => {
+                match *import_directive.subclass {
+                    TypedefImport(*) => {
+                        debug!("I!!!! import `%s::...` in \
+                                `%s`",
+                               self.idents_to_str((*module_path).get()),
+                               self.module_to_str(module_));
+                    }
+                    _ => ()
+                }
+            }
+            Success(*) => {
+                match *import_directive.subclass {
+                    TypedefImport(*) => {
+                        debug!("S!!!! import `%s::...` in \
+                                `%s`",
+                               self.idents_to_str((*module_path).get()),
+                               self.module_to_str(module_));
+                    }
+                    _ => ()
                 }
             }
         }
@@ -2108,7 +2228,7 @@ impl Resolver {
                     assert module_.glob_count >= 1u;
                     module_.glob_count -= 1u;
                 }
-                SingleImport(*) => {
+                SingleImport(*) | TypedefImport(*) => {
                     // Ignore.
                 }
             }
@@ -2286,8 +2406,23 @@ impl Resolver {
     fn resolve_single_module_import(module_: @Module,
                                     containing_module: @Module,
                                     target: ident,
-                                    source: ident)
-                                 -> ResolveResult<()> {
+                                    source: ident) -> ResolveResult<()> {
+        self.resolve_single_module_import_(module_, containing_module, target, source, false)
+    }
+
+    fn resolve_single_module_typedef_import(module_: @Module,
+                                            containing_module: @Module,
+                                            target: ident,
+                                            source: ident) -> ResolveResult<()> {
+        self.resolve_single_module_import_(module_, containing_module, target, source, true)
+    }
+
+    fn resolve_single_module_import_(module_: @Module,
+                                     containing_module: @Module,
+                                     target: ident,
+                                     source: ident,
+                                     typedef_import: bool)
+        -> ResolveResult<()> {
 
         debug!("(resolving single module import) resolving `%s` = `%s::%s` \
                 from `%s`",
@@ -2373,6 +2508,7 @@ impl Resolver {
                         // The import is unresolved. Bail out.
                         debug!("(resolving single module import) unresolved \
                                 import; bailing out");
+                        if typedef_import { debug!("TYPEDEF IMPORT INDETERMINATE"); }
                         return Indeterminate;
                     }
                 }
@@ -2877,6 +3013,11 @@ impl Resolver {
                 target_name = target;
                 source_name = source;
                 allowable_namespaces = namespaces;
+            }
+            TypedefImport(target, source) => {
+                target_name = target;
+                source_name = source;
+                allowable_namespaces = TypeNSOnly;
             }
             GlobImport => {
                 fail ~"found `import *`, which is invalid";
