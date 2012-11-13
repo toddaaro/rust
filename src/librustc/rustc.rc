@@ -90,6 +90,10 @@ mod middle {
         mod reachable;
         mod machine;
         mod deriving;
+        mod unwind {
+            mod dwarf;
+            mod return_val;
+        }
     }
     #[legacy_exports]
     mod ty;
