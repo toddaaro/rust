@@ -23,6 +23,7 @@ use util::ppaux::ty_to_str;
 use syntax::print::pprust::expr_to_str;
 use syntax::parse::token::ident_interner;
 use syntax::ast::ident;
+use unwind::UnwindStrategy;
 
 type namegen = fn@(~str) -> ident;
 fn new_namegen(intr: @ident_interner) -> namegen {
@@ -179,7 +180,9 @@ type crate_ctxt = {
      // is not emitted by LLVM's GC pass when no functions use GC.
      mut uses_gc: bool,
      dbg_cx: Option<debuginfo::debug_ctxt>,
-     mut do_not_commit_warning_issued: bool};
+     mut do_not_commit_warning_issued: bool,
+     unwind_strategy: @UnwindStrategy
+};
 
 // Types used for llself.
 struct ValSelfData {

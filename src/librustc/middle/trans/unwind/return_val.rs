@@ -5,4 +5,7 @@ struct ReturnValUnwindStrategy {
 }
 
 impl ReturnValUnwindStrategy: UnwindStrategy {
+    fn invoke(bcx: block, llfn: ValueRef, llargs: ~[ValueRef]) -> block {
+        fail
+    }
 }
