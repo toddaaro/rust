@@ -77,9 +77,14 @@ fn syntax_expander_table() -> HashMap<~str, syntax_extension> {
     let syntax_expanders = HashMap();
     syntax_expanders.insert(~"macro",
                             macro_defining(ext::simplext::add_new_extension));
-    syntax_expanders.insert(~"macro_rules",
-                            builtin_item_tt(
-                                ext::tt::macro_rules::add_new_extension));
+    syntax_expanders.insert(
+        ~"macro_rules",
+        builtin_item_tt(
+            ext::tt::macro_rules::add_new_expr_extension));
+    syntax_expanders.insert(
+        ~"macro_item_rules",
+        builtin_item_tt(
+            ext::tt::macro_rules::add_new_item_extension));
     syntax_expanders.insert(~"fmt", builtin(ext::fmt::expand_syntax_ext));
     syntax_expanders.insert(
         ~"auto_serialize",

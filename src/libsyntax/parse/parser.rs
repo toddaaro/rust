@@ -3463,6 +3463,18 @@ impl Parser {
         }
     }
 
+    /// Used by macro_rules to parse `{ $item }`
+    fn parse_item_trapped_in_block(+attrs: ~[attribute]) -> @ast::item {
+        self.expect(token::LBRACE);
+        let item = match self.parse_item(attrs) {
+            Some(move item) => item,
+            None => self.fatal(~"item required")
+        };
+        self.expect(token::RBRACE);
+
+        return item;
+    }
+
     fn parse_use() -> view_item_ {
         return view_item_import(self.parse_view_paths());
     }
