@@ -1206,9 +1206,11 @@ mod node {
                     (*it).leaf = option::None;
                     return option::None
                 } else {
-                    let {ch, next} =
+                    let range =
                         str::char_range_at(*aleaf.content,
                                      (*it).leaf_byte_pos + aleaf.byte_offset);
+                    let ch = range.ch;
+                    let next = range.next;
                     (*it).leaf_byte_pos = next - aleaf.byte_offset;
                     return option::Some(ch)
                 }

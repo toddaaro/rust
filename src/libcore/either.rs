@@ -57,7 +57,7 @@ pub fn rights<T, U: Copy>(eithers: &[Either<T, U>]) -> ~[U] {
 
 // XXX bad copies. take arg by val
 pub fn partition<T: Copy, U: Copy>(eithers: &[Either<T, U>])
-    -> {lefts: ~[T], rights: ~[U]} {
+    -> (~[T], ~[U]) {
     /*!
      * Extracts from a vector of either all the left values and right values
      *
@@ -73,7 +73,7 @@ pub fn partition<T: Copy, U: Copy>(eithers: &[Either<T, U>])
           Right(copy r) => rights.push(r)
         }
     }
-    return {lefts: move lefts, rights: move rights};
+    return (move lefts, move rights);
 }
 
 // XXX bad copies
