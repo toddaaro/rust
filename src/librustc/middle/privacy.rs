@@ -148,6 +148,8 @@ fn check_crate(tcx: ty::ctxt, method_map: &method_map, crate: @ast::crate) {
 
             visit::visit_mod(the_module, span, node_id, method_map, visitor);
 
+            debug!("%i", n_added);
+
             for n_added.times {
                 ignore(privileged_items.pop());
             }
