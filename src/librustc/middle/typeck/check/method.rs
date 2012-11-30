@@ -367,13 +367,13 @@ impl LookupContext {
                     debug!("adding supertrait: %?",
                            supertrait.def_id);
 
-                    let new_substs = ty::subst_substs(
+                    /*let new_substs = ty::subst_substs(
                         tcx,
                         &supertrait.tpt.substs,
-                        &init_substs);
+                        &init_substs);*/
 
                     // Again replacing the self type
-                    let new_substs = {self_ty: Some(rcvr_ty), ..new_substs};
+                    let new_substs = {self_ty: Some(rcvr_ty), ..supertrait.tpt.substs};
 
                     worklist.push((supertrait.tpt.ty, new_substs));
                 }
@@ -422,53 +422,94 @@ impl LookupContext {
 
     fn push_inherent_candidates_from_trait(&self,
                                            self_ty: ty::t,
-                                           did: def_id,
+                                           _did: def_id,
                                            substs: &ty::substs,
                                            vstore: ty::vstore) {
         debug!("push_inherent_candidates_from_trait(did=%s, substs=%s)",
-               self.did_to_str(did),
+               self.did_to_str(_did),
                substs_to_str(self.tcx(), substs));
         let _indenter = indenter();
 
         let tcx = self.tcx();
-        let ms = ty::trait_methods(tcx, did);
-        let index = match vec::position(*ms, |m| m.ident == self.m_name) {
-            Some(i) => i,
-            None => { return; } // no method with the right name
-        };
-        let method = &ms[index];
 
-        /* FIXME(#3157) we should transform the vstore in accordance
-           with the self type
+        let mut worklist = ~[];
 
-        match method.self_type {
-            ast::sty_region(_) => {
-                return; // inapplicable
-            }
-            ast::sty_by_ref | ast::sty_region(_) => vstore_slice(r)
-            ast::sty_box(_) => vstore_box, // XXX NDM mutability
-            ast::sty_uniq(_) => vstore_uniq
-        }
-        */
+        let init_trait_ty = self_ty;
+        let init_substs = substs;
 
         // It is illegal to invoke a method on a trait instance that
         // refers to the `self` type.  Nonetheless, we substitute
         // `trait_ty` for `self` here, because it allows the compiler
         // to soldier on.  An error will be reported should this
         // candidate be selected if the method refers to `self`.
-        let rcvr_substs = {self_ty: Some(self_ty), ..*substs};
+        let init_substs = {self_ty: Some(self_ty), ..*init_substs};
 
-        let (rcvr_ty, rcvr_substs) =
-            self.create_rcvr_ty_and_substs_for_method(
-                method.self_ty, self_ty, move rcvr_substs);
+        worklist.push((init_trait_ty, init_substs));
 
-        self.inherent_candidates.push(Candidate {
-            rcvr_ty: rcvr_ty,
-            rcvr_substs: move rcvr_substs,
-            num_method_tps: method.tps.len(),
-            self_mode: get_mode_from_self_type(method.self_ty),
-            origin: method_trait(did, index, vstore)
-        });
+        let mut i = 0;
+        while i < worklist.len() {
+            let (init_trait_ty, init_substs) = worklist[i];
+            i += 1;
+
+            let init_trait_id = ty::ty_to_def_id(init_trait_ty).get();
+
+            // Add all the supertraits of this trait to the worklist.
+            let supertraits = ty::trait_supertraits(tcx,
+                                                    init_trait_id);
+            for supertraits.each |supertrait| {
+                debug!("adding supertrait: %?",
+                       supertrait.def_id);
+
+                /*let new_substs = ty::subst_substs(
+                    tcx,
+                    &supertrait.tpt.substs,
+                    &init_substs);*/
+
+                // Again replacing the self type
+                let new_substs = {self_ty: Some(self_ty), ..supertrait.tpt.substs};
+
+                worklist.push((supertrait.tpt.ty, new_substs));
+            }
+
+
+            let ms = ty::trait_methods(tcx, init_trait_id);
+            let index = match vec::position(*ms, |m| m.ident == self.m_name) {
+                Some(i) => {
+                    debug!("match for %?", init_trait_id);
+                    i
+                }
+                None => {
+                    debug!("no match for %?", init_trait_id);
+                    // no method with the right name
+                    loop;
+                }
+            };
+            let method = &ms[index];
+
+            /* FIXME(#3157) we should transform the vstore in accordance
+            with the self type
+
+            match method.self_type {
+                ast::sty_region(_) => {
+                    return; // inapplicable
+                }
+                ast::sty_by_ref | ast::sty_region(_) => vstore_slice(r)
+                ast::sty_box(_) => vstore_box, // XXX NDM mutability
+                ast::sty_uniq(_) => vstore_uniq
+            }*/
+
+            let (rcvr_ty, rcvr_substs) =
+                self.create_rcvr_ty_and_substs_for_method(
+                    method.self_ty, self_ty, move init_substs);
+
+            self.inherent_candidates.push(Candidate {
+                rcvr_ty: rcvr_ty,
+                rcvr_substs: move rcvr_substs,
+                num_method_tps: method.tps.len(),
+                self_mode: get_mode_from_self_type(method.self_ty),
+                origin: method_trait(init_trait_id, index, vstore)
+            });
+        }
     }
 
     fn push_inherent_candidates_from_self(&self,
