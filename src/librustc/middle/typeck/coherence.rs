@@ -24,7 +24,7 @@ use syntax::ast::{item_foreign_mod, item_impl, item_mac, item_mod};
 use syntax::ast::{item_trait, item_ty, local_crate, method, node_id};
 use syntax::ast::{trait_ref};
 use syntax::ast_map::node_item;
-use syntax::ast_util::{def_id_of_def, dummy_sp};
+use syntax::ast_util::{def_id_of_def, dummy_sp, is_local};
 use syntax::attr;
 use syntax::codemap::span;
 use syntax::visit::{default_simple_visitor, default_visitor};
@@ -208,8 +208,13 @@ impl CoherenceChecker {
             .. *default_simple_visitor()
         }));
 
-        // Check that there are no overlapping trait instances
-        self.check_implementation_coherence();
+        let coherence_info = &self.crate_context.coherence_info;
+        let extension_methods = &coherence_info.extension_methods;
+
+        for extension_methods.each_key |trait_id| {
+            // Check that there are no overlapping trait instances
+            self.check_implementation_coherence(trait_id);
+        }
 
         // Check whether traits with base types are in privileged scopes.
         self.check_privileged_scopes(crate);
@@ -218,6 +223,18 @@ impl CoherenceChecker {
         // coherence checks, because we ensure by construction that no errors
         // can happen at link time.
         self.add_external_crates();
+
+        for extension_methods.each_key |trait_id| {
+            // Check that all impls of traits have impls of supertraits.
+            // This is not required for coherence or soundness, as the lack
+            // of impls for supertraits would be detected upon use, but
+            // noticing that the supertraits don't exist at impl time
+            // should be nice for usability.
+
+            // This check must be done after adding external crates
+            // because some of the supertrait impls my not be local
+            self.check_supertrait_impls(trait_id);
+        }
 
         // Populate the table of destructors. It might seem a bit strange to
         // do this here, but it's actually the most convenient place, since
@@ -400,23 +417,14 @@ impl CoherenceChecker {
         implementation_list.push(implementation);
     }
 
-    fn check_implementation_coherence() {
-        let coherence_info = &self.crate_context.coherence_info;
-        let extension_methods = &coherence_info.extension_methods;
-
-        for extension_methods.each_key |trait_id| {
-            self.check_implementation_coherence_of(trait_id);
-        }
-    }
-
-    fn check_implementation_coherence_of(trait_def_id: def_id) {
+    fn check_implementation_coherence(trait_def_id: def_id) {
 
         // Unify pairs of polytypes.
-        do self.iter_impls_of_trait(trait_def_id) |a| {
+        for self.iter_impls_of_trait(trait_def_id) |a| {
             let implementation_a = a;
             let polytype_a =
                 self.get_self_type_for_implementation(implementation_a);
-            do self.iter_impls_of_trait(trait_def_id) |b| {
+            for self.iter_impls_of_trait(trait_def_id) |b| {
                 let implementation_b = b;
 
                 // An impl is coherent with itself
@@ -438,8 +446,61 @@ impl CoherenceChecker {
         }
     }
 
+    fn check_supertrait_impls(trait_def_id: def_id) {
+        let supertraits = ty::trait_supertraits(self.crate_context.tcx,
+                                                trait_def_id);
+        if supertraits.is_empty() {
+            return;
+        }
+
+        // For all impls of trait_def_id
+        for self.iter_impls_of_trait(trait_def_id) |a| {
+
+            // Only need to check local impls
+            if !is_local(a.did) { loop; }
+
+            let polytype_a =
+                self.get_self_type_for_implementation(a);
+            // There must be an impl of each supertrait
+            for supertraits.each |supertrait| {
+
+                let mut found = false;
+                for self.iter_impls_of_trait(supertrait.def_id) |b| {
+                    let polytype_b = self.get_self_type_for_implementation(b);
+
+                    if self.polytypes_unify(polytype_a, polytype_b) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if found { loop; }
+
+                let tcx = self.crate_context.tcx;
+                let session = tcx.sess;
+                assert is_local(a.did);
+                let span = match tcx.items.get(a.did.node) {
+                    node_item(item, _) => item.span,
+                    _ => core::util::unreachable()
+                };
+                let impled_trait_ty = ty::lookup_item_type(tcx, trait_def_id);
+                let impled_trait_name = ty_to_str(tcx, impled_trait_ty.ty);
+                let type_name = ty_to_str(tcx, polytype_a.ty);
+                let missing_trait_name = ty_to_str(tcx, supertrait.tpt.ty);
+                session.span_err(
+                    span,
+                    fmt!("no implementation of trait `%s` for type `%s`",
+                         missing_trait_name, type_name));
+                session.note(
+                    fmt!("trait `%s` is a supertrait of trait `%s`",
+                         missing_trait_name, impled_trait_name));
+
+            }
+        }
+    }
+
     fn iter_impls_of_trait(trait_def_id: def_id,
-                           f: &fn(@Impl)) {
+                           f: &fn(@Impl) -> bool) {
 
         let coherence_info = &self.crate_context.coherence_info;
         let extension_methods = &coherence_info.extension_methods;
@@ -447,7 +508,7 @@ impl CoherenceChecker {
         match extension_methods.find(trait_def_id) {
             Some(impls) => {
                 for uint::range(0, impls.len()) |i| {
-                    f(impls[i]);
+                    if !f(impls[i]) { return }
                 }
             }
             None => { /* no impls? */ }
