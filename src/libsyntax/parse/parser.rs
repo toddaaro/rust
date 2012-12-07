@@ -17,7 +17,7 @@ use dvec::DVec;
 use vec::{push};
 use obsolete::{
     ObsoleteSyntax,
-    ObsoleteLowerCaseKindBounds, ObsoleteLet,
+    ObsoleteLet,
     ObsoleteFieldTerminator, ObsoleteStructCtor,
     ObsoleteWith, ObsoleteClassMethod, ObsoleteClassTraits,
     ObsoleteModeInFnType, ObsoleteMoveInit, ObsoleteBinaryMove,
@@ -2487,40 +2487,7 @@ impl Parser {
         let mut bounds = ~[];
         if self.eat(token::COLON) {
             while is_ident(self.token) {
-                if is_ident(self.token) {
-                    let maybe_bound = match self.token {
-                      token::IDENT(copy sid, _) => {
-                        match *self.id_to_str(sid) {
-
-                          ~"send"
-                          | ~"copy"
-                          | ~"const"
-                          | ~"owned" => {
-                            self.obsolete(copy self.span,
-                                          ObsoleteLowerCaseKindBounds);
-                            // Bogus value, but doesn't matter, since
-                            // is an error
-                            Some(ty_param_bound(self.mk_ty_path(sid)))
-                          }
-
-                          _ => None
-                        }
-                      }
-                      _ => fail
-                    };
-
-                    match maybe_bound {
-                        Some(bound) => {
-                            self.bump();
-                            bounds.push(bound);
-                        }
-                        None => {
-                            bounds.push(ty_param_bound(self.parse_ty(false)));
-                        }
-                    }
-                } else {
-                    bounds.push(ty_param_bound(self.parse_ty(false)));
-                }
+                bounds.push(ty_param_bound(self.parse_ty(false)));
             }
         }
         return @move bounds;

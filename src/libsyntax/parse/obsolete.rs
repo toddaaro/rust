@@ -24,7 +24,6 @@ use token::Token;
 
 /// The specific types of unsupported syntax
 pub enum ObsoleteSyntax {
-    ObsoleteLowerCaseKindBounds,
     ObsoleteLet,
     ObsoleteFieldTerminator,
     ObsoleteStructCtor,
@@ -57,12 +56,6 @@ impl Parser {
     /// Reports an obsolete syntax non-fatal error.
     fn obsolete(sp: span, kind: ObsoleteSyntax) {
         let (kind_str, desc) = match kind {
-            ObsoleteLowerCaseKindBounds => (
-                "lower-case kind bounds",
-                "the `send`, `copy`, `const`, and `owned` \
-                 kinds are represented as traits now, and \
-                 should be camel cased"
-            ),
             ObsoleteLet => (
                 "`let` in field declaration",
                 "declare fields as `field: Type`"
