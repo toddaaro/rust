@@ -51,7 +51,7 @@ impl @ast::path: append_types {
 }
 
 trait ext_ctxt_ast_builder {
-    fn ty_param(id: ast::ident, +bounds: ~[ast::ty_param_bound])
+    fn ty_param(id: ast::ident, +bounds: ~[ast::trait_ref])
         -> ast::ty_param;
     fn arg(name: ident, ty: @ast::Ty) -> ast::arg;
     fn expr_block(e: @ast::expr) -> ast::blk;
@@ -173,7 +173,7 @@ impl ext_ctxt: ext_ctxt_ast_builder {
           span: dummy_sp()}
     }
 
-    fn ty_param(id: ast::ident, +bounds: ~[ast::ty_param_bound])
+    fn ty_param(id: ast::ident, +bounds: ~[ast::trait_ref])
         -> ast::ty_param
     {
         {ident: id, id: self.next_id(), bounds: @bounds}

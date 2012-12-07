@@ -101,15 +101,7 @@ const crate_node_id: node_id = 0;
 
 #[auto_serialize]
 #[auto_deserialize]
-// The AST represents all type param bounds as types.
-// typeck::collect::compute_bounds matches these against
-// the "special" built-in traits (see middle::lang_items) and
-// detects Copy, Send, Owned, and Const.
-enum ty_param_bound = @Ty;
-
-#[auto_serialize]
-#[auto_deserialize]
-type ty_param = {ident: ident, id: node_id, bounds: @~[ty_param_bound]};
+type ty_param = {ident: ident, id: node_id, bounds: @~[trait_ref]};
 
 #[auto_serialize]
 #[auto_deserialize]
@@ -1093,7 +1085,7 @@ struct TyFn {
     region: Option<@region>,
     purity: purity,
     onceness: Onceness,
-    bounds: @~[ty_param_bound],
+    bounds: @~[trait_ref],
     decl: fn_decl
 }
 

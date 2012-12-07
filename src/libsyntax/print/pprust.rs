@@ -562,11 +562,7 @@ fn print_item(s: ps, &&item: @ast::item) {
         head(s, visibility_qualified(item.vis, ~"trait"));
         print_ident(s, item.ident);
         print_type_params(s, tps);
-        if vec::len(traits) != 0u {
-            word_space(s, ~":");
-            commasep(s, inconsistent, traits, |s, p|
-                print_path(s, p.path, false));
-        }
+        print_bounds(s, traits);
         word(s.s, ~" ");
         bopen(s);
         for (*methods).each |meth| {
@@ -1744,13 +1740,11 @@ fn print_arg_mode(s: ps, m: ast::mode) {
     if ms != ~"" { word(s.s, ms); }
 }
 
-fn print_bounds(s: ps, bounds: @~[ast::ty_param_bound]) {
-    if bounds.is_not_empty() {
-        word(s.s, ~":");
-        for vec::each(*bounds) |bound| {
-            nbsp(s);
-            print_type(s, **bound);
-        }
+fn print_bounds(s: ps, bounds: @~[ast::trait_ref]) {
+    if vec::len(bounds) != 0u {
+        word_space(s, ~":");
+        commasep(s, inconsistent, bounds, |s, p|
+                 print_path(s, p.path, false));
     }
 }
 
@@ -1892,7 +1886,7 @@ fn print_ty_fn(s: ps,
                opt_region: Option<@ast::region>,
                purity: ast::purity,
                onceness: ast::Onceness,
-               bounds: @~[ast::ty_param_bound],
+               bounds: @~[ast::trait_ref],
                decl: ast::fn_decl, id: Option<ast::ident>,
                tps: Option<~[ast::ty_param]>,
                opt_self_ty: Option<ast::self_ty_>) {

@@ -218,6 +218,15 @@ fn mk_ty_path(cx: ext_ctxt,
     let ty = @{ id: cx.next_id(), node: move ty, span: span };
     ty
 }
+fn mk_trait_ref(cx: ext_ctxt, span: span, idents: ~[ast::ident]) -> ast::trait_ref {
+ mk_trait_ref_from_path(cx, span, mk_raw_path(span, idents))
+}
+fn mk_trait_ref_from_path(cx: ext_ctxt, span: span, path: ast::path) -> ast::trait_ref {
+    @{
+        path: path,
+        ref_id: cx.next_id()
+    }
+}
 fn mk_simple_ty_path(cx: ext_ctxt,
                      span: span,
                      ident: ast::ident)
@@ -242,7 +251,7 @@ fn mk_fn_decl(+inputs: ~[ast::arg], output: @ast::Ty) -> ast::fn_decl {
 }
 fn mk_ty_param(cx: ext_ctxt,
                ident: ast::ident,
-               bounds: @~[ast::ty_param_bound])
+               bounds: @~[ast::trait_ref])
             -> ast::ty_param {
     { ident: ident, id: cx.next_id(), bounds: bounds }
 }

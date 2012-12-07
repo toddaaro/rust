@@ -59,7 +59,7 @@ use ast::{_mod, add, arg, arm, attribute,
              trait_method, trait_ref, tt_delim, tt_seq, tt_tok,
              tt_nonterminal, tuple_variant_kind, Ty, ty_, ty_bot,
              ty_box, ty_field, ty_fn, ty_infer, ty_mac, ty_method, ty_nil,
-             ty_param, ty_param_bound, ty_path, ty_ptr, ty_rec, ty_rptr,
+             ty_param, ty_path, ty_ptr, ty_rec, ty_rptr,
              ty_tup, ty_u32, ty_uniq, ty_vec, ty_fixed_length_vec,
              type_value_ns, uniq, unnamed_field, unsafe_blk, unsafe_fn,
              variant, view_item, view_item_, view_item_export,
@@ -2483,11 +2483,11 @@ impl Parser {
         if self.eat_keyword(~"once") { ast::Once } else { ast::Many }
     }
 
-    fn parse_optional_ty_param_bounds() -> @~[ty_param_bound] {
+    fn parse_optional_ty_param_bounds() -> @~[trait_ref] {
         let mut bounds = ~[];
         if self.eat(token::COLON) {
             while is_ident(self.token) {
-                bounds.push(ty_param_bound(self.parse_ty(false)));
+                bounds.push(self.parse_trait_ref());
             }
         }
         return @move bounds;

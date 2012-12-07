@@ -205,7 +205,6 @@ fn visit_ty<E>(t: @Ty, e: E, v: vt<E>) {
       },
       ty_fn(f) => {
         for f.decl.inputs.each |a| { (v.visit_ty)(a.ty, e, v); }
-        visit_ty_param_bounds(f.bounds, e, v);
         (v.visit_ty)(f.decl.output, e, v);
       }
       ty_path(p, _) => visit_path(p, e, v),
@@ -267,16 +266,7 @@ fn visit_foreign_item<E>(ni: @foreign_item, e: E, v: vt<E>) {
     }
 }
 
-fn visit_ty_param_bounds<E>(bounds: @~[ty_param_bound], e: E, v: vt<E>) {
-    for vec::each(*bounds) |bound| {
-        (v.visit_ty)(**bound, e, v)
-    }
-}
-
-fn visit_ty_params<E>(tps: ~[ty_param], e: E, v: vt<E>) {
-    for tps.each |tp| {
-        visit_ty_param_bounds(tp.bounds, e, v);
-    }
+fn visit_ty_params<E>(_tps: ~[ty_param], _e: E, _v: vt<E>) {
 }
 
 fn visit_fn_decl<E>(fd: fn_decl, e: E, v: vt<E>) {

@@ -16,7 +16,7 @@ use ast::{expr, expr_match, ident, item, item_, item_class, item_enum};
 use ast::{item_impl, m_imm, meta_item, method, named_field, or, pat};
 use ast::{pat_ident, pat_wild, public, pure_fn, re_anon, stmt, struct_def};
 use ast::{struct_variant_kind, sty_by_ref, sty_region, tuple_variant_kind};
-use ast::{ty_nil, ty_param, ty_param_bound, ty_path, ty_rptr, unnamed_field};
+use ast::{ty_nil, ty_param, ty_path, ty_rptr, unnamed_field};
 use ast::{variant};
 use base::ext_ctxt;
 use codemap::span;
@@ -202,8 +202,8 @@ fn create_derived_impl(cx: ext_ctxt,
     // Create the type parameters.
     let impl_ty_params = dvec::DVec();
     for ty_params.each |ty_param| {
-        let bound = build::mk_ty_path(cx, span, trait_path.map(|x| *x));
-        let bounds = @~[ ty_param_bound(bound) ];
+        let bound = build::mk_trait_ref(cx, span, trait_path.map(|x| *x));
+        let bounds = @~[ bound ];
         let impl_ty_param = build::mk_ty_param(cx, ty_param.ident, bounds);
         impl_ty_params.push(move impl_ty_param);
     }

@@ -235,13 +235,9 @@ priv impl ext_ctxt {
         span: span,
         ident: ast::ident,
         path: @ast::path,
-        bounds: @~[ast::ty_param_bound]
+        bounds: @~[ast::trait_ref]
     ) -> ast::ty_param {
-        let bound = ast::ty_param_bound(@{
-            id: self.next_id(),
-            node: ast::ty_path(path, self.next_id()),
-            span: span,
-        });
+        let bound = build::mk_trait_ref_from_path(self, span, path);
 
         {
             ident: ident,
@@ -376,12 +372,7 @@ fn mk_impl(
     let mut trait_tps = vec::append(
         ~[ty_param],
          do tps.map |tp| {
-            let t_bound = ast::ty_param_bound(@{
-                id: cx.next_id(),
-                node: ast::ty_path(path, cx.next_id()),
-                span: span,
-            });
-
+            let t_bound = build::mk_trait_ref_from_path(cx, span, path);
             {
                 ident: tp.ident,
                 id: cx.next_id(),

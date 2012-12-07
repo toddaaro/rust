@@ -138,14 +138,10 @@ fn fold_fn_decl(decl: ast::fn_decl, fld: ast_fold) -> ast::fn_decl {
          cf: decl.cf}
 }
 
-fn fold_ty_param_bound(tpb: ty_param_bound, fld: ast_fold) -> ty_param_bound {
-    ty_param_bound(fld.fold_ty(*tpb))
-}
-
 fn fold_ty_param(tp: ty_param, fld: ast_fold) -> ty_param {
     {ident: /* FIXME (#2543) */ copy tp.ident,
      id: fld.new_id(tp.id),
-     bounds: @vec::map(*tp.bounds, |x| fold_ty_param_bound(*x, fld) )}
+     bounds: tp.bounds}
 }
 
 fn fold_ty_params(tps: ~[ty_param], fld: ast_fold) -> ~[ty_param] {
@@ -526,7 +522,7 @@ fn noop_fold_ty(t: ty_, fld: ast_fold) -> ty_ {
             purity: f.purity,
             region: f.region,
             onceness: f.onceness,
-            bounds: @vec::map(*f.bounds, |x| fold_ty_param_bound(*x, fld)),
+            bounds: f.bounds,
             decl: fold_fn_decl(f.decl, fld)
         }),
       ty_tup(tys) => ty_tup(vec::map(tys, |ty| fld.fold_ty(*ty))),
