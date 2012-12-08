@@ -483,10 +483,6 @@ fn parse_bounds(st: @pstate, conv: conv_did) -> @~[ty::param_bound] {
     let mut bounds = ~[];
     loop {
         bounds.push(match next(st) {
-          'S' => ty::bound_send,
-          'C' => ty::bound_copy,
-          'K' => ty::bound_const,
-          'O' => ty::bound_owned,
           'I' => ty::bound_trait(parse_ty(st, conv)),
           '.' => break,
           _ => fail ~"parse_bounds: bad bounds"

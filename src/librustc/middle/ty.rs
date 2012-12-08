@@ -221,6 +221,8 @@ export AutoRef;
 export AutoRefKind, AutoPtr, AutoBorrowVec, AutoBorrowVecRef, AutoBorrowFn;
 export iter_bound_traits_and_supertraits;
 export count_traits_and_supertraits;
+export trait_ty_to_kind;
+export is_kind_trait;
 
 // Data types
 
@@ -729,10 +731,6 @@ enum type_err {
 }
 
 enum param_bound {
-    bound_copy,
-    bound_owned,
-    bound_send,
-    bound_const,
     bound_trait(t),
 }
 
@@ -796,10 +794,6 @@ impl InferRegion : cmp::Eq {
 impl param_bound : to_bytes::IterBytes {
     pure fn iter_bytes(&self, +lsb0: bool, f: to_bytes::Cb) {
         match *self {
-          bound_copy => 0u8.iter_bytes(lsb0, f),
-          bound_owned => 1u8.iter_bytes(lsb0, f),
-          bound_send => 2u8.iter_bytes(lsb0, f),
-          bound_const => 3u8.iter_bytes(lsb0, f),
           bound_trait(ref t) =>
           to_bytes::iter_bytes_2(&4u8, t, lsb0, f)
         }
@@ -894,26 +888,41 @@ impl FnVid : to_bytes::IterBytes {
     }
 }
 
-fn param_bounds_to_kind(bounds: param_bounds) -> Kind {
+fn param_bounds_to_kind(tcx: ctxt, bounds: param_bounds) -> Kind {
     let mut kind = kind_noncopyable();
     for vec::each(*bounds) |bound| {
         match *bound {
-          bound_copy => {
-            kind = raise_kind(kind, kind_implicitly_copyable());
-          }
-          bound_owned => {
-            kind = raise_kind(kind, kind_owned());
-          }
-          bound_send => {
-            kind = raise_kind(kind, kind_send_only() | kind_owned());
-          }
-          bound_const => {
-            kind = raise_kind(kind, kind_const());
-          }
-          bound_trait(_) => ()
+            bound_trait(t) => {
+                match trait_ty_to_kind(tcx, t) {
+                    Some(k) => {
+                        kind = raise_kind(kind, k);
+                    }
+                    None => ()
+                }
+            }
         }
     }
     kind
+}
+
+fn trait_ty_to_kind(tcx: ctxt, t: t) -> Option<Kind> {
+    let id = ty_to_def_id(t).get();
+    let lang_items = &tcx.lang_items;
+    if lang_items.copy_trait.get() == id {
+        Some(kind_implicitly_copyable())
+    } else if lang_items.owned_trait.get() == id {
+        Some(kind_owned())
+    } else if lang_items.send_trait.get() == id {
+        Some(kind_send_only() | kind_owned())
+    } else if lang_items.const_trait.get() == id {
+        Some(kind_const())
+    } else {
+        None
+    }
+}
+
+fn is_kind_trait(tcx: ctxt, t: t) -> bool {
+    trait_ty_to_kind(tcx, t).is_some()
 }
 
 /// A polytype.
@@ -1580,10 +1589,6 @@ fn substs_to_str(cx: ctxt, substs: &substs) -> ~str {
 
 fn param_bound_to_str(cx: ctxt, pb: &param_bound) -> ~str {
     match *pb {
-        bound_copy => ~"copy",
-        bound_owned => ~"owned",
-        bound_send => ~"send",
-        bound_const => ~"const",
         bound_trait(t) => ty_to_str(cx, t)
     }
 }
@@ -2273,7 +2278,7 @@ fn type_kind(cx: ctxt, ty: t) -> Kind {
       }
 
       ty_param(p) => {
-        param_bounds_to_kind(cx.ty_param_bounds.get(p.def_id.node))
+        param_bounds_to_kind(cx, cx.ty_param_bounds.get(p.def_id.node))
       }
 
       // self is a special type parameter that can only appear in traits; it
@@ -4316,11 +4321,6 @@ fn iter_bound_traits_and_supertraits(tcx: ctxt,
 
         let bound_trait_ty = match *bound {
             ty::bound_trait(bound_t) => bound_t,
-
-            ty::bound_copy | ty::bound_send |
-            ty::bound_const | ty::bound_owned => {
-                loop; // skip non-trait bounds
-            }
         };
 
         let mut worklist = ~[];
@@ -4333,6 +4333,9 @@ fn iter_bound_traits_and_supertraits(tcx: ctxt,
         while i < worklist.len() {
             let init_trait_ty = worklist[i];
             i += 1;
+
+            // Kinds don't have vtables
+            if is_kind_trait(tcx, init_trait_ty) { loop; }
 
             let init_trait_id = match ty_to_def_id(init_trait_ty) {
                 Some(id) => id,
@@ -4722,34 +4725,9 @@ impl sty : cmp::Eq {
 impl param_bound : cmp::Eq {
     pure fn eq(&self, other: &param_bound) -> bool {
         match (*self) {
-            bound_copy => {
-                match (*other) {
-                    bound_copy => true,
-                    _ => false
-                }
-            }
-            bound_owned => {
-                match (*other) {
-                    bound_owned => true,
-                    _ => false
-                }
-            }
-            bound_send => {
-                match (*other) {
-                    bound_send => true,
-                    _ => false
-                }
-            }
-            bound_const => {
-                match (*other) {
-                    bound_const => true,
-                    _ => false
-                }
-            }
             bound_trait(e0a) => {
                 match (*other) {
                     bound_trait(e0b) => e0a == e0b,
-                    _ => false
                 }
             }
         }

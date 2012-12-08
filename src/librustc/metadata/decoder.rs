@@ -412,7 +412,10 @@ fn get_impl_method(intr: @ident_interner, cdata: cmd, id: ast::node_id,
     for reader::tagged_docs(find_item(id, items), tag_item_impl_method)
         |mid| {
             let m_did = reader::with_doc_data(mid, |d| parse_def_id(d));
-            if item_name(intr, find_item(m_did.node, items)) == name {
+        let nm = item_name(intr, find_item(m_did.node, items));
+        error!("nm = %?", intr.get(nm));
+        error!("name = %?", intr.get(name));
+            if nm == name {
                 found = Some(translate_def_id(cdata, m_did));
             }
         }

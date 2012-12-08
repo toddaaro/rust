@@ -11,8 +11,7 @@
 use std::map::HashMap;
 use middle::ty;
 use middle::ty::{arg, canon_mode};
-use middle::ty::{bound_copy, bound_const, bound_owned, bound_send,
-        bound_trait};
+use middle::ty::{bound_trait};
 use middle::ty::{bound_region, br_anon, br_named, br_self, br_cap_avoid};
 use middle::ty::{ctxt, field, method};
 use middle::ty::{mt, t, param_bound};
@@ -262,10 +261,6 @@ fn tys_to_str(cx: ctxt, ts: ~[t]) -> ~str {
 
 fn bound_to_str(cx: ctxt, b: param_bound) -> ~str {
     match b {
-      bound_copy     => ~"copy",
-      bound_owned    => ~"owned",
-      bound_send     => ~"send",
-      bound_const    => ~"const",
       bound_trait(t) => ty_to_str(cx, t)
     }
 }

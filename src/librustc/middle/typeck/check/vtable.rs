@@ -51,10 +51,15 @@ impl VtableContext {
     fn tcx(&const self) -> ty::ctxt { self.ccx.tcx }
 }
 
-fn has_trait_bounds(tps: ~[ty::param_bounds]) -> bool {
+fn has_non_kind_trait_bounds(tcx: ty::ctxt,
+                             tps: ~[ty::param_bounds]) -> bool {
     vec::any(tps, |bs| {
         bs.any(|b| {
-            match b { &ty::bound_trait(_) => true, _ => false }
+            match b {
+                &ty::bound_trait(t) => {
+                    !ty::is_kind_trait(tcx, t)
+                }
+            }
         })
     })
 }
@@ -507,7 +512,7 @@ fn early_resolve_expr(ex: @ast::expr, &&fcx: @fn_ctxt, is_early: bool) {
             let item_ty = ty::lookup_item_type(cx.tcx, did);
             debug!("early resolve expr: def %? %?, %?, %?", ex.id, did, def,
                    fcx.infcx().ty_to_str(item_ty.ty));
-            if has_trait_bounds(*item_ty.bounds) {
+            if has_non_kind_trait_bounds(cx.tcx, *item_ty.bounds) {
                 for item_ty.bounds.each |bounds| {
                     debug!("early_resolve_expr: looking up vtables for bound \
                             %s",
@@ -534,7 +539,7 @@ fn early_resolve_expr(ex: @ast::expr, &&fcx: @fn_ctxt, is_early: bool) {
       ast::expr_index(*) | ast::expr_method_call(*) => {
         match ty::method_call_bounds(cx.tcx, cx.method_map, ex.id) {
           Some(bounds) => {
-            if has_trait_bounds(*bounds) {
+            if has_non_kind_trait_bounds(cx.tcx, *bounds) {
                 let callee_id = match ex.node {
                   ast::expr_field(_, _, _) => ex.id,
                   _ => ex.callee_id

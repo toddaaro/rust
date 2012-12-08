@@ -303,11 +303,13 @@ fn make_mono_id(ccx: @crate_ctxt, item: ast::def_id, substs: ~[ty::t],
             let mut v = ~[];
             for bounds.each |bound| {
                 match *bound {
-                  ty::bound_trait(_) => {
-                    v.push(meth::vtable_id(ccx, vts[i]));
-                    i += 1u;
+                  ty::bound_trait(t) => {
+                      // kinds are not represented in vtables
+                      if !ty::is_kind_trait(ccx.tcx, t) {
+                          v.push(meth::vtable_id(ccx, vts[i]));
+                          i + 1u;
+                      }
                   }
-                  _ => ()
                 }
             }
             (*subst, if v.len() > 0u { Some(v) } else { None })
