@@ -1580,10 +1580,10 @@ fn substs_to_str(cx: ctxt, substs: &substs) -> ~str {
 
 fn param_bound_to_str(cx: ctxt, pb: &param_bound) -> ~str {
     match *pb {
-        bound_copy => ~"copy",
-        bound_owned => ~"owned",
-        bound_send => ~"send",
-        bound_const => ~"const",
+        bound_copy => ~"Copy",
+        bound_owned => ~"Owned",
+        bound_send => ~"Send",
+        bound_const => ~"Const",
         bound_trait(t) => ty_to_str(cx, t)
     }
 }
