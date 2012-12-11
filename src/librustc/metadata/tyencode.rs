@@ -392,13 +392,20 @@ fn enc_ty_fn(w: io::Writer, cx: @ctxt, ft: ty::FnTy) {
 fn enc_bounds(w: io::Writer, cx: @ctxt, bs: @~[ty::param_bound]) {
     for vec::each(*bs) |bound| {
         match *bound {
-          ty::bound_send => w.write_char('S'),
-          ty::bound_copy => w.write_char('C'),
-          ty::bound_const => w.write_char('K'),
-          ty::bound_owned => w.write_char('O'),
           ty::bound_trait(tp) => {
-            w.write_char('I');
-            enc_ty(w, cx, tp);
+              let id = ty::ty_to_def_id(tp).get();
+              if ty::trait_id_is_send_kind_id(cx.tcx, id) {
+                  w.write_char('S');
+              } else if ty::trait_id_is_copy_kind_id(cx.tcx, id) {
+                  w.write_char('C');
+              } else if ty::trait_id_is_const_kind_id(cx.tcx, id) {
+                  w.write_char('K');
+              } else if ty::trait_id_is_owned_kind_id(cx.tcx, id) {
+                  w.write_char('O');
+              } else {
+                  w.write_char('I');
+                  enc_ty(w, cx, tp);
+              }
           }
         }
     }

@@ -429,7 +429,7 @@ fn check_ty(aty: @Ty, cx: ctx, v: visit::vt<ctx>) {
 fn check_bounds(cx: ctx, id: node_id, sp: span,
                 ty: ty::t, bounds: ty::param_bounds) {
     let kind = ty::type_kind(cx.tcx, ty);
-    let p_kind = ty::param_bounds_to_kind(bounds);
+    let p_kind = ty::param_bounds_to_kind(cx.tcx, bounds);
     if !ty::kind_lteq(p_kind, kind) {
         // If the only reason the kind check fails is because the
         // argument type isn't implicitly copyable, consult the warning

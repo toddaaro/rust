@@ -521,9 +521,10 @@ fn combine_impl_and_methods_origins(bcx: block,
     let m_vtables = m_boundss.foldl(0, |sum, m_bounds| {
         m_bounds.foldl(*sum, |sum, m_bound| {
             (*sum) + match (*m_bound) {
-                ty::bound_copy | ty::bound_owned |
-                ty::bound_send | ty::bound_const => 0,
-                ty::bound_trait(_) => 1
+                ty::bound_trait(t) => {
+                    // Kind traits do not get vtables
+                    if !ty::is_kind_trait(bcx.tcx(), t) { 1 } else { 0 }
+                }
             }
         })
     });

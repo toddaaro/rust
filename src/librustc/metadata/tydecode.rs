@@ -483,13 +483,33 @@ fn parse_bounds(st: @pstate, conv: conv_did) -> @~[ty::param_bound] {
     let mut bounds = ~[];
     loop {
         bounds.push(match next(st) {
-          'S' => ty::bound_send,
-          'C' => ty::bound_copy,
-          'K' => ty::bound_const,
-          'O' => ty::bound_owned,
-          'I' => ty::bound_trait(parse_ty(st, conv)),
-          '.' => break,
-          _ => fail ~"parse_bounds: bad bounds"
+            'S' => {
+                ty::bound_trait(
+                    ty::lookup_item_type(
+                        st.tcx,
+                        st.tcx.lang_items.send_trait.get()).ty)
+            }
+            'C' => {
+                ty::bound_trait(
+                    ty::lookup_item_type(
+                        st.tcx,
+                        st.tcx.lang_items.copy_trait.get()).ty)
+            }
+            'K' => {
+                ty::bound_trait(
+                    ty::lookup_item_type(
+                        st.tcx,
+                        st.tcx.lang_items.const_trait.get()).ty)
+            }
+            'O' => {
+                ty::bound_trait(
+                    ty::lookup_item_type(
+                        st.tcx,
+                        st.tcx.lang_items.owned_trait.get()).ty)
+            }
+            'I' => ty::bound_trait(parse_ty(st, conv)),
+            '.' => break,
+            _ => fail ~"parse_bounds: bad bounds"
         });
     }
     @bounds

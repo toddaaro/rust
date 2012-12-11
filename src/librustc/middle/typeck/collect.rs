@@ -869,41 +869,12 @@ fn ty_of_foreign_item(ccx: @crate_ctxt, it: @ast::foreign_item)
 }
 
 // Translate the AST's notion of ty param bounds (which are just newtyped Tys)
-// to ty's notion of ty param bounds, which can either be user-defined traits,
-// or one of the four built-in traits (formerly known as kinds): Const, Copy,
-// Owned, and Send.
+// to ty's notion of ty param bounds.
 fn compute_bounds(ccx: @crate_ctxt,
                   ast_bounds: @~[ast::ty_param_bound]) -> ty::param_bounds {
     @do vec::flat_map(*ast_bounds) |b| {
-        let li = &ccx.tcx.lang_items;
         let ity = ast_ty_to_ty(ccx, empty_rscope, **b);
-        match ty::get(ity).sty {
-            ty::ty_trait(did, _, _) => {
-                let d = Some(did);
-                if d == li.send_trait {
-                    ~[ty::bound_send]
-                }
-                else if d == li.copy_trait {
-                    ~[ty::bound_copy]
-                }
-                else if d == li.const_trait {
-                    ~[ty::bound_const]
-                }
-                else if d == li.owned_trait {
-                    ~[ty::bound_owned]
-                }
-                else {
-                    // Must be a user-defined trait
-                    ~[ty::bound_trait(ity)]
-                }
-            }
-            _ => {
-                ccx.tcx.sess.span_err(
-                    (*b).span, ~"type parameter bounds must be \
-                                 trait types");
-                ~[]
-            }
-        }
+        ~[ty::bound_trait(ity)]
     }
 }
 

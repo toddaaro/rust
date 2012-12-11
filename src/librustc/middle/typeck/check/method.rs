@@ -338,13 +338,10 @@ impl LookupContext {
         for vec::each(*bounds) |bound| {
             let bound_trait_ty = match *bound {
                 ty::bound_trait(bound_t) => bound_t,
-
-                ty::bound_copy | ty::bound_send |
-                ty::bound_const | ty::bound_owned => {
-                    loop; // skip non-trait bounds
-                }
             };
 
+            // Kinds don't have vtables
+            if is_kind_trait(tcx, bound_trait_ty) { loop; }
 
             let bound_substs = match ty::get(bound_trait_ty).sty {
                 ty::ty_trait(_, ref substs, _) => (*substs),
@@ -377,6 +374,9 @@ impl LookupContext {
             while i < worklist.len() {
                 let (init_trait_ty, init_substs) = worklist[i];
                 i += 1;
+
+                // Kinds don't have vtables
+                //if ty::is_kind_trait(tcx, init_trait_ty) { loop; }
 
                 let init_trait_id = ty::ty_to_def_id(init_trait_ty).get();
 
