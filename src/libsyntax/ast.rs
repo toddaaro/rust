@@ -19,7 +19,7 @@ use parse::token;
 
 #[auto_serialize]
 #[auto_deserialize]
-type spanned<T> = {node: T, span: span};
+struct spanned<T> {node: T, span: span}
 
 
 /* can't import macros yet, so this is copied from token.rs. See its comment
@@ -75,11 +75,11 @@ type fn_ident = Option<ident>;
 
 #[auto_serialize]
 #[auto_deserialize]
-type path = {span: span,
+struct path {span: span,
              global: bool,
              idents: ~[ident],
              rp: Option<@region>,
-             types: ~[@Ty]};
+             types: ~[@Ty]}
 
 type crate_num = int;
 
@@ -87,7 +87,7 @@ type node_id = int;
 
 #[auto_serialize]
 #[auto_deserialize]
-type def_id = {crate: crate_num, node: node_id};
+struct def_id {crate: crate_num, node: node_id}
 
 impl def_id : cmp::Eq {
     pure fn eq(&self, other: &def_id) -> bool {
@@ -109,7 +109,7 @@ enum ty_param_bound = @Ty;
 
 #[auto_serialize]
 #[auto_deserialize]
-type ty_param = {ident: ident, id: node_id, bounds: @~[ty_param_bound]};
+struct ty_param {ident: ident, id: node_id, bounds: @~[ty_param_bound]}
 
 #[auto_serialize]
 #[auto_deserialize]
@@ -270,10 +270,10 @@ type crate_cfg = ~[@meta_item];
 
 type crate = spanned<crate_>;
 
-type crate_ =
+struct crate_
     {module: _mod,
      attrs: ~[attribute],
-     config: crate_cfg};
+     config: crate_cfg}
 
 type meta_item = spanned<meta_item_>;
 
@@ -289,19 +289,19 @@ type blk = spanned<blk_>;
 
 #[auto_serialize]
 #[auto_deserialize]
-type blk_ = {view_items: ~[@view_item],
+struct blk_ {view_items: ~[@view_item],
              stmts: ~[@stmt],
              expr: Option<@expr>,
              id: node_id,
-             rules: blk_check_mode};
+             rules: blk_check_mode}
 
 #[auto_serialize]
 #[auto_deserialize]
-type pat = {id: node_id, node: pat_, span: span};
+struct pat {id: node_id, node: pat_, span: span}
 
 #[auto_serialize]
 #[auto_deserialize]
-type field_pat = {ident: ident, pat: @pat};
+struct field_pat {ident: ident, pat: @pat}
 
 #[auto_serialize]
 #[auto_deserialize]
@@ -616,8 +616,8 @@ enum stmt_ {
 // a refinement on pat.
 #[auto_serialize]
 #[auto_deserialize]
-type local_ =  {is_mutbl: bool, ty: @Ty, pat: @pat,
-                init: Option<@expr>, id: node_id};
+struct local_ {is_mutbl: bool, ty: @Ty, pat: @pat,
+                init: Option<@expr>, id: node_id}
 
 type local = spanned<local_>;
 
@@ -629,11 +629,11 @@ enum decl_ { decl_local(~[@local]), decl_item(@item), }
 
 #[auto_serialize]
 #[auto_deserialize]
-type arm = {pats: ~[@pat], guard: Option<@expr>, body: blk};
+struct arm {pats: ~[@pat], guard: Option<@expr>, body: blk}
 
 #[auto_serialize]
 #[auto_deserialize]
-type field_ = {mutbl: mutability, ident: ident, expr: @expr};
+struct field_ {mutbl: mutability, ident: ident, expr: @expr}
 
 type field = spanned<field_>;
 
@@ -655,7 +655,7 @@ impl blk_check_mode : cmp::Eq {
 
 #[auto_serialize]
 #[auto_deserialize]
-type expr = {id: node_id, callee_id: node_id, node: expr_, span: span};
+struct expr {id: node_id, callee_id: node_id, node: expr_, span: span}
 // Extra node ID is only used for index, assign_op, unary, binary, method call
 
 #[auto_serialize]
@@ -725,12 +725,12 @@ enum expr_ {
 
 #[auto_serialize]
 #[auto_deserialize]
-type capture_item_ = {
+struct capture_item_ {
     id: int,
     is_move: bool,
     name: ident, // Currently, can only capture a local var.
     span: span
-};
+}
 
 type capture_item = @capture_item_;
 
@@ -835,7 +835,7 @@ type mac_arg = Option<@expr>;
 
 #[auto_serialize]
 #[auto_deserialize]
-type mac_body_ = {span: span};
+struct mac_body_ {span: span}
 
 type mac_body = Option<mac_body_>;
 
@@ -900,19 +900,19 @@ impl ast::lit_: cmp::Eq {
 // type structure in middle/ty.rs as well.
 #[auto_serialize]
 #[auto_deserialize]
-type mt = {ty: @Ty, mutbl: mutability};
+struct mt {ty: @Ty, mutbl: mutability}
 
 #[auto_serialize]
 #[auto_deserialize]
-type ty_field_ = {ident: ident, mt: mt};
+struct ty_field_ {ident: ident, mt: mt}
 
 type ty_field = spanned<ty_field_>;
 
 #[auto_serialize]
 #[auto_deserialize]
-type ty_method = {ident: ident, attrs: ~[attribute], purity: purity,
+struct ty_method {ident: ident, attrs: ~[attribute], purity: purity,
                   decl: fn_decl, tps: ~[ty_param], self_ty: self_ty,
-                  id: node_id, span: span};
+                  id: node_id, span: span}
 
 #[auto_serialize]
 #[auto_deserialize]
@@ -1004,7 +1004,7 @@ impl float_ty : cmp::Eq {
 
 #[auto_serialize]
 #[auto_deserialize]
-type Ty = {id: node_id, node: ty_, span: span};
+struct Ty {id: node_id, node: ty_, span: span}
 
 // Not represented directly in the AST, referred to by name through a ty_path.
 #[auto_serialize]
@@ -1057,7 +1057,7 @@ impl prim_ty : cmp::Eq {
 
 #[auto_serialize]
 #[auto_deserialize]
-type region = {id: node_id, node: region_};
+struct region {id: node_id, node: region_}
 
 #[auto_serialize]
 #[auto_deserialize]
@@ -1140,14 +1140,14 @@ impl Ty : to_bytes::IterBytes {
 
 #[auto_serialize]
 #[auto_deserialize]
-type arg = {mode: mode, ty: @Ty, pat: @pat, id: node_id};
+struct arg {mode: mode, ty: @Ty, pat: @pat, id: node_id}
 
 #[auto_serialize]
 #[auto_deserialize]
-type fn_decl =
+struct fn_decl
     {inputs: ~[arg],
      output: @Ty,
-     cf: ret_style};
+     cf: ret_style}
 
 #[auto_serialize]
 #[auto_deserialize]
@@ -1256,15 +1256,15 @@ type self_ty = spanned<self_ty_>;
 
 #[auto_serialize]
 #[auto_deserialize]
-type method = {ident: ident, attrs: ~[attribute],
+struct method {ident: ident, attrs: ~[attribute],
                tps: ~[ty_param], self_ty: self_ty,
                purity: purity, decl: fn_decl, body: blk,
                id: node_id, span: span, self_id: node_id,
-               vis: visibility};
+               vis: visibility}
 
 #[auto_serialize]
 #[auto_deserialize]
-type _mod = {view_items: ~[@view_item], items: ~[@item]};
+struct _mod {view_items: ~[@view_item], items: ~[@item]}
 
 #[auto_serialize]
 #[auto_deserialize]
@@ -1302,15 +1302,15 @@ impl foreign_abi : cmp::Eq {
 
 #[auto_serialize]
 #[auto_deserialize]
-type foreign_mod =
+struct foreign_mod
     {sort: foreign_mod_sort,
      abi: ident,
      view_items: ~[@view_item],
-     items: ~[@foreign_item]};
+     items: ~[@foreign_item]}
 
 #[auto_serialize]
 #[auto_deserialize]
-type variant_arg = {ty: @Ty, id: node_id};
+struct variant_arg {ty: @Ty, id: node_id}
 
 #[auto_serialize]
 #[auto_deserialize]
@@ -1322,7 +1322,7 @@ enum variant_kind {
 
 #[auto_serialize]
 #[auto_deserialize]
-type enum_def_ = { variants: ~[variant], common: Option<@struct_def> };
+struct enum_def_ { variants: ~[variant], common: Option<@struct_def> }
 
 #[auto_serialize]
 #[auto_deserialize]
@@ -1330,14 +1330,14 @@ enum enum_def = enum_def_;
 
 #[auto_serialize]
 #[auto_deserialize]
-type variant_ = {name: ident, attrs: ~[attribute], kind: variant_kind,
-                 id: node_id, disr_expr: Option<@expr>, vis: visibility};
+struct variant_ {name: ident, attrs: ~[attribute], kind: variant_kind,
+                 id: node_id, disr_expr: Option<@expr>, vis: visibility}
 
 type variant = spanned<variant_>;
 
 #[auto_serialize]
 #[auto_deserialize]
-type path_list_ident_ = {name: ident, id: node_id};
+struct path_list_ident_ {name: ident, id: node_id}
 
 type path_list_ident = spanned<path_list_ident_>;
 
@@ -1374,8 +1374,8 @@ enum view_path_ {
 
 #[auto_serialize]
 #[auto_deserialize]
-type view_item = {node: view_item_, attrs: ~[attribute],
-                  vis: visibility, span: span};
+struct view_item {node: view_item_, attrs: ~[attribute],
+                  vis: visibility, span: span}
 
 #[auto_serialize]
 #[auto_deserialize]
@@ -1405,7 +1405,7 @@ impl attr_style : cmp::Eq {
 // doc-comments are promoted to attributes that have is_sugared_doc = true
 #[auto_serialize]
 #[auto_deserialize]
-type attribute_ = {style: attr_style, value: meta_item, is_sugared_doc: bool};
+struct attribute_ {style: attr_style, value: meta_item, is_sugared_doc: bool}
 
 /*
   trait_refs appear in impls.
@@ -1416,7 +1416,7 @@ type attribute_ = {style: attr_style, value: meta_item, is_sugared_doc: bool};
  */
 #[auto_serialize]
 #[auto_deserialize]
-type trait_ref = {path: @path, ref_id: node_id};
+struct trait_ref {path: @path, ref_id: node_id}
 
 #[auto_serialize]
 #[auto_deserialize]
@@ -1438,11 +1438,11 @@ impl visibility : cmp::Eq {
 
 #[auto_serialize]
 #[auto_deserialize]
-type struct_field_ = {
+struct struct_field_ {
     kind: struct_field_kind,
     id: node_id,
     ty: @Ty
-};
+}
 
 type struct_field = spanned<struct_field_>;
 
@@ -1482,7 +1482,7 @@ impl struct_field_kind : cmp::Eq {
 
 #[auto_serialize]
 #[auto_deserialize]
-type struct_def = {
+struct struct_def {
     fields: ~[@struct_field], /* fields */
     /* (not including ctor or dtor) */
     /* dtor is optional */
@@ -1490,7 +1490,7 @@ type struct_def = {
     /* ID of the constructor. This is only used for tuple- or enum-like
      * structs. */
     ctor_id: Option<node_id>
-};
+}
 
 /*
   FIXME (#3300): Should allow items to be anonymous. Right now
@@ -1498,9 +1498,9 @@ type struct_def = {
  */
 #[auto_serialize]
 #[auto_deserialize]
-type item = {ident: ident, attrs: ~[attribute],
+struct item {ident: ident, attrs: ~[attribute],
              id: node_id, node: item_,
-             vis: visibility, span: span};
+             vis: visibility, span: span}
 
 #[auto_serialize]
 #[auto_deserialize]
@@ -1548,20 +1548,20 @@ type struct_dtor = spanned<struct_dtor_>;
 
 #[auto_serialize]
 #[auto_deserialize]
-type struct_dtor_ = {id: node_id,
+struct struct_dtor_ {id: node_id,
                     attrs: ~[attribute],
                     self_id: node_id,
-                    body: blk};
+                    body: blk}
 
 #[auto_serialize]
 #[auto_deserialize]
-type foreign_item =
+struct foreign_item
     {ident: ident,
      attrs: ~[attribute],
      node: foreign_item_,
      id: node_id,
      span: span,
-     vis: visibility};
+     vis: visibility}
 
 #[auto_serialize]
 #[auto_deserialize]

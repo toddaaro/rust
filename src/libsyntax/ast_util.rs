@@ -16,7 +16,7 @@ pure fn spanned<T>(+lo: BytePos, +hi: BytePos, +t: T) -> spanned<T> {
 }
 
 pure fn respan<T>(sp: span, +t: T) -> spanned<T> {
-    {node: move t, span: sp}
+    spanned {node: move t, span: sp}
 }
 
 pure fn dummy_spanned<T>(+t: T) -> spanned<T> {
@@ -41,7 +41,9 @@ pure fn path_name_i(idents: ~[ident], intr: @token::ident_interner) -> ~str {
 
 pure fn path_to_ident(p: @path) -> ident { vec::last(p.idents) }
 
-pure fn local_def(id: node_id) -> def_id { {crate: local_crate, node: id} }
+pure fn local_def(id: node_id) -> def_id {
+    def_id {crate: local_crate, node: id}
+}
 
 pure fn is_local(did: ast::def_id) -> bool { did.crate == local_crate }
 
@@ -271,22 +273,22 @@ impl def_id : core::to_bytes::IterBytes {
 
 fn block_from_expr(e: @expr) -> blk {
     let blk_ = default_block(~[], option::Some::<@expr>(e), e.id);
-    return {node: blk_, span: e.span};
+    return spanned {node: blk_, span: e.span};
 }
 
 fn default_block(+stmts1: ~[@stmt], expr1: Option<@expr>, id1: node_id) ->
    blk_ {
-    {view_items: ~[], stmts: stmts1,
+    blk_ {view_items: ~[], stmts: stmts1,
      expr: expr1, id: id1, rules: default_blk}
 }
 
 fn ident_to_path(s: span, +i: ident) -> @path {
-    @{span: s, global: false, idents: ~[i],
+    @path {span: s, global: false, idents: ~[i],
       rp: None, types: ~[]}
 }
 
 fn ident_to_pat(id: node_id, s: span, +i: ident) -> @pat {
-    @{id: id,
+    @pat {id: id,
       node: pat_ident(bind_by_value, ident_to_path(s, i), None),
       span: s}
 }
@@ -316,10 +318,10 @@ fn trait_method_to_ty_method(method: trait_method) -> ty_method {
     match method {
       required(ref m) => (*m),
       provided(m) => {
-        {ident: m.ident, attrs: m.attrs,
-         purity: m.purity, decl: m.decl,
-         tps: m.tps, self_ty: m.self_ty,
-         id: m.id, span: m.span}
+        ty_method {ident: m.ident, attrs: m.attrs,
+                   purity: m.purity, decl: m.decl,
+                   tps: m.tps, self_ty: m.self_ty,
+                   id: m.id, span: m.span}
       }
     }
 }
@@ -410,7 +412,7 @@ fn operator_prec(op: ast::binop) -> uint {
 fn dtor_dec() -> fn_decl {
     let nil_t = @{id: 0, node: ty_nil, span: dummy_sp()};
     // dtor has no args
-    {inputs: ~[],
+    fn_decl {inputs: ~[],
      output: nil_t, cf: return_val}
 }
 

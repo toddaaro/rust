@@ -81,14 +81,15 @@ fn mk_word_item(name: ~str) -> @ast::meta_item {
 }
 
 fn mk_attr(item: @ast::meta_item) -> ast::attribute {
-    return dummy_spanned({style: ast::attr_inner, value: *item,
-                       is_sugared_doc: false});
+    return dummy_spanned(ast::attribute_ {
+        style: ast::attr_inner, value: *item,
+        is_sugared_doc: false});
 }
 
 fn mk_sugared_doc_attr(text: ~str,
                        +lo: BytePos, +hi: BytePos) -> ast::attribute {
     let lit = spanned(lo, hi, ast::lit_str(@text));
-    let attr = {
+    let attr = ast::attribute_ {
         style: doc_comment_style(text),
         value: spanned(lo, hi, ast::meta_name_value(~"doc", lit)),
         is_sugared_doc: true
