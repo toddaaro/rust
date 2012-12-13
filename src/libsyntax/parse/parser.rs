@@ -1700,7 +1700,7 @@ impl Parser {
             let last_arg = self.mk_expr(block.span.lo, block.span.hi,
                                     ctor(block));
             let args = vec::append(args, ~[last_arg]);
-            @{node: expr_call(f, args, true),
+            @expr {node: expr_call(f, args, true),
               .. *e}
           }
           expr_method_call(f, i, tps, args, false) => {
@@ -1708,14 +1708,14 @@ impl Parser {
             let last_arg = self.mk_expr(block.span.lo, block.span.hi,
                                     ctor(block));
             let args = vec::append(args, ~[last_arg]);
-            @{node: expr_method_call(f, i, tps, args, true),
+            @expr {node: expr_method_call(f, i, tps, args, true),
               .. *e}
           }
           expr_field(f, i, tps) => {
             let block = self.parse_lambda_block_expr();
             let last_arg = self.mk_expr(block.span.lo, block.span.hi,
                                     ctor(block));
-            @{node: expr_method_call(f, i, tps, ~[last_arg], true),
+            @expr {node: expr_method_call(f, i, tps, ~[last_arg], true),
               .. *e}
           }
           expr_path(*) | expr_call(*) | expr_method_call(*) |
@@ -1843,14 +1843,18 @@ impl Parser {
                 self.eat(token::COMMA);
             }
 
-            let blk = {node: {view_items: ~[],
-                              stmts: ~[],
-                              expr: Some(expr),
-                              id: self.get_id(),
-                              rules: default_blk},
-                       span: expr.span};
+            let blk = spanned {
+                node: ast::blk_ {
+                    view_items: ~[],
+                    stmts: ~[],
+                    expr: Some(expr),
+                    id: self.get_id(),
+                    rules: default_blk
+                },
+                span: expr.span
+            };
 
-            arms.push({pats: pats, guard: guard, body: blk});
+            arms.push(arm {pats: pats, guard: guard, body: blk});
         }
         let mut hi = self.span.hi;
         self.bump();
@@ -1929,13 +1933,13 @@ impl Parser {
                 self.bump();
                 subpat = self.parse_pat(refutable);
             } else {
-                subpat = @{
+                subpat = @pat {
                     id: self.get_id(),
                     node: pat_ident(bind_infer, fieldpath, None),
                     span: self.last_span
                 };
             }
-            fields.push({ident: fieldname, pat: subpat});
+            fields.push(ast::field_pat {ident: fieldname, pat: subpat});
         }
         return (fields, etc);
     }
@@ -1954,10 +1958,10 @@ impl Parser {
             hi = sub.span.hi;
             // HACK: parse @"..." as a literal of a vstore @str
             pat = match sub.node {
-              pat_lit(e@@{
-                node: expr_lit(@{node: lit_str(_), span: _}), _
+              pat_lit(e@@expr {
+                node: expr_lit(@spanned {node: lit_str(_), span: _}), _
               }) => {
-                let vst = @{id: self.get_id(), callee_id: self.get_id(),
+                let vst = @expr {id: self.get_id(), callee_id: self.get_id(),
                             node: expr_vstore(e, expr_vstore_box),
                             span: mk_sp(lo, hi)};
                 pat_lit(vst)
@@ -1971,10 +1975,10 @@ impl Parser {
             hi = sub.span.hi;
             // HACK: parse ~"..." as a literal of a vstore ~str
             pat = match sub.node {
-              pat_lit(e@@{
-                node: expr_lit(@{node: lit_str(_), span: _}), _
+              pat_lit(e@@expr{
+                node: expr_lit(@spanned{node: lit_str(_), span: _}), _
               }) => {
-                let vst = @{id: self.get_id(), callee_id: self.get_id(),
+                let vst = @expr{id: self.get_id(), callee_id: self.get_id(),
                             node: expr_vstore(e, expr_vstore_uniq),
                             span: mk_sp(lo, hi)};
                 pat_lit(vst)
@@ -1990,10 +1994,10 @@ impl Parser {
               hi = sub.span.hi;
               // HACK: parse &"..." as a literal of a borrowed str
               pat = match sub.node {
-                  pat_lit(e@@{
-                      node: expr_lit(@{node: lit_str(_), span: _}), _
+                  pat_lit(e@@expr{
+                      node: expr_lit(@spanned {node: lit_str(_), span: _}), _
                   }) => {
-                      let vst = @{
+                      let vst = @expr{
                           id: self.get_id(),
                           callee_id: self.get_id(),
                           node: expr_vstore(e, expr_vstore_slice),
@@ -2016,7 +2020,7 @@ impl Parser {
             if self.token == token::RPAREN {
                 hi = self.span.hi;
                 self.bump();
-                let lit = @{node: lit_nil, span: mk_sp(lo, hi)};
+                let lit = @spanned {node: lit_nil, span: mk_sp(lo, hi)};
                 let expr = self.mk_expr(lo, hi, expr_lit(lit));
                 pat = pat_lit(expr);
             } else {
@@ -2133,7 +2137,7 @@ impl Parser {
             hi = self.span.hi;
           }
         }
-        return @{id: self.get_id(), node: pat, span: mk_sp(lo, hi)};
+        return @pat {id: self.get_id(), node: pat, span: mk_sp(lo, hi)};
     }
 
     fn parse_pat_ident(refutable: bool,
@@ -2167,13 +2171,13 @@ impl Parser {
                    allow_init: bool) -> @local {
         let lo = self.span.lo;
         let pat = self.parse_pat(false);
-        let mut ty = @{id: self.get_id(),
+        let mut ty = @Ty {id: self.get_id(),
                        node: ty_infer,
                        span: mk_sp(lo, lo)};
         if self.eat(token::COLON) { ty = self.parse_ty(false); }
         let init = if allow_init { self.parse_initializer() } else { None };
         return @spanned(lo, self.last_span.hi,
-                     {is_mutbl: is_mutbl, ty: ty, pat: pat,
+                     ast::local_ {is_mutbl: is_mutbl, ty: ty, pat: pat,
                       init: init, id: self.get_id()});
     }
 
@@ -2200,7 +2204,7 @@ impl Parser {
         let name = self.parse_ident();
         self.expect(token::COLON);
         let ty = self.parse_ty(false);
-        return @spanned(lo, self.last_span.hi, {
+        return @spanned(lo, self.last_span.hi, ast::struct_field_ {
             kind: named_field(name, is_mutbl, pr),
             id: self.get_id(),
             ty: ty
@@ -2383,7 +2387,7 @@ impl Parser {
                             match self.token {
                                 token::SEMI => {
                                     self.bump();
-                                    stmts.push(@{node: stmt_semi(e, stmt_id),
+                                    stmts.push(@spanned {node: stmt_semi(e, stmt_id),
                                                  ..*stmt});
                                 }
                                 token::RBRACE => {
@@ -2407,7 +2411,7 @@ impl Parser {
                             match self.token {
                                 token::SEMI => {
                                     self.bump();
-                                    stmts.push(@{node: stmt_mac((*m), true),
+                                    stmts.push(@spanned {node: stmt_mac((*m), true),
                                                  ..*stmt});
                                 }
                                 token::RBRACE => {
@@ -2435,13 +2439,13 @@ impl Parser {
         }
         let mut hi = self.span.hi;
         self.bump();
-        let bloc = {view_items: view_items, stmts: stmts, expr: expr,
+        let bloc = ast::blk_ {view_items: view_items, stmts: stmts, expr: expr,
                     id: self.get_id(), rules: s};
         return spanned(lo, hi, bloc);
     }
 
     fn mk_ty_path(i: ident) -> @Ty {
-        @{id: self.get_id(), node: ty_path(
+        @Ty {id: self.get_id(), node: ty_path(
             ident_to_path(copy self.last_span, i),
             self.get_id()), span: self.last_span}
     }
@@ -2506,7 +2510,7 @@ impl Parser {
     fn parse_ty_param() -> ty_param {
         let ident = self.parse_ident();
         let bounds = self.parse_optional_ty_param_bounds();
-        return {ident: ident, id: self.get_id(), bounds: bounds};
+        return ty_param {ident: ident, id: self.get_id(), bounds: bounds};
     }
 
     fn parse_ty_params() -> ~[ty_param] {
@@ -2527,7 +2531,7 @@ impl Parser {
         let capture_clause = @either::rights(args_or_capture_items);
 
         let (ret_style, ret_ty) = self.parse_ret_ty();
-        return ({inputs: inputs,
+        return (fn_decl {inputs: inputs,
                  output: ret_ty,
                  cf: ret_style}, capture_clause);
     }
@@ -2629,7 +2633,7 @@ impl Parser {
         let capture_clause = @either::rights(args_or_capture_items);
         let (ret_style, ret_ty) = self.parse_ret_ty();
 
-        let fn_decl = {
+        let fn_decl = fn_decl {
             inputs: inputs,
             output: ret_ty,
             cf: ret_style
@@ -2652,9 +2656,9 @@ impl Parser {
         let output = if self.eat(token::RARROW) {
             self.parse_ty(false)
         } else {
-            @{id: self.get_id(), node: ty_infer, span: self.span}
+            @Ty{id: self.get_id(), node: ty_infer, span: self.span}
         };
-        return ({inputs: either::lefts(inputs_captures),
+        return (fn_decl {inputs: either::lefts(inputs_captures),
                  output: output,
                  cf: return_val},
                 @either::rights(inputs_captures));
