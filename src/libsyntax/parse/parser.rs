@@ -382,7 +382,7 @@ impl Parser {
             p.parse_arg_general(false)
         };
         let (ret_style, ret_ty) = self.parse_ret_ty();
-        return {inputs: inputs, output: ret_ty,
+        return fn_decl {inputs: inputs, output: ret_ty,
                 cf: ret_style};
     }
 
@@ -420,7 +420,7 @@ impl Parser {
                 debug!("parse_trait_methods(): parsing required method");
                 // NB: at the moment, visibility annotations on required
                 // methods are ignored; this could change.
-                required({ident: ident, attrs: attrs,
+                required(ty_method {ident: ident, attrs: attrs,
                           purity: pur, decl: d, tps: tps,
                           self_ty: self_ty,
                           id: p.get_id(), span: mk_sp(lo, hi)})
@@ -430,7 +430,7 @@ impl Parser {
                 let (inner_attrs, body) =
                     p.parse_inner_attrs_and_block(true);
                 let attrs = vec::append(attrs, inner_attrs);
-                provided(@{ident: ident,
+                provided(@method {ident: ident,
                            attrs: attrs,
                            tps: tps,
                            self_ty: self_ty,
@@ -454,7 +454,7 @@ impl Parser {
     fn parse_mt() -> mt {
         let mutbl = self.parse_mutability();
         let t = self.parse_ty(false);
-        return {ty: t, mutbl: mutbl};
+        return mt {ty: t, mutbl: mutbl};
     }
 
     fn parse_ty_field() -> ty_field {
@@ -463,8 +463,8 @@ impl Parser {
         let id = self.parse_ident();
         self.expect(token::COLON);
         let ty = self.parse_ty(false);
-        return spanned(lo, ty.span.hi, {
-            ident: id, mt: {ty: ty, mutbl: mutbl}
+        return spanned(lo, ty.span.hi, ast::ty_field_ {
+            ident: id, mt: mt {ty: ty, mutbl: mutbl}
         });
     }
 
@@ -472,7 +472,7 @@ impl Parser {
         return if self.eat(token::RARROW) {
             let lo = self.span.lo;
             if self.eat(token::NOT) {
-                (noreturn, @{id: self.get_id(),
+                (noreturn, @Ty {id: self.get_id(),
                              node: ty_bot,
                              span: mk_sp(lo, self.last_span.hi)})
             } else {
@@ -480,7 +480,7 @@ impl Parser {
             }
         } else {
             let pos = self.span.lo;
-            (return_val, @{id: self.get_id(),
+            (return_val, @Ty {id: self.get_id(),
                            node: ty_nil,
                            span: mk_sp(pos, pos)})
         }
@@ -494,7 +494,7 @@ impl Parser {
             None => re_anon
         };
 
-        @{id: self.get_id(), node: r}
+        @region {id: self.get_id(), node: r}
     }
 
     // Parses something like "&x"
@@ -519,7 +519,7 @@ impl Parser {
 
         match self.maybe_parse_dollar_mac() {
           Some(ref e) => {
-            return @{id: self.get_id(),
+            return @Ty {id: self.get_id(),
                   node: ty_mac(spanned(lo, self.span.hi, (*e))),
                   span: mk_sp(lo, self.span.hi)};
           }
@@ -583,7 +583,7 @@ impl Parser {
         } else { self.fatal(~"expected type"); };
 
         let sp = mk_sp(lo, self.last_span.hi);
-        return @{id: self.get_id(), node: t, span: sp};
+        return @Ty {id: self.get_id(), node: t, span: sp};
     }
 
     fn parse_box_or_uniq_pointee(
@@ -711,7 +711,7 @@ impl Parser {
 
         let t = self.parse_ty(false);
 
-        {mode: m, ty: t, pat: pat, id: self.get_id()}
+        arg {mode: m, ty: t, pat: pat, id: self.get_id()}
     }
 
     fn parse_arg() -> arg_or_capture_item {
@@ -729,11 +729,11 @@ impl Parser {
             let t = if p.eat(token::COLON) {
                 p.parse_ty(false)
             } else {
-                @{id: p.get_id(),
+                @Ty {id: p.get_id(),
                   node: ty_infer,
                   span: mk_sp(p.span.lo, p.span.hi)}
             };
-            either::Left({mode: m, ty: t, pat: pat, id: p.get_id()})
+            either::Left(arg {mode: m, ty: t, pat: pat, id: p.get_id()})
         }
     }
 
@@ -807,7 +807,7 @@ impl Parser {
             self.bump();
             self.lit_from_token(tok)
         };
-        return {node: lit, span: mk_sp(lo, self.last_span.hi)};
+        return spanned {node: lit, span: mk_sp(lo, self.last_span.hi)};
     }
 
     fn parse_path_without_tps() -> @path {
@@ -836,7 +836,7 @@ impl Parser {
                 break;
             }
         }
-        @{span: mk_sp(lo, self.last_span.hi), global: global,
+        @path {span: mk_sp(lo, self.last_span.hi), global: global,
           idents: ids, rp: None, types: ~[]}
     }
 
@@ -879,11 +879,11 @@ impl Parser {
                 self.parse_seq_lt_gt(Some(token::COMMA),
                                      |p| p.parse_ty(false))
             } else {
-                {node: ~[], span: path.span}
+                spanned {node: ~[], span: path.span}
             }
         };
 
-        return @{span: mk_sp(lo, tps.span.hi),
+        return @path {span: mk_sp(lo, tps.span.hi),
               rp: rp,
               types: tps.node,.. *path};
     }
@@ -904,27 +904,27 @@ impl Parser {
         let i = self.parse_ident();
         self.expect(sep);
         let e = self.parse_expr();
-        return spanned(lo, e.span.hi, {mutbl: m, ident: i, expr: e});
+        return spanned(lo, e.span.hi, ast::field_ {mutbl: m, ident: i, expr: e});
     }
 
     fn mk_expr(+lo: BytePos, +hi: BytePos, +node: expr_) -> @expr {
-        return @{id: self.get_id(), callee_id: self.get_id(),
+        return @expr {id: self.get_id(), callee_id: self.get_id(),
               node: node, span: mk_sp(lo, hi)};
     }
 
     fn mk_mac_expr(+lo: BytePos, +hi: BytePos, m: mac_) -> @expr {
-        return @{id: self.get_id(),
+        return @expr {id: self.get_id(),
               callee_id: self.get_id(),
-              node: expr_mac({node: m, span: mk_sp(lo, hi)}),
+              node: expr_mac(spanned {node: m, span: mk_sp(lo, hi)}),
               span: mk_sp(lo, hi)};
     }
 
     fn mk_lit_u32(i: u32) -> @expr {
         let span = self.span;
-        let lv_lit = @{node: lit_uint(i as u64, ty_u32),
+        let lv_lit = @spanned {node: lit_uint(i as u64, ty_u32),
                        span: span};
 
-        return @{id: self.get_id(), callee_id: self.get_id(),
+        return @expr {id: self.get_id(), callee_id: self.get_id(),
               node: expr_lit(lv_lit), span: span};
     }
 
@@ -1191,7 +1191,7 @@ impl Parser {
                 self.bump();
             }
             let hi = self.last_span.lo;
-            b = Some({span: mk_sp(lo,hi)});
+            b = Some(ast::mac_body_ {span: mk_sp(lo,hi)});
         }
         return self.mk_mac_expr(lo, self.span.hi, mac_invoc(pth, e, b));
     }
@@ -1458,7 +1458,7 @@ impl Parser {
                 hi = e.span.hi;
                 // HACK: turn &[...] into a &-evec
                 ex = match e.node {
-                  expr_vec(*) | expr_lit(@{node: lit_str(_), span: _})
+                  expr_vec(*) | expr_lit(@spanned {node: lit_str(_), span: _})
                   if m == m_imm => {
                     expr_vstore(e, expr_vstore_slice)
                   }
@@ -1481,7 +1481,7 @@ impl Parser {
               expr_vec(*) if m == m_mutbl =>
                 expr_vstore(e, expr_vstore_mut_box),
               expr_vec(*) if m == m_imm => expr_vstore(e, expr_vstore_box),
-              expr_lit(@{node: lit_str(_), span: _}) if m == m_imm =>
+              expr_lit(@spanned {node: lit_str(_), span: _}) if m == m_imm =>
                 expr_vstore(e, expr_vstore_box),
               _ => expr_unary(box(m), e)
             };
@@ -1493,7 +1493,7 @@ impl Parser {
             hi = e.span.hi;
             // HACK: turn ~[...] into a ~-evec
             ex = match e.node {
-              expr_vec(*) | expr_lit(@{node: lit_str(_), span: _})
+              expr_vec(*) | expr_lit(@spanned {node: lit_str(_), span: _})
               if m == m_imm => expr_vstore(e, expr_vstore_uniq),
               _ => expr_unary(uniq(m), e)
             };
@@ -1633,9 +1633,9 @@ impl Parser {
                   _ => {
                     // No argument list - `do foo {`
                     ({
-                        {
+                        fn_decl {
                             inputs: ~[],
-                            output: @{
+                            output: @Ty {
                                 id: self.get_id(),
                                 node: ty_infer,
                                 span: self.span
@@ -1664,7 +1664,7 @@ impl Parser {
         let lo = self.last_span.lo;
         let (decl, captures) = parse_decl();
         let body = parse_body();
-        let fakeblock = {view_items: ~[], stmts: ~[], expr: Some(body),
+        let fakeblock = ast::blk_ {view_items: ~[], stmts: ~[], expr: Some(body),
                          id: self.get_id(), rules: default_blk};
         let fakeblock = spanned(body.span.lo, body.span.hi,
                                 fakeblock);
