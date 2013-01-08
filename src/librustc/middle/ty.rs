@@ -4307,8 +4307,15 @@ fn iter_bound_traits_and_supertraits(tcx: ctxt,
             // Add supertraits to worklist
             let supertraits = trait_supertraits(tcx,
                                                 init_trait_id);
-            for supertraits.each |supertrait| {
-                worklist.push(supertrait.tpt.ty);
+
+            for supertraits.each |&supertrait| {
+                let supertrait = match get(init_trait_ty).sty {
+                    ty_trait(_, ref substs, _) => {
+                        subst(tcx, substs, supertrait.tpt.ty)
+                    }
+                    _ => fail
+                };
+                worklist.push(supertrait);
             }
 
             if !f(init_trait_ty) {
