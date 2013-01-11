@@ -143,6 +143,8 @@ fn type_uses_for(ccx: @crate_ctxt, fn_id: def_id, n_tps: uint)
 
                 ~"bswap16" | ~"bswap32" | ~"bswap64" => 0,
 
+                ~"memcpy" => 0,
+
                 // would be cool to make these an enum instead of strings!
                 _ => fail ~"unknown intrinsic in type_use"
             };

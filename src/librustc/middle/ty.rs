@@ -132,7 +132,8 @@ export encode_vstore, decode_vstore;
 export ty_nil, mk_nil, type_is_nil;
 export ty_trait, mk_trait;
 export ty_param, mk_param, ty_params_to_tys;
-export ty_ptr, mk_ptr, mk_mut_ptr, mk_imm_ptr, mk_nil_ptr, type_is_unsafe_ptr;
+export ty_ptr, mk_ptr, mk_mut_ptr, mk_imm_ptr, mk_const_ptr;
+export mk_nil_ptr, type_is_unsafe_ptr;
 export ty_rptr, mk_rptr, mk_mut_rptr, mk_imm_rptr;
 export ty_rec, mk_rec;
 export ty_enum, mk_enum, type_is_enum;
@@ -1170,6 +1171,10 @@ fn mk_mut_ptr(cx: ctxt, ty: t) -> t { mk_ptr(cx, {ty: ty,
 
 fn mk_imm_ptr(cx: ctxt, ty: t) -> t {
     mk_ptr(cx, {ty: ty, mutbl: ast::m_imm})
+}
+
+fn mk_const_ptr(cx: ctxt, ty: t) -> t {
+    mk_ptr(cx, {ty: ty, mutbl: ast::m_const})
 }
 
 fn mk_nil_ptr(cx: ctxt) -> t {

@@ -3070,6 +3070,14 @@ fn check_intrinsic_type(ccx: @crate_ctxt, it: @ast::foreign_item) {
          ty::mk_int(tcx))
       }
 
+        ~"memcpy" => {
+            (0u, ~[
+                arg(ast::by_copy, ty::mk_mut_ptr(tcx, ty::mk_u8(tcx))),
+                arg(ast::by_copy, ty::mk_const_ptr(tcx, ty::mk_u8(tcx))),
+                arg(ast::by_copy, ty::mk_uint(tcx))],
+            ty::mk_nil(tcx))
+        }
+
       ~"get_tydesc" => {
         // FIXME (#3730): return *intrinsic::tydesc, not *()
         (1u, ~[], ty::mk_nil_ptr(tcx))

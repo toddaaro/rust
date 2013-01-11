@@ -2521,6 +2521,8 @@ fn declare_intrinsics(llmod: ModuleRef) -> HashMap<~str, ValueRef> {
     intrinsics.insert(~"llvm.gcread", gcread);
     intrinsics.insert(~"llvm.memcpy.p0i8.p0i8.i32", memcpy32);
     intrinsics.insert(~"llvm.memcpy.p0i8.p0i8.i64", memcpy64);
+    intrinsics.insert(~"llvm.memmove.p0i8.p0i8.i32", memcpy32);
+    intrinsics.insert(~"llvm.memmove.p0i8.p0i8.i64", memcpy64);
     intrinsics.insert(~"llvm.memset.p0i8.i32", memset32);
     intrinsics.insert(~"llvm.memset.p0i8.i64", memset64);
     intrinsics.insert(~"llvm.trap", trap);

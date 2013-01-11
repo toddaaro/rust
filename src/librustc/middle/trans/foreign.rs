@@ -821,6 +821,12 @@ fn trans_intrinsic(ccx: @crate_ctxt, decl: ValueRef, item: @ast::foreign_item,
                                Some(copy substs), Some(item.span));
     let mut bcx = top_scope_block(fcx, None), lltop = bcx.llbb;
     match ccx.sess.str_of(item.ident) {
+        ~"memcpy" => {
+            call_memcpy(bcx,
+                        get_param(decl, first_real_arg),
+                        get_param(decl, first_real_arg + 1),
+                        get_param(decl, first_real_arg + 2));
+        }
         ~"atomic_cxchg" => {
             let old = AtomicCmpXchg(bcx,
                                     get_param(decl, first_real_arg),

@@ -41,6 +41,11 @@ extern mod libc_ {
 #[abi = "rust-intrinsic"]
 extern mod rusti {
     fn addr_of<T>(&&val: T) -> *T;
+    #[cfg(stage1)]
+    #[cfg(stage2)]
+    #[cfg(stage3)]
+    fn memcpy(dest: *mut u8, src: *const u8,
+              n: uint);
 }
 
 /// Get an unsafe pointer to a value
@@ -113,6 +118,16 @@ pub pure fn is_not_null<T>(ptr: *const T) -> bool { !is_null(ptr) }
  * Copies `count` elements (not bytes) from `src` to `dst`. The source
  * and destination may not overlap.
  */
+#[inline(always)]
+#[cfg(stage0)]
+pub unsafe fn memcpy<T>(dst: *mut T, src: *const T, count: uint) {
+    let n = count * sys::size_of::<T>();
+    rusti::memcpy(dst as *mut u8, src as *u8, n as uint);
+}
+
+#[cfg(stage1)]
+#[cfg(stage2)]
+#[cfg(stage3)]
 #[inline(always)]
 pub unsafe fn memcpy<T>(dst: *mut T, src: *const T, count: uint) {
     let n = count * sys::size_of::<T>();
