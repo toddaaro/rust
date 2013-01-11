@@ -975,6 +975,12 @@ rust_log_str(uint32_t level, const char *str, size_t size) {
     task->sched_loop->get_log().log(task, level, "%.*s", (int)size, str);
 }
 
+extern "C" void
+rust_register_exit_function(spawn_fn runner, fn_env_pair *f) {
+    rust_task *task = rust_get_current_task();
+    task->kernel->register_exit_function(runner, f);
+}
+
 //
 // Local Variables:
 // mode: C++

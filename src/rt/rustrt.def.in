@@ -208,3 +208,4 @@ linenoiseHistoryAdd
 linenoiseHistorySetMaxLen
 linenoiseHistorySave
 linenoiseHistoryLoad
+rust_register_exit_function
