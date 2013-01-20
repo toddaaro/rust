@@ -20,7 +20,7 @@ use ll = uv_ll;
 
 use core::libc::c_void;
 use core::libc;
-use core::oldcomm::{Port, Chan, listen};
+use core::pipes::{stream, Port, Chan, SharedChan};
 use core::prelude::*;
 use core::ptr::addr_of;
 use core::task::TaskBuilder;
@@ -30,22 +30,30 @@ use core::task;
 pub enum IoTask {
     IoTask_({
         async_handle: *ll::uv_async_t,
-        op_chan: Chan<IoTaskMsg>
+        op_chan: SharedChan<IoTaskMsg>
     })
+}
+
+impl IoTask: Clone {
+    fn clone(&self) -> IoTask {
+        IoTask_({
+            async_handle: self.async_handle,
+            op_chan: self.op_chan.clone()
+        })
+    }
 }
 
 pub fn spawn_iotask(task: task::TaskBuilder) -> IoTask {
 
-    do listen |iotask_ch| {
+    let (iotask_port, iotask_chan) = stream();
 
-        do task.sched_mode(task::SingleThreaded).spawn {
-            debug!("entering libuv task");
-            run_loop(iotask_ch);
-            debug!("libuv task exiting");
-        };
+    do task.sched_mode(task::SingleThreaded).spawn {
+        debug!("entering libuv task");
+        run_loop(&iotask_chan);
+        debug!("libuv task exiting");
+    };
 
-        iotask_ch.recv()
-    }
+    iotask_port.recv()
 }
 
 
@@ -71,7 +79,7 @@ pub fn spawn_iotask(task: task::TaskBuilder) -> IoTask {
  * module. It is not safe to send the `loop_ptr` param to this callback out
  * via ports/chans.
  */
-pub unsafe fn interact(iotask: IoTask,
+pub unsafe fn interact(iotask: &IoTask,
                    cb: fn~(*c_void)) {
     send_msg(iotask, Interaction(move cb));
 }
@@ -83,7 +91,7 @@ pub unsafe fn interact(iotask: IoTask,
  * async handle and do a sanity check to make sure that all other handles are
  * closed, causing a failure otherwise.
  */
-pub fn exit(iotask: IoTask) unsafe {
+pub fn exit(iotask: &IoTask) unsafe {
     send_msg(iotask, TeardownLoop);
 }
 
@@ -96,7 +104,7 @@ enum IoTaskMsg {
 }
 
 /// Run the loop and begin handling messages
-fn run_loop(iotask_ch: Chan<IoTask>) unsafe {
+fn run_loop(iotask_ch: &Chan<IoTask>) unsafe {
 
     let loop_ptr = ll::loop_new();
 
@@ -136,7 +144,7 @@ type IoTaskLoopData = {
     msg_po: Port<IoTaskMsg>
 };
 
-fn send_msg(iotask: IoTask,
+fn send_msg(iotask: &IoTask,
             msg: IoTaskMsg) unsafe {
     iotask.op_chan.send(move msg);
     ll::async_send(iotask.async_handle);
