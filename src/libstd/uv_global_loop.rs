@@ -126,15 +126,14 @@ mod test {
 
     use core::iter;
     use core::libc;
-    use core::oldcomm;
     use core::ptr;
     use core::task;
+    use core::pipes::{stream, Chan, Port, SharedChan};
 
     extern fn simple_timer_close_cb(timer_ptr: *ll::uv_timer_t) unsafe {
-        let exit_ch_ptr = ll::get_data_for_uv_handle(
-            timer_ptr as *libc::c_void) as *oldcomm::Chan<bool>;
-        let exit_ch = *exit_ch_ptr;
-        oldcomm::send(exit_ch, true);
+        let data = ll::get_data_for_uv_handle(timer_ptr as *libc::c_void);
+        let exit_ch_ptr = data as *Chan<bool>;
+        (*exit_ch_ptr).send(true);
         log(debug, fmt!("EXIT_CH_PTR simple_timer_close_cb exit_ch_ptr: %?",
                        exit_ch_ptr));
     }
@@ -153,8 +152,7 @@ mod test {
     }
 
     fn impl_uv_hl_simple_timer(iotask: &IoTask) unsafe {
-        let exit_po = oldcomm::Port::<bool>();
-        let exit_ch = oldcomm::Chan(&exit_po);
+        let (exit_po, exit_ch) = stream::<bool>();
         let exit_ch_ptr = ptr::addr_of(&exit_ch);
         log(debug, fmt!("EXIT_CH_PTR newly created exit_ch_ptr: %?",
                        exit_ch_ptr));
@@ -179,22 +177,21 @@ mod test {
                 fail ~"failure on ll::timer_init()";
             }
         };
-        oldcomm::recv(exit_po);
+        exit_po.recv();
         log(debug, ~"global_loop timer test: msg recv on exit_po, done..");
     }
 
     #[test]
     fn test_gl_uv_global_loop_high_level_global_timer() unsafe {
         let hl_loop = &get_gl();
-        let exit_po = oldcomm::Port::<()>();
-        let exit_ch = oldcomm::Chan(&exit_po);
+        let (exit_po, exit_ch) = stream::<()>();
         task::spawn_sched(task::ManualThreads(1u), || {
             let hl_loop = &get_gl();
             impl_uv_hl_simple_timer(hl_loop);
-            oldcomm::send(exit_ch, ());
+            exit_ch.send(());
         });
         impl_uv_hl_simple_timer(hl_loop);
-        oldcomm::recv(exit_po);
+        exit_po.recv();
     }
 
     // keeping this test ignored until some kind of stress-test-harness
@@ -202,18 +199,19 @@ mod test {
     #[test]
     #[ignore]
     fn test_stress_gl_uv_global_loop_high_level_global_timer() unsafe {
-        let exit_po = oldcomm::Port::<()>();
-        let exit_ch = oldcomm::Chan(&exit_po);
+        let (exit_po, exit_ch) = stream::<()>();
+        let exit_ch = SharedChan(exit_ch);
         let cycles = 5000u;
         for iter::repeat(cycles) {
+            let exit_ch_clone = exit_ch.clone();
             task::spawn_sched(task::ManualThreads(1u), || {
                 let hl_loop = &get_gl();
                 impl_uv_hl_simple_timer(hl_loop);
-                oldcomm::send(exit_ch, ());
+                exit_ch_clone.send(());
             });
         };
         for iter::repeat(cycles) {
-            oldcomm::recv(exit_po);
+            exit_po.recv();
         };
         log(debug, ~"test_stress_gl_uv_global_loop_high_level_global_timer"+
             ~" exiting sucessfully!");
