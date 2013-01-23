@@ -237,7 +237,8 @@ mod test {
 
     // this fn documents the bear minimum neccesary to roll your own
     // high_level_loop
-    unsafe fn spawn_test_loop(exit_ch: oldcomm::Chan<()>) -> IoTask {
+    // XXX: Putting exit_ch in a ~ to avoid memory leak
+    unsafe fn spawn_test_loop(exit_ch: ~Chan<()>) -> IoTask {
         let (iotask_port, iotask_ch) = stream::<IoTask>();
         do task::spawn_sched(task::ManualThreads(1u)) {
             debug!("about to run a test loop");
@@ -259,9 +260,8 @@ mod test {
 
     #[test]
     fn test_uv_iotask_async() unsafe {
-        let exit_po = oldcomm::Port::<()>();
-        let exit_ch = oldcomm::Chan(&exit_po);
-        let iotask = &spawn_test_loop(exit_ch);
+        let (exit_po, exit_ch) = stream();
+        let iotask = &spawn_test_loop(~exit_ch);
 
         debug!("spawned iotask");
 
@@ -288,7 +288,7 @@ mod test {
         };
         log(debug, ~"sending teardown_loop msg..");
         exit(iotask);
-        oldcomm::recv(exit_po);
+        exit_po.recv();
         log(debug, ~"after recv on exit_po.. exiting..");
     }
 }
