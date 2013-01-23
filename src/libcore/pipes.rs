@@ -597,13 +597,16 @@ fn sender_terminate<T: Owned>(p: *Packet<T>) {
 
 #[doc(hidden)]
 fn receiver_terminate<T: Owned>(p: *Packet<T>) {
+    error!("receiver_terminate");
     let p = unsafe { &*p };
     match swap_state_rel(&mut p.header.state, Terminated) {
       Empty => {
+          error!("empty");
         assert p.header.blocked_task.is_null();
         // the sender will clean up
       }
       Blocked => {
+          error!("blocked");
         let old_task = swap_task(&mut p.header.blocked_task, ptr::null());
         if !old_task.is_null() {
             unsafe {
@@ -613,6 +616,7 @@ fn receiver_terminate<T: Owned>(p: *Packet<T>) {
         }
       }
       Terminated | Full => {
+          error!("terminated or full");
         assert p.header.blocked_task.is_null();
         // I have to clean up, use drop_glue
       }
@@ -1327,5 +1331,22 @@ pub mod test {
         }
 
         assert !port.peek();
+    }
+
+    #[test]
+    fn test_chan_try_send_twice() {
+        error!("creating stream");
+        let (port, chan) = stream::<()>();
+        assert chan.try_send(()) == true;
+        {
+            // Kill the port
+            error!("killing port");
+            fn f<T>(v: T) { }
+            f(port);
+        }
+        error!("trying to send");
+        assert chan.try_send(()) == false;
+        // Should continue getting the same result
+        assert chan.try_send(()) == false;
     }
 }
