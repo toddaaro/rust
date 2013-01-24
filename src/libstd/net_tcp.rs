@@ -24,6 +24,7 @@ use core::io;
 use core::libc::size_t;
 use core::libc;
 use core::oldcomm;
+use core::pipes::{stream, Chan, Port, SharedChan};
 use core::prelude::*;
 use core::ptr;
 use core::result::{Result};
@@ -151,12 +152,12 @@ pub fn connect(input_ip: ip::IpAddr, port: uint,
         closed_signal_ch: oldcomm::Chan(&closed_signal_po)
     };
     let conn_data_ptr = ptr::addr_of(&conn_data);
-    let reader_po = oldcomm::Port::<result::Result<~[u8], TcpErrData>>();
+    let (reader_po, reader_ch) = stream::<Result<~[u8], TcpErrData>>();
     let stream_handle_ptr = malloc_uv_tcp_t();
     *(stream_handle_ptr as *mut uv::ll::uv_tcp_t) = uv::ll::tcp_t();
     let socket_data = @{
-        reader_po: reader_po,
-        reader_ch: oldcomm::Chan(&reader_po),
+        reader_po: @reader_po,
+        reader_ch: reader_ch,
         stream_handle_ptr: stream_handle_ptr,
         connect_req: uv::ll::connect_t(),
         write_req: uv::ll::write_t(),
@@ -340,7 +341,7 @@ pub fn write_future(sock: &TcpSocket, raw_write_data: ~[u8])
  * `tcp_err_data` record
  */
 pub fn read_start(sock: &TcpSocket)
-    -> result::Result<oldcomm::Port<
+    -> result::Result<@Port<
         result::Result<~[u8], TcpErrData>>, TcpErrData> unsafe {
     let socket_data = ptr::addr_of(&(*(sock.socket_data)));
     read_start_common_impl(socket_data)
@@ -495,13 +496,13 @@ pub fn accept(new_conn: TcpNewConnection)
       NewTcpConn(server_handle_ptr) => {
         let server_data_ptr = uv::ll::get_data_for_uv_handle(
             server_handle_ptr) as *TcpListenFcData;
-        let reader_po = oldcomm::Port();
+          let (reader_po, reader_ch) = stream();
         let iotask = &(*server_data_ptr).iotask;
         let stream_handle_ptr = malloc_uv_tcp_t();
         *(stream_handle_ptr as *mut uv::ll::uv_tcp_t) = uv::ll::tcp_t();
         let client_socket_data: @TcpSocketData = @{
-            reader_po: reader_po,
-            reader_ch: oldcomm::Chan(&reader_po),
+            reader_po: @reader_po,
+            reader_ch: reader_ch,
             stream_handle_ptr : stream_handle_ptr,
             connect_req : uv::ll::connect_t(),
             write_req : uv::ll::write_t(),
@@ -756,7 +757,7 @@ pub fn socket_buf(sock: TcpSocket) -> TcpSocketBuf {
 
 /// Convenience methods extending `net::tcp::tcp_socket`
 impl TcpSocket {
-    pub fn read_start() -> result::Result<oldcomm::Port<
+    pub fn read_start() -> result::Result<@Port<
         result::Result<~[u8], TcpErrData>>, TcpErrData> {
         read_start(&self)
     }
@@ -925,10 +926,11 @@ fn read_common_impl(socket_data: *TcpSocketData, timeout_msecs: uint)
     else {
         log(debug, ~"tcp::read before recv_timeout");
         let read_result = if timeout_msecs > 0u {
+            let port = result::unwrap(rs_result);
             timer::recv_timeout(
-               iotask, timeout_msecs, result::get(&rs_result))
+               iotask, timeout_msecs, port)
         } else {
-            Some(oldcomm::recv(result::get(&rs_result)))
+            Some(result::unwrap(rs_result).recv())
         };
         log(debug, ~"tcp::read after recv_timeout");
         match move read_result {
@@ -978,7 +980,7 @@ fn read_stop_common_impl(socket_data: *TcpSocketData) ->
 
 // shared impl for read_start
 fn read_start_common_impl(socket_data: *TcpSocketData)
-    -> result::Result<oldcomm::Port<
+    -> result::Result<@Port<
         result::Result<~[u8], TcpErrData>>, TcpErrData> unsafe {
     let stream_handle_ptr = (*socket_data).stream_handle_ptr;
     let start_po = oldcomm::Port::<Option<uv::ll::uv_err_data>>();
@@ -1002,7 +1004,7 @@ fn read_start_common_impl(socket_data: *TcpSocketData)
     };
     match oldcomm::recv(start_po) {
       Some(ref err_data) => result::Err(err_data.to_tcp_err()),
-      None => result::Ok((*socket_data).reader_po)
+        None => result::Ok((*socket_data).reader_po)
     }
 }
 
@@ -1141,8 +1143,8 @@ extern fn on_tcp_read_cb(stream: *uv::ll::uv_stream_t,
         let err_data = uv::ll::get_last_err_data(loop_ptr).to_tcp_err();
         log(debug, fmt!("on_tcp_read_cb: incoming err.. name %? msg %?",
                         err_data.err_name, err_data.err_msg));
-        let reader_ch = (*socket_data_ptr).reader_ch;
-        oldcomm::send(reader_ch, result::Err(err_data));
+        let reader_ch = &(*socket_data_ptr).reader_ch;
+        reader_ch.send(result::Err(err_data));
       }
       // do nothing .. unneeded buf
       0 => (),
@@ -1150,10 +1152,10 @@ extern fn on_tcp_read_cb(stream: *uv::ll::uv_stream_t,
       _ => {
         // we have data
         log(debug, fmt!("tcp on_read_cb nread: %d", nread as int));
-        let reader_ch = (*socket_data_ptr).reader_ch;
+        let reader_ch = &(*socket_data_ptr).reader_ch;
         let buf_base = uv::ll::get_base_from_buf(buf);
         let new_bytes = vec::from_buf(buf_base, nread as uint);
-        oldcomm::send(reader_ch, result::Ok(new_bytes));
+        reader_ch.send(result::Ok(new_bytes));
       }
     }
     uv::ll::free_base_of_buf(buf);
@@ -1256,8 +1258,8 @@ enum ConnAttempt {
 }
 
 type TcpSocketData = {
-    reader_po: oldcomm::Port<result::Result<~[u8], TcpErrData>>,
-    reader_ch: oldcomm::Chan<result::Result<~[u8], TcpErrData>>,
+    reader_po: @Port<result::Result<~[u8], TcpErrData>>,
+    reader_ch: Chan<result::Result<~[u8], TcpErrData>>,
     stream_handle_ptr: *uv::ll::uv_tcp_t,
     connect_req: uv::ll::uv_connect_t,
     write_req: uv::ll::uv_write_t,
