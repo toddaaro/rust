@@ -106,80 +106,76 @@ endef
 
 define TOOLS_STAGE_N_HOST
 
-
-# Promote the stageN target to stageN+1 host
-# FIXME: Shouldn't need to depend on host/librustc.so once
-# rpath is working
 $$(HLIB$(2)_H_$(4))/$$(CFG_LIBFUZZER):					\
-		$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_LIBFUZZER)	\
+		$$(TLIB$(2)_T_$(4)_H_$(3))/$$(CFG_LIBFUZZER)	\
 		$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTC)			\
 		$$(HSREQ$(2)_H_$(4))
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
-	$$(Q)cp -R $$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBFUZZER_GLOB) \
-		$$(wildcard $$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBFUZZER_DSYM_GLOB)) \
+	$$(Q)cp -R $$(TLIB$(2)_T_$(4)_H_$(3))/$(LIBFUZZER_GLOB) \
+		$$(wildcard $$(TLIB$(2)_T_$(4)_H_$(3))/$(LIBFUZZER_DSYM_GLOB)) \
 	        $$(HLIB$(2)_H_$(4))
 
 $$(HBIN$(2)_H_$(4))/fuzzer$$(X):				\
-		$$(TBIN$(1)_T_$(4)_H_$(3))/fuzzer$$(X)	\
+		$$(TBIN$(2)_T_$(4)_H_$(3))/fuzzer$$(X)	\
 		$$(HLIB$(2)_H_$(4))/$$(CFG_LIBFUZZER)	\
 		$$(HSREQ$(2)_H_$(4))
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
 
 $$(HBIN$(2)_H_$(4))/compiletest$$(X):				\
-		$$(TBIN$(1)_T_$(4)_H_$(3))/compiletest$$(X)	\
+		$$(TBIN$(2)_T_$(4)_H_$(3))/compiletest$$(X)	\
 		$$(HSREQ$(2)_H_$(4))
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
 
 
 $$(HLIB$(2)_H_$(4))/$$(CFG_LIBCARGO):				\
-		$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_LIBCARGO)	\
+		$$(TLIB$(2)_T_$(4)_H_$(3))/$$(CFG_LIBCARGO)	\
 		$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTC)		\
 		$$(HSREQ$(2)_H_$(4))
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
-	$$(Q)cp -R $$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBCARGO_GLOB) \
-		$$(wildcard $$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBCARGO_DSYM_GLOB)) \
+	$$(Q)cp -R $$(TLIB$(2)_T_$(4)_H_$(3))/$(LIBCARGO_GLOB) \
+		$$(wildcard $$(TLIB$(2)_T_$(4)_H_$(3))/$(LIBCARGO_DSYM_GLOB)) \
 	        $$(HLIB$(2)_H_$(4))
 
 $$(HBIN$(2)_H_$(4))/cargo$$(X):					\
-		$$(TBIN$(1)_T_$(4)_H_$(3))/cargo$$(X)	\
+		$$(TBIN$(2)_T_$(4)_H_$(3))/cargo$$(X)	\
 		$$(HLIB$(2)_H_$(4))/$$(CFG_LIBCARGO)	\
 		$$(HSREQ$(2)_H_$(4))
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
 
 $$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTDOC):					\
-		$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_LIBRUSTDOC)	\
+		$$(TLIB$(2)_T_$(4)_H_$(3))/$$(CFG_LIBRUSTDOC)	\
 		$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTC)			\
 		$$(HSREQ$(2)_H_$(4))
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
-	$$(Q)cp -R $$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBRUSTDOC_GLOB) \
-		$$(wildcard $$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBRUSTDOC_DSYM_GLOB)) \
+	$$(Q)cp -R $$(TLIB$(2)_T_$(4)_H_$(3))/$(LIBRUSTDOC_GLOB) \
+		$$(wildcard $$(TLIB$(2)_T_$(4)_H_$(3))/$(LIBRUSTDOC_DSYM_GLOB)) \
 	        $$(HLIB$(2)_H_$(4))
 
 $$(HBIN$(2)_H_$(4))/rustdoc$$(X):				\
-		$$(TBIN$(1)_T_$(4)_H_$(3))/rustdoc$$(X)	\
+		$$(TBIN$(2)_T_$(4)_H_$(3))/rustdoc$$(X)	\
 		$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTDOC)	\
 		$$(HSREQ$(2)_H_$(4))
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
 
 $$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTI):					\
-		$$(TLIB$(1)_T_$(4)_H_$(3))/$$(CFG_LIBRUSTI)	\
+		$$(TLIB$(2)_T_$(4)_H_$(3))/$$(CFG_LIBRUSTI)	\
 		$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTC)			\
 		$$(HSREQ$(2)_H_$(4))
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
-	$$(Q)cp -R $$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBRUSTI_GLOB) \
-		$$(wildcard $$(TLIB$(1)_T_$(4)_H_$(3))/$(LIBRUSTI_DSYM_GLOB)) \
+	$$(Q)cp -R $$(TLIB$(2)_T_$(4)_H_$(3))/$(LIBRUSTI_GLOB) \
+		$$(wildcard $$(TLIB$(2)_T_$(4)_H_$(3))/$(LIBRUSTI_DSYM_GLOB)) \
 	        $$(HLIB$(2)_H_$(4))
 
 $$(HBIN$(2)_H_$(4))/rusti$$(X):				\
-		$$(TBIN$(1)_T_$(4)_H_$(3))/rusti$$(X)	\
+		$$(TBIN$(2)_T_$(4)_H_$(3))/rusti$$(X)	\
 		$$(HLIB$(2)_H_$(4))/$$(CFG_LIBRUSTI)	\
 		$$(HSREQ$(2)_H_$(4))
 	@$$(call E, cp: $$@)

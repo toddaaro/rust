@@ -140,13 +140,12 @@ pub fn BufferHeader() -> BufferHeader {
 
 // This is for protocols to associate extra data to thread around.
 #[doc(hidden)]
-#[cfg(stage0)]
+#[cfg(stage1)]
 type Buffer<T: Owned> = {
     header: BufferHeader,
     data: T,
 };
 #[doc(hidden)]
-#[cfg(stage1)]
 #[cfg(stage2)]
 #[cfg(stage3)]
 pub struct Buffer<T: Owned> {
@@ -239,7 +238,7 @@ pub fn mk_packet<T: Owned>() -> Packet<T> {
 }
 
 #[doc(hidden)]
-#[cfg(stage0)]
+#[cfg(stage1)]
 fn unibuffer<T: Owned>() -> ~Buffer<Packet<T>> {
     let b = ~{
         header: BufferHeader(),
@@ -256,7 +255,6 @@ fn unibuffer<T: Owned>() -> ~Buffer<Packet<T>> {
 }
 
 #[doc(hidden)]
-#[cfg(stage1)]
 #[cfg(stage2)]
 #[cfg(stage3)]
 fn unibuffer<T: Owned>() -> ~Buffer<Packet<T>> {

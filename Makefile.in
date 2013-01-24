@@ -344,6 +344,18 @@ else
     $$(TLIB$(1)_T_$(2)_H_$(3))/$(CFG_LIBRUSTC)
 endif
 
+# Prerequisites for building target artifacts
+TSREQ$(1)_T_$(2)_H_$(3) = \
+	$$(HSREQ$(4)_H_$(3)) \
+	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_RUNTIME) \
+	$$(TLIB$(1)_T_$(2)_H_$(3))/libmorestack.a
+
+# Prerequisites for a working stageN compiler and libraries, for a specific target
+SREQ$(1)_T_$(2)_H_$(3) = \
+	$$(TSREQ$(1)_T_$(2)_H_$(3)) \
+	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CORELIB) \
+	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_STDLIB)
+
 # Preqrequisites for using the stageN compiler
 HSREQ$(1)_H_$(3) = \
 	$$(HBIN$(1)_H_$(3))/rustc$$(X) \
@@ -354,18 +366,6 @@ HSREQ$(1)_H_$(3) = \
 	$$(HLIBSYNTAX_DEFAULT$(1)_H_$(3)) \
 	$$(HLIBRUSTC_DEFAULT$(1)_H_$(3)) \
 	$$(MKFILE_DEPS)
-
-# Prerequisites for using the stageN compiler to build target artifacts
-TSREQ$(1)_T_$(2)_H_$(3) = \
-	$$(HSREQ$(1)_H_$(3)) \
-	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_RUNTIME) \
-	$$(TLIB$(1)_T_$(2)_H_$(3))/libmorestack.a
-
-# Prerequisites for a working stageN compiler and libraries, for a specific target
-SREQ$(1)_T_$(2)_H_$(3) = \
-	$$(TSREQ$(1)_T_$(2)_H_$(3)) \
-	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CORELIB) \
-	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_STDLIB)
 
 # Prerequisites for a working stageN compiler and libraries, for a specific target
 CSREQ$(1)_T_$(2)_H_$(3) = \
@@ -411,23 +411,27 @@ endif
 STAGE$(1)_T_$(2)_H_$(3) := 						\
 	$$(Q)$$(call CFG_RUN_TARG,$(1),				\
 		$$(CFG_VALGRIND_COMPILE$(1)) 			\
-		$$(HBIN$(1)_H_$(3))/rustc$$(X)			\
+		$$(HBIN$(4)_H_$(3))/rustc$$(X)			\
+		--sysroot $$(HROOT$(1)_H_$(3)) \
 		--cfg $$(CFGFLAG$(1)_T_$(2)_H_$(3))			\
 		$$(CFG_RUSTC_FLAGS) $$(EXTRAFLAGS_STAGE$(1)) --target=$(2))
 
 PERF_STAGE$(1)_T_$(2)_H_$(3) := 				\
 	$$(Q)$$(call CFG_RUN_TARG,$(1),				\
 		$$(CFG_PERF_TOOL) 						\
-		$$(HBIN$(1)_H_$(3))/rustc$$(X)			\
+		$$(HBIN$(4)_H_$(3))/rustc$$(X)			\
+		--sysroot $$(HROOT$(1)_H_$(3)) \
 		--cfg $$(CFGFLAG$(1)_T_$(2)_H_$(3))			\
 		$$(CFG_RUSTC_FLAGS) $$(EXTRAFLAGS_STAGE$(1)) --target=$(2))
 
 endef
 
 $(foreach build,$(CFG_TARGET_TRIPLES), \
- $(eval $(foreach target,$(CFG_TARGET_TRIPLES), \
-  $(eval $(foreach stage,$(STAGES), \
-   $(eval $(call SREQ,$(stage),$(target),$(build))))))))
+ $(foreach target,$(CFG_TARGET_TRIPLES), \
+   $(eval $(call SREQ,0,$(target),$(build),0)) \
+   $(eval $(call SREQ,1,$(target),$(build),0)) \
+   $(eval $(call SREQ,2,$(target),$(build),1)) \
+   $(eval $(call SREQ,3,$(target),$(build),2))))
 
 ######################################################################
 # rustc-H-targets
@@ -441,7 +445,7 @@ define DEF_RUSTC_STAGE_TARGET
 
 rustc-stage$(2)-H-$(1):							\
 	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
-		$$(SREQ$(2)_T_$$(target)_H_$(1)))
+		$$(HSREQ$(2)_H_$(1)))
 
 endef
 

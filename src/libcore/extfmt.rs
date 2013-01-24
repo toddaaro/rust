@@ -496,10 +496,9 @@ pub mod rt {
 
     pub enum Ty { TyDefault, TyBits, TyHexUpper, TyHexLower, TyOctal, }
 
-    #[cfg(stage0)]
+    #[cfg(stage1)]
     pub type Conv = {flags: u32, width: Count, precision: Count, ty: Ty};
 
-    #[cfg(stage1)]
     #[cfg(stage2)]
     #[cfg(stage3)]
     pub struct Conv {
