@@ -198,6 +198,7 @@ mod test {
     use core::oldcomm;
     use core::ptr;
     use core::task;
+    use core::pipes::{stream, Chan, Port};
 
     extern fn async_close_cb(handle: *ll::uv_async_t) unsafe {
         log(debug, fmt!("async_close_cb handle %?", handle));
@@ -237,7 +238,7 @@ mod test {
 
     // this fn documents the bear minimum neccesary to roll your own
     // high_level_loop
-    unsafe fn spawn_test_loop(exit_ch: oldcomm::Chan<()>) -> IoTask {
+    unsafe fn spawn_test_loop(exit_ch: ~Chan<()>) -> IoTask {
         let (iotask_port, iotask_ch) = stream::<IoTask>();
         do task::spawn_sched(task::ManualThreads(1u)) {
             debug!("about to run a test loop");
@@ -259,9 +260,8 @@ mod test {
 
     #[test]
     fn test_uv_iotask_async() unsafe {
-        let exit_po = oldcomm::Port::<()>();
-        let exit_ch = oldcomm::Chan(&exit_po);
-        let iotask = &spawn_test_loop(exit_ch);
+        let (exit_po, exit_ch) = stream::<()>();
+        let iotask = &spawn_test_loop(~exit_ch);
 
         debug!("spawned iotask");
 
@@ -271,24 +271,25 @@ mod test {
         // under race-condition type situations.. this ensures that the loop
         // lives until, at least, all of the impl_uv_hl_async() runs have been
         // called, at least.
-        let work_exit_po = oldcomm::Port::<()>();
-        let work_exit_ch = oldcomm::Chan(&work_exit_po);
+        let (work_exit_po, work_exit_ch) = stream::<()>();
+        let work_exit_ch = SharedChan(work_exit_ch);
         for iter::repeat(7u) {
             let iotask_clone = iotask.clone();
+            let work_exit_ch_clone = work_exit_ch.clone();
             do task::spawn_sched(task::ManualThreads(1u)) {
                 debug!("async");
                 impl_uv_iotask_async(&iotask_clone);
                 debug!("done async");
-                oldcomm::send(work_exit_ch, ());
+                work_exit_ch_clone.send(());
             };
         };
         for iter::repeat(7u) {
             debug!("waiting");
-            oldcomm::recv(work_exit_po);
+            work_exit_po.recv();
         };
         log(debug, ~"sending teardown_loop msg..");
         exit(iotask);
-        oldcomm::recv(exit_po);
+        exit_po.recv();
         log(debug, ~"after recv on exit_po.. exiting..");
     }
 }
