@@ -152,7 +152,7 @@ struct AncestorNode {
     mut ancestors:    AncestorList,
 }
 
-enum AncestorList = Option<private::Exclusive<AncestorNode>>;
+struct AncestorList(Option<private::Exclusive<AncestorNode>>);
 
 // Accessors for taskgroup arcs and ancestor arcs that wrap the unsafety.
 #[inline(always)]

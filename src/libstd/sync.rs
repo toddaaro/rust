@@ -83,7 +83,7 @@ struct SemInner<Q> {
     blocked:   Q
 }
 #[doc(hidden)]
-enum Sem<Q: Owned> = Exclusive<SemInner<Q>>;
+struct Sem<Q: Owned>(Exclusive<SemInner<Q>>);
 
 #[doc(hidden)]
 fn new_sem<Q: Owned>(count: int, q: Q) -> Sem<Q> {

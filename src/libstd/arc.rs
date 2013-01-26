@@ -426,10 +426,9 @@ fn borrow_rwlock<T: Const Owned>(state: &r/mut RWARCInner<T>) -> &r/RWlock {
 // FIXME (#3154) ice with struct/&<T> prevents these from being structs.
 
 /// The "write permission" token used for RWARC.write_downgrade().
-pub enum RWWriteMode<T: Const Owned> =
-    (&mut T, sync::RWlockWriteMode, PoisonOnFail);
+pub struct RWWriteMode<T: Const Owned>((&mut T, sync::RWlockWriteMode, PoisonOnFail));
 /// The "read permission" token used for RWARC.write_downgrade().
-pub enum RWReadMode<T:Const Owned> = (&T, sync::RWlockReadMode);
+pub struct RWReadMode<T:Const Owned>((&T, sync::RWlockReadMode));
 
 impl<T: Const Owned> &RWWriteMode<T> {
     /// Access the pre-downgrade RWARC in write mode.

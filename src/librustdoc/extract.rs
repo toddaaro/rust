@@ -320,10 +320,10 @@ fn structdoc_from_struct(
 ) -> doc::StructDoc {
     {
         item: itemdoc,
-        fields: do struct_def.fields.map |field| {
+        fields: do struct_def.fields.filter_map |field| {
             match field.node.kind {
-                ast::named_field(ident, _, _) => to_str(ident),
-                ast::unnamed_field => fail ~"what is an unnamed struct field?"
+                ast::named_field(ident, _, _) => Some(to_str(ident)),
+                ast::unnamed_field => None
             }
         },
         sig: None

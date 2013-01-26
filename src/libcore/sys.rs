@@ -28,14 +28,14 @@ use vec;
 pub type FreeGlue = fn(*TypeDesc, *c_void);
 
 // Corresponds to runtime type_desc type
-pub enum TypeDesc = {
+pub struct TypeDesc {
     size: uint,
     align: uint,
     take_glue: uint,
     drop_glue: uint,
     free_glue: uint
     // Remaining fields not listed
-};
+}
 
 /// The representation of a Rust closure
 pub struct Closure {
