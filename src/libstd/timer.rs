@@ -18,7 +18,10 @@ use uv::iotask::IoTask;
 
 use core::either;
 use core::libc;
+use core::libc::c_void;
+use core::cast::transmute;
 use core::oldcomm;
+use core::pipes::{stream, Chan, SharedChan, Port};
 use core::prelude::*;
 use core::ptr;
 use core;
@@ -44,9 +47,8 @@ pub fn delayed_send<T: Owned>(iotask: &IoTask,
                               ch: oldcomm::Chan<T>,
                               val: T) {
         unsafe {
-            let timer_done_po = oldcomm::Port::<()>();
-            let timer_done_ch = oldcomm::Chan(&timer_done_po);
-            let timer_done_ch_ptr = ptr::addr_of(&timer_done_ch);
+            let (timer_done_po, timer_done_ch) = stream::<()>();
+            let timer_done_ch = SharedChan(timer_done_ch);
             let timer = uv::ll::timer_t();
             let timer_ptr = ptr::addr_of(&timer);
             do iotask::interact(iotask) |loop_ptr| {
@@ -56,9 +58,12 @@ pub fn delayed_send<T: Owned>(iotask: &IoTask,
                         let start_result = uv::ll::timer_start(
                             timer_ptr, delayed_send_cb, msecs, 0u);
                         if (start_result == 0i32) {
+                            // Note: putting the channel into a ~ to cast to *c_void
+                            let timer_done_ch_clone = ~timer_done_ch.clone();
+                            let timer_done_ch_ptr = transmute::<~SharedChan<()>, *c_void>(timer_done_ch_clone);
                             uv::ll::set_data_for_uv_handle(
                                 timer_ptr,
-                                timer_done_ch_ptr as *libc::c_void);
+                                timer_done_ch_ptr);
                         } else {
                             let error_msg = uv::ll::get_last_err_info(
                                 loop_ptr);
@@ -73,11 +78,11 @@ pub fn delayed_send<T: Owned>(iotask: &IoTask,
                 }
             };
             // delayed_send_cb has been processed by libuv
-            oldcomm::recv(timer_done_po);
+            timer_done_po.recv();
             // notify the caller immediately
             oldcomm::send(ch, move(val));
             // uv_close for this timer has been processed
-            oldcomm::recv(timer_done_po);
+            timer_done_po.recv();
     };
 }
 
@@ -144,11 +149,12 @@ extern fn delayed_send_cb(handle: *uv::ll::uv_timer_t,
     unsafe {
         log(debug,
             fmt!("delayed_send_cb handle %? status %?", handle, status));
-        let timer_done_ch =
-            *(uv::ll::get_data_for_uv_handle(handle) as *oldcomm::Chan<()>);
+        // Faking a borrowed pointer to our ~SharedChan
+        let timer_done_ch_ptr: &*c_void = &uv::ll::get_data_for_uv_handle(handle);
+        let timer_done_ch_ptr = transmute::<&*c_void, &~SharedChan<()>>(timer_done_ch_ptr);
         let stop_result = uv::ll::timer_stop(handle);
         if (stop_result == 0i32) {
-            oldcomm::send(timer_done_ch, ());
+            timer_done_ch_ptr.send(());
             uv::ll::close(handle, delayed_send_close_cb);
         } else {
             let loop_ptr = uv::ll::get_loop_for_uv_handle(handle);
@@ -161,9 +167,9 @@ extern fn delayed_send_cb(handle: *uv::ll::uv_timer_t,
 extern fn delayed_send_close_cb(handle: *uv::ll::uv_timer_t) {
     unsafe {
         log(debug, fmt!("delayed_send_close_cb handle %?", handle));
-        let timer_done_ch =
-            *(uv::ll::get_data_for_uv_handle(handle) as *oldcomm::Chan<()>);
-        oldcomm::send(timer_done_ch, ());
+        let timer_done_ch_ptr = uv::ll::get_data_for_uv_handle(handle);
+        let timer_done_ch = transmute::<*c_void, ~SharedChan<()>>(timer_done_ch_ptr);
+        timer_done_ch.send(());
     }
 }
 
