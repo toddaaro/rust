@@ -485,7 +485,6 @@ mod tests {
     use arc::*;
     use arc;
 
-    use core::oldcomm::*;
     use core::option::{Some, None};
     use core::option;
     use core::pipes;
