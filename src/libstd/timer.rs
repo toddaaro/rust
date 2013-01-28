@@ -20,7 +20,6 @@ use core::either;
 use core::libc;
 use core::libc::c_void;
 use core::cast::transmute;
-use core::oldcomm;
 use core::pipes::{stream, Chan, SharedChan, Port, select2i};
 use core::prelude::*;
 use core::ptr;
@@ -179,9 +178,9 @@ mod test {
     use uv;
 
     use core::iter;
-    use core::oldcomm;
     use core::rand;
     use core::task;
+    use core::pipes::{stream, SharedChan};
 
     #[test]
     fn test_gl_timer_simple_sleep_test() {
@@ -199,8 +198,8 @@ mod test {
 
     #[test]
     fn test_gl_timer_sleep_stress2() {
-        let po = oldcomm::Port();
-        let ch = oldcomm::Chan(&po);
+        let (po, ch) = stream();
+        let ch = SharedChan(ch);
         let hl_loop = &uv::global_loop::get();
 
         let repeat = 20u;
@@ -214,8 +213,10 @@ mod test {
 
         for iter::repeat(repeat) {
 
+            let ch = ch.clone();
             for spec.each |spec| {
                 let (times, maxms) = *spec;
+                let ch = ch.clone();
                 let hl_loop_clone = hl_loop.clone();
                 do task::spawn {
                     use rand::*;
@@ -223,13 +224,13 @@ mod test {
                     for iter::repeat(times) {
                         sleep(&hl_loop_clone, rng.next() as uint % maxms);
                     }
-                    oldcomm::send(ch, ());
+                    ch.send(());
                 }
             }
         }
 
         for iter::repeat(repeat * spec.len()) {
-            oldcomm::recv(po)
+            po.recv()
         }
     }
 
