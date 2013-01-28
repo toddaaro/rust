@@ -27,7 +27,7 @@ use core::either;
 use core::io::WriterUtil;
 use core::io;
 use core::libc::size_t;
-use core::oldcomm;
+use core::pipes::{stream, Chan, Port, SharedChan};
 use core::option;
 use core::prelude::*;
 use core::result;
@@ -306,8 +306,8 @@ fn run_tests(opts: &TestOpts,
     let mut wait_idx = 0;
     let mut done_idx = 0;
 
-    let p = oldcomm::Port();
-    let ch = oldcomm::Chan(&p);
+    let (p, ch) = stream();
+    let ch = SharedChan(ch);
 
     while done_idx < total {
         while wait_idx < concurrency && run_idx < total {
@@ -318,12 +318,12 @@ fn run_tests(opts: &TestOpts,
                 // that hang forever.
                 callback(TeWait(copy test));
             }
-            run_test(move test, ch);
+            run_test(move test, ch.clone());
             wait_idx += 1;
             run_idx += 1;
         }
 
-        let (test, result) = oldcomm::recv(p);
+        let (test, result) = p.recv();
         if concurrency != 1 {
             callback(TeWait(copy test));
         }
@@ -407,9 +407,9 @@ struct TestFuture {
     wait: fn@() -> TestResult,
 }
 
-pub fn run_test(test: TestDesc, monitor_ch: oldcomm::Chan<MonitorMsg>) {
+pub fn run_test(test: TestDesc, monitor_ch: SharedChan<MonitorMsg>) {
     if test.ignore {
-        oldcomm::send(monitor_ch, (copy test, TrIgnored));
+        monitor_ch.send((copy test, TrIgnored));
         return;
     }
 
@@ -421,7 +421,7 @@ pub fn run_test(test: TestDesc, monitor_ch: oldcomm::Chan<MonitorMsg>) {
         }).spawn(move testfn);
         let task_result = option::unwrap(move result_future).recv();
         let test_result = calc_result(&test, task_result == task::Success);
-        oldcomm::send(monitor_ch, (copy test, test_result));
+        monitor_ch.send((copy test, test_result));
     };
 }
 
@@ -443,7 +443,7 @@ mod tests {
     use test::{TestOpts, run_test};
 
     use core::either;
-    use core::oldcomm;
+    use core::pipes::{stream, SharedChan};
     use core::option;
     use core::vec;
 
@@ -456,10 +456,10 @@ mod tests {
             ignore: true,
             should_fail: false
         };
-        let p = oldcomm::Port();
-        let ch = oldcomm::Chan(&p);
+        let (p, ch) = stream();
+        let ch = SharedChan(ch);
         run_test(desc, ch);
-        let (_, res) = oldcomm::recv(p);
+        let (_, res) = p.recv();
         assert res != TrOk;
     }
 
@@ -472,10 +472,10 @@ mod tests {
             ignore: true,
             should_fail: false
         };
-        let p = oldcomm::Port();
-        let ch = oldcomm::Chan(&p);
+        let (p, ch) = stream();
+        let ch = SharedChan(ch);
         run_test(desc, ch);
-        let (_, res) = oldcomm::recv(p);
+        let (_, res) = p.recv();
         assert res == TrIgnored;
     }
 
@@ -489,10 +489,10 @@ mod tests {
             ignore: false,
             should_fail: true
         };
-        let p = oldcomm::Port();
-        let ch = oldcomm::Chan(&p);
+        let (p, ch) = stream();
+        let ch = SharedChan(ch);
         run_test(desc, ch);
-        let (_, res) = oldcomm::recv(p);
+        let (_, res) = p.recv();
         assert res == TrOk;
     }
 
@@ -505,10 +505,10 @@ mod tests {
             ignore: false,
             should_fail: true
         };
-        let p = oldcomm::Port();
-        let ch = oldcomm::Chan(&p);
+        let (p, ch) = stream();
+        let ch = SharedChan(ch);
         run_test(desc, ch);
-        let (_, res) = oldcomm::recv(p);
+        let (_, res) = p.recv();
         assert res == TrFailed;
     }
 
