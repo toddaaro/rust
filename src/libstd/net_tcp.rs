@@ -668,77 +668,78 @@ fn listen_common(host_ip: ip::IpAddr, port: uint, backlog: uint,
         };
         let server_data_ptr = ptr::addr_of(&server_data);
 
-        let setup_result = do oldcomm::listen |setup_ch| {
-            // this is to address a compiler warning about
-            // an implicit copy.. it seems that double nested
-            // will defeat a move sigil, as is done to the host_ip
-            // arg above.. this same pattern works w/o complaint in
-            // tcp::connect (because the iotask::interact cb isn't
-            // nested within a core::comm::listen block)
-            let loc_ip = copy(host_ip);
-            do iotask::interact(iotask) |move loc_ip, loop_ptr| {
-                unsafe {
-                    match uv::ll::tcp_init(loop_ptr, server_stream_ptr) {
-                        0i32 => {
-                            uv::ll::set_data_for_uv_handle(
-                                server_stream_ptr,
-                                server_data_ptr);
-                            let addr_str = ip::format_addr(&loc_ip);
-                            let bind_result = match loc_ip {
-                                ip::Ipv4(ref addr) => {
-                                    log(debug, fmt!("addr: %?", addr));
-                                    let in_addr = uv::ll::ip4_addr(
-                                        addr_str,
-                                        port as int);
-                                    uv::ll::tcp_bind(server_stream_ptr,
-                                                     ptr::addr_of(&in_addr))
-                                }
-                                ip::Ipv6(ref addr) => {
-                                    log(debug, fmt!("addr: %?", addr));
-                                    let in_addr = uv::ll::ip6_addr(
-                                        addr_str,
-                                        port as int);
-                                    uv::ll::tcp_bind6(server_stream_ptr,
-                                                      ptr::addr_of(&in_addr))
-                                }
-                            };
-                            match bind_result {
-                                0i32 => {
-                                    match uv::ll::listen(
-                                        server_stream_ptr,
-                                        backlog as libc::c_int,
-                                        tcp_lfc_on_connection_cb) {
-                                        0i32 => oldcomm::send(setup_ch, None),
-                                        _ => {
-                                            log(debug,
-                                                ~"failure to uv_tcp_init");
-                                            let err_data =
-                                                uv::ll::get_last_err_data(
-                                                    loop_ptr);
-                                            oldcomm::send(setup_ch,
-                                                          Some(err_data));
-                                        }
+        let (setup_po, setup_ch) = stream();
+
+        // this is to address a compiler warning about
+        // an implicit copy.. it seems that double nested
+        // will defeat a move sigil, as is done to the host_ip
+        // arg above.. this same pattern works w/o complaint in
+        // tcp::connect (because the iotask::interact cb isn't
+        // nested within a core::comm::listen block)
+        let loc_ip = copy(host_ip);
+        do iotask::interact(iotask) |move loc_ip, loop_ptr| {
+            unsafe {
+                match uv::ll::tcp_init(loop_ptr, server_stream_ptr) {
+                    0i32 => {
+                        uv::ll::set_data_for_uv_handle(
+                            server_stream_ptr,
+                            server_data_ptr);
+                        let addr_str = ip::format_addr(&loc_ip);
+                        let bind_result = match loc_ip {
+                            ip::Ipv4(ref addr) => {
+                                log(debug, fmt!("addr: %?", addr));
+                                let in_addr = uv::ll::ip4_addr(
+                                    addr_str,
+                                    port as int);
+                                uv::ll::tcp_bind(server_stream_ptr,
+                                                 ptr::addr_of(&in_addr))
+                            }
+                            ip::Ipv6(ref addr) => {
+                                log(debug, fmt!("addr: %?", addr));
+                                let in_addr = uv::ll::ip6_addr(
+                                    addr_str,
+                                    port as int);
+                                uv::ll::tcp_bind6(server_stream_ptr,
+                                                  ptr::addr_of(&in_addr))
+                            }
+                        };
+                        match bind_result {
+                            0i32 => {
+                                match uv::ll::listen(
+                                    server_stream_ptr,
+                                    backlog as libc::c_int,
+                                    tcp_lfc_on_connection_cb) {
+                                    0i32 => setup_ch.send(None),
+                                    _ => {
+                                        log(debug,
+                                            ~"failure to uv_tcp_init");
+                                        let err_data =
+                                            uv::ll::get_last_err_data(
+                                                loop_ptr);
+                                        setup_ch.send(Some(err_data));
                                     }
                                 }
-                                _ => {
-                                    log(debug, ~"failure to uv_tcp_bind");
-                                    let err_data = uv::ll::get_last_err_data(
-                                        loop_ptr);
-                                    oldcomm::send(setup_ch, Some(err_data));
-                                }
+                            }
+                            _ => {
+                                log(debug, ~"failure to uv_tcp_bind");
+                                let err_data = uv::ll::get_last_err_data(
+                                    loop_ptr);
+                                setup_ch.send(Some(err_data));
                             }
                         }
-                        _ => {
-                            log(debug, ~"failure to uv_tcp_bind");
-                            let err_data = uv::ll::get_last_err_data(
-                                loop_ptr);
-                            oldcomm::send(setup_ch, Some(err_data));
-                        }
+                    }
+                    _ => {
+                        log(debug, ~"failure to uv_tcp_bind");
+                        let err_data = uv::ll::get_last_err_data(
+                            loop_ptr);
+                        setup_ch.send(Some(err_data));
                     }
                 }
             }
-            setup_ch.recv()
-        };
+        }
+
+        let setup_result = setup_po.recv();
+
         match setup_result {
             Some(ref err_data) => {
                 do iotask::interact(iotask) |loop_ptr| {
