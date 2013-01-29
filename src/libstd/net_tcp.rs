@@ -1510,8 +1510,7 @@ pub mod test {
         let expected_req = ~"ping";
         let expected_resp = ~"pong";
 
-        let server_result_po = oldcomm::Port::<~str>();
-        let server_result_ch = oldcomm::Chan(&server_result_po);
+        let (server_result_po, server_result_ch) = stream::<~str>();
 
         let (cont_po, cont_ch) = stream::<()>();
         let cont_ch = SharedChan(cont_ch);
@@ -1543,7 +1542,7 @@ pub mod test {
         };
         assert actual_resp_result.is_ok();
         let actual_resp = actual_resp_result.get();
-        let actual_req = oldcomm::recv(server_result_po);
+        let actual_req = server_result_po.recv();
         log(debug, fmt!("REQ: expected: '%s' actual: '%s'",
                        expected_req, actual_req));
         log(debug, fmt!("RESP: expected: '%s' actual: '%s'",
@@ -1557,16 +1556,13 @@ pub mod test {
         let server_port = 8887u;
         let expected_resp = ~"pong";
 
-        let server_result_po = oldcomm::Port::<~str>();
-        let server_result_ch = oldcomm::Chan(&server_result_po);
-
         let (cont_po, cont_ch) = stream::<()>();
         let cont_ch = SharedChan(cont_ch);
         // server
         let hl_loop_clone = hl_loop.clone();
         do task::spawn_sched(task::ManualThreads(1u)) {
             let cont_ch = cont_ch.clone();
-            let actual_req = do oldcomm::listen |server_ch| {
+            do oldcomm::listen |server_ch| {
                 run_tcp_test_server(
                     server_ip,
                     server_port,
@@ -1575,7 +1571,6 @@ pub mod test {
                     cont_ch.clone(),
                     &hl_loop_clone)
             };
-            server_result_ch.send(actual_req);
         };
         cont_po.recv();
         // client
@@ -1699,8 +1694,7 @@ pub mod test {
         let expected_req = ~"ping";
         let expected_resp = ~"pong";
 
-        let server_result_po = oldcomm::Port::<~str>();
-        let server_result_ch = oldcomm::Chan(&server_result_po);
+        let (server_result_po, server_result_ch) = stream::<~str>();
 
         let (cont_po, cont_ch) = stream::<()>();
         let cont_ch = SharedChan(cont_ch);
@@ -1734,7 +1728,7 @@ pub mod test {
             buf_read(sock_buf, resp_buf.len())
         };
 
-        let actual_req = oldcomm::recv(server_result_po);
+        let actual_req = server_result_po.recv();
         log(debug, fmt!("REQ: expected: '%s' actual: '%s'",
                        expected_req, actual_req));
         log(debug, fmt!("RESP: expected: '%s' actual: '%s'",
@@ -1752,16 +1746,13 @@ pub mod test {
         let expected_req = ~"GET /";
         let expected_resp = ~"A string\nwith multiple lines\n";
 
-        let server_result_po = oldcomm::Port::<~str>();
-        let server_result_ch = oldcomm::Chan(&server_result_po);
-
         let (cont_po, cont_ch) = stream::<()>();
         let cont_ch = SharedChan(cont_ch);
         // server
         let hl_loop_clone = hl_loop.clone();
         do task::spawn_sched(task::ManualThreads(1u)) {
             let cont_ch = cont_ch.clone();
-            let actual_req = do oldcomm::listen |server_ch| {
+            do oldcomm::listen |server_ch| {
                 run_tcp_test_server(
                     server_ip,
                     server_port,
@@ -1770,7 +1761,6 @@ pub mod test {
                     cont_ch.clone(),
                     &hl_loop_clone)
             };
-            server_result_ch.send(actual_req);
         };
         cont_po.recv();
         // client
