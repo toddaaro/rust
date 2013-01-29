@@ -648,14 +648,15 @@ fn listen_common(host_ip: ip::IpAddr, port: uint, backlog: uint,
           on_connect_cb: fn~(*uv::ll::uv_tcp_t))
     -> result::Result<(), TcpListenErrData> {
     unsafe {
-        let stream_closed_po = oldcomm::Port::<()>();
+        let (stream_closed_po, stream_closed_ch) = stream::<()>();
+        let stream_closed_ch = SharedChan(stream_closed_ch);
         let (kill_po, kill_ch) = stream::<Option<TcpErrData>>();
         let kill_ch = SharedChan(kill_ch);
         let server_stream = uv::ll::tcp_t();
         let server_stream_ptr = ptr::addr_of(&server_stream);
         let server_data: TcpListenFcData = TcpListenFcData {
             server_stream_ptr: server_stream_ptr,
-            stream_closed_ch: oldcomm::Chan(&stream_closed_po),
+            stream_closed_ch: stream_closed_ch,
             kill_ch: kill_ch.clone(),
             on_connect_cb: move on_connect_cb,
             iotask: iotask.clone(),
@@ -1150,7 +1151,7 @@ enum TcpNewConnection {
 
 struct TcpListenFcData {
     server_stream_ptr: *uv::ll::uv_tcp_t,
-    stream_closed_ch: oldcomm::Chan<()>,
+    stream_closed_ch: SharedChan<()>,
     kill_ch: SharedChan<Option<TcpErrData>>,
     on_connect_cb: fn~(*uv::ll::uv_tcp_t),
     iotask: IoTask,
@@ -1162,7 +1163,8 @@ extern fn tcp_lfc_close_cb(handle: *uv::ll::uv_tcp_t) {
     unsafe {
         let server_data_ptr = uv::ll::get_data_for_uv_handle(
             handle) as *TcpListenFcData;
-        oldcomm::send((*server_data_ptr).stream_closed_ch, ());
+        let stream_closed_ch = (*server_data_ptr).stream_closed_ch.clone();
+        stream_closed_ch.send(());
     }
 }
 
