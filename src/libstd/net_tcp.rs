@@ -1518,15 +1518,12 @@ pub mod test {
         let hl_loop_clone = hl_loop.clone();
         do task::spawn_sched(task::ManualThreads(1u)) {
             let cont_ch = cont_ch.clone();
-            let actual_req = do oldcomm::listen |server_ch| {
-                run_tcp_test_server(
-                    server_ip,
-                    server_port,
-                    expected_resp,
-                    server_ch,
-                    cont_ch.clone(),
-                    &hl_loop_clone)
-            };
+            let actual_req = run_tcp_test_server(
+                server_ip,
+                server_port,
+                expected_resp,
+                cont_ch.clone(),
+                &hl_loop_clone);
             server_result_ch.send(actual_req);
         };
         cont_po.recv();
@@ -1562,15 +1559,12 @@ pub mod test {
         let hl_loop_clone = hl_loop.clone();
         do task::spawn_sched(task::ManualThreads(1u)) {
             let cont_ch = cont_ch.clone();
-            do oldcomm::listen |server_ch| {
-                run_tcp_test_server(
-                    server_ip,
-                    server_port,
-                    expected_resp,
-                    server_ch,
-                    cont_ch.clone(),
-                    &hl_loop_clone)
-            };
+            run_tcp_test_server(
+                server_ip,
+                server_port,
+                expected_resp,
+                cont_ch.clone(),
+                &hl_loop_clone);
         };
         cont_po.recv();
         // client
@@ -1631,15 +1625,12 @@ pub mod test {
         let hl_loop_clone = hl_loop.clone();
         do task::spawn_sched(task::ManualThreads(1u)) {
             let cont_ch = cont_ch.clone();
-            do oldcomm::listen |server_ch| {
-                run_tcp_test_server(
-                    server_ip,
-                    server_port,
-                    expected_resp,
-                    server_ch,
-                    cont_ch.clone(),
-                    &hl_loop_clone)
-            };
+            run_tcp_test_server(
+                server_ip,
+                server_port,
+                expected_resp,
+                cont_ch.clone(),
+                &hl_loop_clone);
         }
         cont_po.recv();
         // this one should fail..
@@ -1702,15 +1693,12 @@ pub mod test {
         let iotask_clone = iotask.clone();
         do task::spawn_sched(task::ManualThreads(1u)) {
             let cont_ch = cont_ch.clone();
-            let actual_req = do oldcomm::listen |server_ch| {
-                run_tcp_test_server(
-                    server_ip,
-                    server_port,
-                    expected_resp,
-                    server_ch,
-                    cont_ch.clone(),
-                    &iotask_clone)
-            };
+            let actual_req = run_tcp_test_server(
+                server_ip,
+                server_port,
+                expected_resp,
+                cont_ch.clone(),
+                &iotask_clone);
             server_result_ch.send(actual_req);
         };
         cont_po.recv();
@@ -1752,15 +1740,12 @@ pub mod test {
         let hl_loop_clone = hl_loop.clone();
         do task::spawn_sched(task::ManualThreads(1u)) {
             let cont_ch = cont_ch.clone();
-            do oldcomm::listen |server_ch| {
-                run_tcp_test_server(
-                    server_ip,
-                    server_port,
-                    expected_resp,
-                    server_ch,
-                    cont_ch.clone(),
-                    &hl_loop_clone)
-            };
+            run_tcp_test_server(
+                server_ip,
+                server_port,
+                expected_resp,
+                cont_ch.clone(),
+                &hl_loop_clone);
         };
         cont_po.recv();
         // client
@@ -1796,9 +1781,10 @@ pub mod test {
     }
 
     fn run_tcp_test_server(server_ip: &str, server_port: uint, resp: ~str,
-                          server_ch: oldcomm::Chan<~str>,
                           cont_ch: SharedChan<()>,
                           iotask: &IoTask) -> ~str {
+        let (server_po, server_ch) = stream::<~str>();
+        let server_ch = SharedChan(server_ch);
         let server_ip_addr = ip::v4::parse_addr(server_ip);
         let listen_result = listen(move server_ip_addr, server_port, 128,
                                    iotask,
@@ -1813,6 +1799,7 @@ pub mod test {
             |new_conn, kill_ch| {
             log(debug, ~"SERVER: new connection!");
             do oldcomm::listen |cont_ch| {
+                let server_ch = server_ch.clone();
                 do task::spawn_sched(task::ManualThreads(1u)) {
                     log(debug, ~"SERVER: starting worker for new req");
 
@@ -1879,7 +1866,7 @@ pub mod test {
               }
             }
         }
-        let ret_val = server_ch.recv();
+        let ret_val = server_po.recv();
         log(debug, fmt!("SERVER: exited and got return val: '%s'", ret_val));
         ret_val
     }
