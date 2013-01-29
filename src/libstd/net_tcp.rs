@@ -1108,9 +1108,10 @@ fn write_common_impl(socket_data_ptr: *TcpSocketData,
             vec::raw::to_ptr(raw_write_data),
             vec::len(raw_write_data)) ];
         let write_buf_vec_ptr = ptr::addr_of(&write_buf_vec);
-        let result_po = oldcomm::Port::<TcpWriteResult>();
-        let write_data = {
-            result_ch: oldcomm::Chan(&result_po)
+        let (result_po, result_ch) = stream::<TcpWriteResult>();
+        let result_ch = SharedChan(result_ch);
+        let write_data = WriteReqData {
+            result_ch: result_ch
         };
         let write_data_ptr = ptr::addr_of(&write_data);
         do iotask::interact(&(*socket_data_ptr).iotask) |loop_ptr| {
@@ -1129,8 +1130,8 @@ fn write_common_impl(socket_data_ptr: *TcpSocketData,
                     _ => {
                         log(debug, ~"error invoking uv_write()");
                         let err_data = uv::ll::get_last_err_data(loop_ptr);
-                        oldcomm::send((*write_data_ptr).result_ch,
-                                      TcpWriteError(err_data.to_tcp_err()));
+                        let result_ch = (*write_data_ptr).result_ch.clone();
+                        result_ch.send(TcpWriteError(err_data.to_tcp_err()));
                     }
                 }
             }
@@ -1139,7 +1140,7 @@ fn write_common_impl(socket_data_ptr: *TcpSocketData,
         // and waiting here for the write to complete, we should transfer
         // ownership of everything to the I/O task and let it deal with the
         // aftermath, so we don't have to sit here blocking.
-        match oldcomm::recv(result_po) {
+        match result_po.recv() {
             TcpWriteSuccess => Ok(()),
             TcpWriteError(move err_data) => Err(err_data)
         }
@@ -1297,21 +1298,22 @@ extern fn tcp_write_complete_cb(write_req: *uv::ll::uv_write_t,
             as *WriteReqData;
         if status == 0i32 {
             log(debug, ~"successful write complete");
-            oldcomm::send((*write_data_ptr).result_ch, TcpWriteSuccess);
+            let result_ch = (*write_data_ptr).result_ch.clone();
+            result_ch.send(TcpWriteSuccess);
         } else {
             let stream_handle_ptr = uv::ll::get_stream_handle_from_write_req(
                 write_req);
             let loop_ptr = uv::ll::get_loop_for_uv_handle(stream_handle_ptr);
             let err_data = uv::ll::get_last_err_data(loop_ptr);
             log(debug, ~"failure to write");
-            oldcomm::send((*write_data_ptr).result_ch,
-                             TcpWriteError(err_data.to_tcp_err()));
+            let result_ch = (*write_data_ptr).result_ch.clone();
+            result_ch.send(TcpWriteError(err_data.to_tcp_err()));
         }
     }
 }
 
 struct WriteReqData {
-    result_ch: oldcomm::Chan<TcpWriteResult>,
+    result_ch: SharedChan<TcpWriteResult>,
 }
 
 struct ConnectReqData {
