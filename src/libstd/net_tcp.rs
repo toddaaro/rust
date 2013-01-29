@@ -378,12 +378,9 @@ pub fn read_start(sock: &TcpSocket)
  *
  * * `sock` - a `net::tcp::tcp_socket` that you wish to stop reading on
  */
-pub fn read_stop(sock: &TcpSocket,
-             read_port: oldcomm::Port<result::Result<~[u8], TcpErrData>>) ->
+pub fn read_stop(sock: &TcpSocket) ->
     result::Result<(), TcpErrData> {
     unsafe {
-        log(debug,
-            fmt!("taking the read_port out of commission %?", read_port));
         let socket_data = ptr::addr_of(&(*sock.socket_data));
         read_stop_common_impl(socket_data)
     }
@@ -543,8 +540,8 @@ pub fn accept(new_conn: TcpNewConnection)
                 let client_stream_handle_ptr =
                     (*client_socket_data_ptr).stream_handle_ptr;
 
-                let result_po = oldcomm::Port::<Option<TcpErrData>>();
-                let result_ch = oldcomm::Chan(&result_po);
+                let (result_po, result_ch) = stream::<Option<TcpErrData>>();
+                let result_ch = SharedChan(result_ch);
 
                 // UNSAFE LIBUV INTERACTION BEGIN
                 // .. normally this happens within the context of
@@ -570,11 +567,11 @@ pub fn accept(new_conn: TcpNewConnection)
                                     client_stream_handle_ptr,
                                     client_socket_data_ptr
                                     as *libc::c_void);
-                                oldcomm::send(result_ch, None);
+                                result_ch.send(None);
                             }
                             _ => {
                                 log(debug, ~"failed to accept client conn");
-                                oldcomm::send(result_ch, Some(
+                                result_ch.send(Some(
                                     uv::ll::get_last_err_data(
                                         loop_ptr).to_tcp_err()));
                             }
@@ -582,13 +579,13 @@ pub fn accept(new_conn: TcpNewConnection)
                     }
                     _ => {
                         log(debug, ~"failed to accept client stream");
-                        oldcomm::send(result_ch, Some(
+                        result_ch.send(Some(
                             uv::ll::get_last_err_data(
                                 loop_ptr).to_tcp_err()));
                     }
                 }
                 // UNSAFE LIBUV INTERACTION END
-                match oldcomm::recv(result_po) {
+                match result_po.recv() {
                     Some(copy err_data) => result::Err(err_data),
                     None => result::Ok(TcpSocket(client_socket_data))
                 }
@@ -823,10 +820,9 @@ impl TcpSocket {
         result::Result<~[u8], TcpErrData>>, TcpErrData> {
         read_start(&self)
     }
-    pub fn read_stop(read_port:
-                 oldcomm::Port<result::Result<~[u8], TcpErrData>>) ->
+    pub fn read_stop() ->
         result::Result<(), TcpErrData> {
-        read_stop(&self, move read_port)
+        read_stop(&self)
     }
     fn read(timeout_msecs: uint) ->
         result::Result<~[u8], TcpErrData> {
