@@ -624,9 +624,9 @@ pub fn accept(new_conn: TcpNewConnection)
  */
 pub fn listen(host_ip: ip::IpAddr, port: uint, backlog: uint,
               iotask: &IoTask,
-              on_establish_cb: fn~(oldcomm::Chan<Option<TcpErrData>>),
+              on_establish_cb: fn~(SharedChan<Option<TcpErrData>>),
               new_connect_cb: fn~(TcpNewConnection,
-                                  oldcomm::Chan<Option<TcpErrData>>))
+                                  SharedChan<Option<TcpErrData>>))
     -> result::Result<(), TcpListenErrData> {
     do listen_common(move host_ip, port, backlog, iotask,
                      move on_establish_cb)
@@ -636,7 +636,7 @@ pub fn listen(host_ip: ip::IpAddr, port: uint, backlog: uint,
             let server_data_ptr = uv::ll::get_data_for_uv_handle(handle)
                 as *TcpListenFcData;
             let new_conn = NewTcpConn(handle);
-            let kill_ch = (*server_data_ptr).kill_ch;
+            let kill_ch = (*server_data_ptr).kill_ch.clone();
             new_connect_cb(new_conn, kill_ch);
         }
     }
@@ -644,19 +644,19 @@ pub fn listen(host_ip: ip::IpAddr, port: uint, backlog: uint,
 
 fn listen_common(host_ip: ip::IpAddr, port: uint, backlog: uint,
           iotask: &IoTask,
-          on_establish_cb: fn~(oldcomm::Chan<Option<TcpErrData>>),
+          on_establish_cb: fn~(SharedChan<Option<TcpErrData>>),
           on_connect_cb: fn~(*uv::ll::uv_tcp_t))
     -> result::Result<(), TcpListenErrData> {
     unsafe {
         let stream_closed_po = oldcomm::Port::<()>();
-        let kill_po = oldcomm::Port::<Option<TcpErrData>>();
-        let kill_ch = oldcomm::Chan(&kill_po);
+        let (kill_po, kill_ch) = stream::<Option<TcpErrData>>();
+        let kill_ch = SharedChan(kill_ch);
         let server_stream = uv::ll::tcp_t();
         let server_stream_ptr = ptr::addr_of(&server_stream);
         let server_data: TcpListenFcData = TcpListenFcData {
             server_stream_ptr: server_stream_ptr,
             stream_closed_ch: oldcomm::Chan(&stream_closed_po),
-            kill_ch: kill_ch,
+            kill_ch: kill_ch.clone(),
             on_connect_cb: move on_connect_cb,
             iotask: iotask.clone(),
             ipv6: match &host_ip {
@@ -769,8 +769,8 @@ fn listen_common(host_ip: ip::IpAddr, port: uint, backlog: uint,
                 }
             }
             None => {
-                on_establish_cb(kill_ch);
-                let kill_result = oldcomm::recv(kill_po);
+                on_establish_cb(kill_ch.clone());
+                let kill_result = kill_po.recv();
                 do iotask::interact(iotask) |loop_ptr| {
                     unsafe {
                         log(debug,
@@ -1151,7 +1151,7 @@ enum TcpNewConnection {
 struct TcpListenFcData {
     server_stream_ptr: *uv::ll::uv_tcp_t,
     stream_closed_ch: oldcomm::Chan<()>,
-    kill_ch: oldcomm::Chan<Option<TcpErrData>>,
+    kill_ch: SharedChan<Option<TcpErrData>>,
     on_connect_cb: fn~(*uv::ll::uv_tcp_t),
     iotask: IoTask,
     ipv6: bool,
@@ -1171,13 +1171,13 @@ extern fn tcp_lfc_on_connection_cb(handle: *uv::ll::uv_tcp_t,
     unsafe {
         let server_data_ptr = uv::ll::get_data_for_uv_handle(handle)
             as *TcpListenFcData;
-        let kill_ch = (*server_data_ptr).kill_ch;
+        let kill_ch = (*server_data_ptr).kill_ch.clone();
         if (*server_data_ptr).active {
             match status {
               0i32 => ((*server_data_ptr).on_connect_cb)(handle),
               _ => {
                 let loop_ptr = uv::ll::get_loop_for_uv_handle(handle);
-                oldcomm::send(kill_ch,
+                kill_ch.send(
                            Some(uv::ll::get_last_err_data(loop_ptr)
                                 .to_tcp_err()));
                 (*server_data_ptr).active = false;
@@ -1829,7 +1829,7 @@ pub mod test {
                     if result::is_err(&accept_result) {
                         log(debug, ~"SERVER: error accept connection");
                         let err_data = result::get_err(&accept_result);
-                        oldcomm::send(kill_ch, Some(err_data));
+                        kill_ch.send(Some(err_data));
                         log(debug,
                             ~"SERVER/WORKER: send on err cont ch");
                         cont_ch.send(());
@@ -1855,12 +1855,12 @@ pub mod test {
                             log(debug, ~"SERVER: before write");
                             tcp_write_single(&sock, str::to_bytes(resp));
                             log(debug, ~"SERVER: after write.. die");
-                            oldcomm::send(kill_ch, None);
+                            kill_ch.send(None);
                           }
                           result::Err(move err_data) => {
                             log(debug, fmt!("SERVER: error recvd: %s %s",
                                 err_data.err_name, err_data.err_msg));
-                            oldcomm::send(kill_ch, Some(err_data));
+                            kill_ch.send(Some(err_data));
                             server_ch.send(~"");
                           }
                         }
