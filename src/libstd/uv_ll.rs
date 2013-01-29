@@ -1133,7 +1133,6 @@ pub mod test {
     use uv_ll::*;
 
     use core::libc;
-    use core::oldcomm;
     use core::ptr;
     use core::str;
     use core::sys;
@@ -1492,7 +1491,7 @@ pub mod test {
     }
 
     struct async_handle_data {
-        continue_chan: *oldcomm::Chan<bool>,
+        continue_chan: SharedChan<bool>,
     }
 
     extern fn async_close_cb(handle: *libc::c_void) {
@@ -1509,9 +1508,9 @@ pub mod test {
             // do its thang
             let data = get_data_for_uv_handle(
                 async_handle as *libc::c_void) as *async_handle_data;
-            let continue_chan = *((*data).continue_chan);
+            let continue_chan = (*data).continue_chan.clone();
             let should_continue = status == 0i32;
-            oldcomm::send(continue_chan, should_continue);
+            continue_chan.send(should_continue);
             close(async_handle as *libc::c_void, async_close_cb);
         }
     }
@@ -1521,7 +1520,7 @@ pub mod test {
                           +kill_server_msg: ~str,
                           +server_resp_msg: ~str,
                           server_chan: SharedChan<~str>,
-                          continue_chan: *oldcomm::Chan<bool>) {
+                          continue_chan: SharedChan<bool>) {
         unsafe {
             let test_loop = loop_new();
             let tcp_server = tcp_t();
@@ -1634,21 +1633,20 @@ pub mod test {
             let (server_port, server_chan) = stream::<~str>();
             let server_chan = SharedChan(server_chan);
 
-            let continue_port = oldcomm::Port::<bool>();
-            let continue_chan = oldcomm::Chan::<bool>(&continue_port);
-            let continue_chan_ptr = ptr::addr_of(&continue_chan);
+            let (continue_port, continue_chan) = stream::<bool>();
+            let continue_chan = SharedChan(continue_chan);
 
             do task::spawn_sched(task::ManualThreads(1)) {
                 impl_uv_tcp_server(bind_ip, port,
                                    kill_server_msg,
                                    server_resp_msg,
                                    server_chan.clone(),
-                                   continue_chan_ptr);
+                                   continue_chan.clone());
             };
 
             // block until the server up is.. possibly a race?
             log(debug, ~"before receiving on server continue_port");
-            oldcomm::recv(continue_port);
+            continue_port.recv();
             log(debug, ~"received on continue port, set up tcp client");
 
             do task::spawn_sched(task::ManualThreads(1u)) {
