@@ -1394,7 +1394,6 @@ pub mod test {
     use uv;
 
     use core::io;
-    use core::oldcomm;
     use core::pipes::{stream, Chan, Port, SharedChan};
     use core::prelude::*;
     use core::result;
@@ -1529,14 +1528,11 @@ pub mod test {
         cont_po.recv();
         // client
         log(debug, ~"server started, firing up client..");
-        let actual_resp_result = do oldcomm::listen |client_ch| {
-            run_tcp_test_client(
-                server_ip,
-                server_port,
-                expected_req,
-                client_ch,
-                hl_loop)
-        };
+        let actual_resp_result = run_tcp_test_client(
+            server_ip,
+            server_port,
+            expected_req,
+            hl_loop);
         assert actual_resp_result.is_ok();
         let actual_resp = actual_resp_result.get();
         let actual_req = server_result_po.recv();
@@ -1569,28 +1565,25 @@ pub mod test {
         cont_po.recv();
         // client
         log(debug, ~"server started, firing up client..");
-        do oldcomm::listen |client_ch| {
-            let server_ip_addr = ip::v4::parse_addr(server_ip);
-            let iotask = uv::global_loop::get();
-            let connect_result = connect(move server_ip_addr, server_port,
-                                         &iotask);
+        let server_ip_addr = ip::v4::parse_addr(server_ip);
+        let iotask = uv::global_loop::get();
+        let connect_result = connect(move server_ip_addr, server_port,
+                                     &iotask);
 
-            let sock = result::unwrap(move connect_result);
+        let sock = result::unwrap(move connect_result);
 
-            debug!("testing peer address");
-            // This is what we are actually testing!
-            assert net::ip::format_addr(&sock.get_peer_addr()) ==
-                ~"127.0.0.1";
-            assert net::ip::get_port(&sock.get_peer_addr()) == 8887;
+        debug!("testing peer address");
+        // This is what we are actually testing!
+        assert net::ip::format_addr(&sock.get_peer_addr()) ==
+            ~"127.0.0.1";
+        assert net::ip::get_port(&sock.get_peer_addr()) == 8887;
 
-            // Fulfill the protocol the test server expects
-            let resp_bytes = str::to_bytes(~"ping");
-            tcp_write_single(&sock, resp_bytes);
-            debug!("message sent");
-            let read_result = sock.read(0u);
-            client_ch.send(str::from_bytes(read_result.get()));
-            debug!("result read");
-        };
+        // Fulfill the protocol the test server expects
+        let resp_bytes = str::to_bytes(~"ping");
+        tcp_write_single(&sock, resp_bytes);
+        debug!("message sent");
+        sock.read(0u);
+        debug!("result read");
     }
     pub fn impl_gl_tcp_ipv4_client_error_connection_refused() {
         let hl_loop = &uv::global_loop::get();
@@ -1599,14 +1592,11 @@ pub mod test {
         let expected_req = ~"ping";
         // client
         log(debug, ~"firing up client..");
-        let actual_resp_result = do oldcomm::listen |client_ch| {
-            run_tcp_test_client(
-                server_ip,
-                server_port,
-                expected_req,
-                client_ch,
-                hl_loop)
-        };
+        let actual_resp_result = run_tcp_test_client(
+            server_ip,
+            server_port,
+            expected_req,
+            hl_loop);
         match actual_resp_result.get_err() {
           ConnectionRefused => (),
           _ => fail ~"unknown error.. expected connection_refused"
@@ -1640,14 +1630,11 @@ pub mod test {
                             hl_loop);
         // client.. just doing this so that the first server tears down
         log(debug, ~"server started, firing up client..");
-        do oldcomm::listen |client_ch| {
-            run_tcp_test_client(
-                server_ip,
-                server_port,
-                expected_req,
-                client_ch,
-                hl_loop)
-        };
+        run_tcp_test_client(
+            server_ip,
+            server_port,
+            expected_req,
+            hl_loop);
         match listen_err {
           AddressInUse => {
             assert true;
@@ -1797,8 +1784,8 @@ pub mod test {
             // risky to run this on the loop, but some users
             // will want the POWER
             |new_conn, kill_ch| {
-            log(debug, ~"SERVER: new connection!");
-            do oldcomm::listen |cont_ch| {
+                log(debug, ~"SERVER: new connection!");
+                let (cont_po, cont_ch) = stream();
                 let server_ch = server_ch.clone();
                 do task::spawn_sched(task::ManualThreads(1u)) {
                     log(debug, ~"SERVER: starting worker for new req");
@@ -1847,9 +1834,7 @@ pub mod test {
                     }
                 }
                 log(debug, ~"SERVER: waiting to recv on cont_ch");
-                cont_ch.recv()
-            };
-            log(debug, ~"SERVER: recv'd on cont_ch..leaving listen cb");
+                cont_po.recv();
         });
         // err check on listen_result
         if result::is_err(&listen_result) {
@@ -1895,7 +1880,6 @@ pub mod test {
     }
 
     fn run_tcp_test_client(server_ip: &str, server_port: uint, resp: &str,
-                          client_ch: oldcomm::Chan<~str>,
                           iotask: &IoTask) -> result::Result<~str,
                                                     TcpConnectErrData> {
         let server_ip_addr = ip::v4::parse_addr(server_ip);
@@ -1918,8 +1902,7 @@ pub mod test {
                 Ok(~"")
             }
             else {
-                client_ch.send(str::from_bytes(read_result.get()));
-                let ret_val = client_ch.recv();
+                let ret_val = str::from_bytes(read_result.get());
                 log(debug, fmt!("CLIENT: after client_ch recv ret: '%s'",
                    ret_val));
                 Ok(ret_val)
