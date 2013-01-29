@@ -23,7 +23,6 @@ use core::io::{Reader, ReaderUtil, Writer};
 use core::io;
 use core::libc::size_t;
 use core::libc;
-use core::oldcomm;
 use core::pipes::{stream, Chan, Port, SharedChan};
 use core::prelude::*;
 use core::ptr;
@@ -1028,8 +1027,7 @@ fn read_stop_common_impl(socket_data: *TcpSocketData) ->
     result::Result<(), TcpErrData> {
     unsafe {
         let stream_handle_ptr = (*socket_data).stream_handle_ptr;
-        let stop_po = oldcomm::Port::<Option<TcpErrData>>();
-        let stop_ch = oldcomm::Chan(&stop_po);
+        let (stop_po, stop_ch) = stream::<Option<TcpErrData>>();
         do iotask::interact(&(*socket_data).iotask) |loop_ptr| {
             unsafe {
                 log(debug, ~"in interact cb for tcp::read_stop");
@@ -1037,17 +1035,17 @@ fn read_stop_common_impl(socket_data: *TcpSocketData) ->
                                         as *uv::ll::uv_stream_t) {
                     0i32 => {
                         log(debug, ~"successfully called uv_read_stop");
-                        oldcomm::send(stop_ch, None);
+                        stop_ch.send(None);
                     }
                     _ => {
                         log(debug, ~"failure in calling uv_read_stop");
                         let err_data = uv::ll::get_last_err_data(loop_ptr);
-                        oldcomm::send(stop_ch, Some(err_data.to_tcp_err()));
+                        stop_ch.send(Some(err_data.to_tcp_err()));
                     }
                 }
             }
         }
-        match oldcomm::recv(stop_po) {
+        match stop_po.recv() {
             Some(move err_data) => Err(err_data),
             None => Ok(())
         }
@@ -1060,8 +1058,7 @@ fn read_start_common_impl(socket_data: *TcpSocketData)
         result::Result<~[u8], TcpErrData>>, TcpErrData> {
     unsafe {
         let stream_handle_ptr = (*socket_data).stream_handle_ptr;
-        let start_po = oldcomm::Port::<Option<uv::ll::uv_err_data>>();
-        let start_ch = oldcomm::Chan(&start_po);
+        let (start_po, start_ch) = stream::<Option<uv::ll::uv_err_data>>();
         log(debug, ~"in tcp::read_start before interact loop");
         do iotask::interact(&(*socket_data).iotask) |loop_ptr| {
             unsafe {
@@ -1073,17 +1070,17 @@ fn read_start_common_impl(socket_data: *TcpSocketData)
                                          on_tcp_read_cb) {
                     0i32 => {
                         log(debug, ~"success doing uv_read_start");
-                        oldcomm::send(start_ch, None);
+                        start_ch.send(None);
                     }
                     _ => {
                         log(debug, ~"error attempting uv_read_start");
                         let err_data = uv::ll::get_last_err_data(loop_ptr);
-                        oldcomm::send(start_ch, Some(err_data));
+                        start_ch.send(Some(err_data));
                     }
                 }
             }
         }
-        match oldcomm::recv(start_po) {
+        match start_po.recv() {
             Some(ref err_data) => result::Err(err_data.to_tcp_err()),
             None => {
                 
@@ -1398,6 +1395,7 @@ pub mod test {
 
     use core::io;
     use core::oldcomm;
+    use core::pipes::{stream, Chan, Port, SharedChan};
     use core::prelude::*;
     use core::result;
     use core::str;
@@ -1515,23 +1513,24 @@ pub mod test {
         let server_result_po = oldcomm::Port::<~str>();
         let server_result_ch = oldcomm::Chan(&server_result_po);
 
-        let cont_po = oldcomm::Port::<()>();
-        let cont_ch = oldcomm::Chan(&cont_po);
+        let (cont_po, cont_ch) = stream::<()>();
+        let cont_ch = SharedChan(cont_ch);
         // server
         let hl_loop_clone = hl_loop.clone();
         do task::spawn_sched(task::ManualThreads(1u)) {
+            let cont_ch = cont_ch.clone();
             let actual_req = do oldcomm::listen |server_ch| {
                 run_tcp_test_server(
                     server_ip,
                     server_port,
                     expected_resp,
                     server_ch,
-                    cont_ch,
+                    cont_ch.clone(),
                     &hl_loop_clone)
             };
             server_result_ch.send(actual_req);
         };
-        oldcomm::recv(cont_po);
+        cont_po.recv();
         // client
         log(debug, ~"server started, firing up client..");
         let actual_resp_result = do oldcomm::listen |client_ch| {
@@ -1561,23 +1560,24 @@ pub mod test {
         let server_result_po = oldcomm::Port::<~str>();
         let server_result_ch = oldcomm::Chan(&server_result_po);
 
-        let cont_po = oldcomm::Port::<()>();
-        let cont_ch = oldcomm::Chan(&cont_po);
+        let (cont_po, cont_ch) = stream::<()>();
+        let cont_ch = SharedChan(cont_ch);
         // server
         let hl_loop_clone = hl_loop.clone();
         do task::spawn_sched(task::ManualThreads(1u)) {
+            let cont_ch = cont_ch.clone();
             let actual_req = do oldcomm::listen |server_ch| {
                 run_tcp_test_server(
                     server_ip,
                     server_port,
                     expected_resp,
                     server_ch,
-                    cont_ch,
+                    cont_ch.clone(),
                     &hl_loop_clone)
             };
             server_result_ch.send(actual_req);
         };
-        oldcomm::recv(cont_po);
+        cont_po.recv();
         // client
         log(debug, ~"server started, firing up client..");
         do oldcomm::listen |client_ch| {
@@ -1630,26 +1630,23 @@ pub mod test {
         let expected_req = ~"ping";
         let expected_resp = ~"pong";
 
-        let server_result_po = oldcomm::Port::<~str>();
-        let server_result_ch = oldcomm::Chan(&server_result_po);
-
-        let cont_po = oldcomm::Port::<()>();
-        let cont_ch = oldcomm::Chan(&cont_po);
+        let (cont_po, cont_ch) = stream::<()>();
+        let cont_ch = SharedChan(cont_ch);
         // server
         let hl_loop_clone = hl_loop.clone();
         do task::spawn_sched(task::ManualThreads(1u)) {
-            let actual_req = do oldcomm::listen |server_ch| {
+            let cont_ch = cont_ch.clone();
+            do oldcomm::listen |server_ch| {
                 run_tcp_test_server(
                     server_ip,
                     server_port,
                     expected_resp,
                     server_ch,
-                    cont_ch,
+                    cont_ch.clone(),
                     &hl_loop_clone)
             };
-            server_result_ch.send(actual_req);
-        };
-        oldcomm::recv(cont_po);
+        }
+        cont_po.recv();
         // this one should fail..
         let listen_err = run_tcp_test_server_fail(
                             server_ip,
@@ -1705,23 +1702,24 @@ pub mod test {
         let server_result_po = oldcomm::Port::<~str>();
         let server_result_ch = oldcomm::Chan(&server_result_po);
 
-        let cont_po = oldcomm::Port::<()>();
-        let cont_ch = oldcomm::Chan(&cont_po);
+        let (cont_po, cont_ch) = stream::<()>();
+        let cont_ch = SharedChan(cont_ch);
         // server
         let iotask_clone = iotask.clone();
         do task::spawn_sched(task::ManualThreads(1u)) {
+            let cont_ch = cont_ch.clone();
             let actual_req = do oldcomm::listen |server_ch| {
                 run_tcp_test_server(
                     server_ip,
                     server_port,
                     expected_resp,
                     server_ch,
-                    cont_ch,
+                    cont_ch.clone(),
                     &iotask_clone)
             };
             server_result_ch.send(actual_req);
         };
-        oldcomm::recv(cont_po);
+        cont_po.recv();
         // client
         let server_addr = ip::v4::parse_addr(server_ip);
         let conn_result = connect(server_addr, server_port, iotask);
@@ -1757,23 +1755,24 @@ pub mod test {
         let server_result_po = oldcomm::Port::<~str>();
         let server_result_ch = oldcomm::Chan(&server_result_po);
 
-        let cont_po = oldcomm::Port::<()>();
-        let cont_ch = oldcomm::Chan(&cont_po);
+        let (cont_po, cont_ch) = stream::<()>();
+        let cont_ch = SharedChan(cont_ch);
         // server
         let hl_loop_clone = hl_loop.clone();
         do task::spawn_sched(task::ManualThreads(1u)) {
+            let cont_ch = cont_ch.clone();
             let actual_req = do oldcomm::listen |server_ch| {
                 run_tcp_test_server(
                     server_ip,
                     server_port,
                     expected_resp,
                     server_ch,
-                    cont_ch,
+                    cont_ch.clone(),
                     &hl_loop_clone)
             };
             server_result_ch.send(actual_req);
         };
-        oldcomm::recv(cont_po);
+        cont_po.recv();
         // client
         log(debug, ~"server started, firing up client..");
         let server_addr = ip::v4::parse_addr(server_ip);
@@ -1808,7 +1807,7 @@ pub mod test {
 
     fn run_tcp_test_server(server_ip: &str, server_port: uint, resp: ~str,
                           server_ch: oldcomm::Chan<~str>,
-                          cont_ch: oldcomm::Chan<()>,
+                          cont_ch: SharedChan<()>,
                           iotask: &IoTask) -> ~str {
         let server_ip_addr = ip::v4::parse_addr(server_ip);
         let listen_result = listen(move server_ip_addr, server_port, 128,
@@ -1817,7 +1816,7 @@ pub mod test {
             |kill_ch| {
                 log(debug, fmt!("establish_cb %?",
                     kill_ch));
-                oldcomm::send(cont_ch, ());
+                cont_ch.send(());
             },
             // risky to run this on the loop, but some users
             // will want the POWER
