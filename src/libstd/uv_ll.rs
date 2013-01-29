@@ -1391,8 +1391,8 @@ pub mod test {
                     log(debug, ~"SERVER: client req contains kill_msg!");
                     log(debug, ~"SERVER: sending response to client");
                     read_stop(client_stream_ptr);
-                    let server_chan = *((*client_data).server_chan);
-                    oldcomm::send(server_chan, request_str);
+                    let server_chan = (*client_data).server_chan.clone();
+                    server_chan.send(request_str);
                     let write_result = write(
                         write_req,
                         client_stream_ptr as *libc::c_void,
@@ -1487,7 +1487,7 @@ pub mod test {
         server: *uv_tcp_t,
         server_kill_msg: ~str,
         server_resp_buf: *~[uv_buf_t],
-        server_chan: *oldcomm::Chan<~str>,
+        server_chan: SharedChan<~str>,
         server_write_req: *uv_write_t,
     }
 
@@ -1520,7 +1520,7 @@ pub mod test {
                           server_port: int,
                           +kill_server_msg: ~str,
                           +server_resp_msg: ~str,
-                          server_chan: *oldcomm::Chan<~str>,
+                          server_chan: SharedChan<~str>,
                           continue_chan: *oldcomm::Chan<bool>) {
         unsafe {
             let test_loop = loop_new();
@@ -1631,8 +1631,8 @@ pub mod test {
             let server_resp_msg = ~"mu!";
             let (client_port, client_chan) = stream::<~str>();
             let client_chan = SharedChan(client_chan);
-            let server_port = oldcomm::Port::<~str>();
-            let server_chan = oldcomm::Chan::<~str>(&server_port);
+            let (server_port, server_chan) = stream::<~str>();
+            let server_chan = SharedChan(server_chan);
 
             let continue_port = oldcomm::Port::<bool>();
             let continue_chan = oldcomm::Chan::<bool>(&continue_port);
@@ -1642,7 +1642,7 @@ pub mod test {
                 impl_uv_tcp_server(bind_ip, port,
                                    kill_server_msg,
                                    server_resp_msg,
-                                   ptr::addr_of(&server_chan),
+                                   server_chan.clone(),
                                    continue_chan_ptr);
             };
 
@@ -1657,7 +1657,7 @@ pub mod test {
                                    client_chan.clone());
             };
 
-            let msg_from_client = oldcomm::recv(server_port);
+            let msg_from_client = server_port.recv();
             let msg_from_server = client_port.recv();
 
             assert str::contains(msg_from_client, kill_server_msg);
