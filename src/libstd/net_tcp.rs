@@ -147,11 +147,13 @@ pub fn connect(input_ip: ip::IpAddr, port: uint,
                iotask: &IoTask)
     -> result::Result<TcpSocket, TcpConnectErrData> {
     unsafe {
-        let result_po = oldcomm::Port::<ConnAttempt>();
-        let closed_signal_po = oldcomm::Port::<()>();
-        let conn_data = {
-            result_ch: oldcomm::Chan(&result_po),
-            closed_signal_ch: oldcomm::Chan(&closed_signal_po)
+        let (result_po, result_ch) = stream::<ConnAttempt>();
+        let result_ch = SharedChan(result_ch);
+        let (closed_signal_po, closed_signal_ch) = stream::<()>();
+        let closed_signal_ch = SharedChan(closed_signal_ch);
+        let conn_data = ConnectReqData {
+            result_ch: result_ch,
+            closed_signal_ch: closed_signal_ch
         };
         let conn_data_ptr = ptr::addr_of(&conn_data);
         let (reader_po, reader_ch) = stream::<Result<~[u8], TcpErrData>>();
@@ -171,7 +173,6 @@ pub fn connect(input_ip: ip::IpAddr, port: uint,
             iotask: iotask.clone()
         };
         let socket_data_ptr = ptr::addr_of(&(*socket_data));
-        log(debug, fmt!("tcp_connect result_ch %?", conn_data.result_ch));
         // get an unsafe representation of our stream_handle_ptr that
         // we can send into the interact cb to be handled in libuv..
         log(debug, fmt!("stream_handle_ptr outside interact %?",
@@ -241,8 +242,8 @@ pub fn connect(input_ip: ip::IpAddr, port: uint,
                                 // somesuch
                                 let err_data =
                                     uv::ll::get_last_err_data(loop_ptr);
-                                oldcomm::send((*conn_data_ptr).result_ch,
-                                              ConnFailure(err_data));
+                                let result_ch = (*conn_data_ptr).result_ch.clone();
+                                result_ch.send(ConnFailure(err_data));
                                 uv::ll::set_data_for_uv_handle(
                                     stream_handle_ptr,
                                     conn_data_ptr);
@@ -254,19 +255,19 @@ pub fn connect(input_ip: ip::IpAddr, port: uint,
                     _ => {
                         // failure to create a tcp handle
                         let err_data = uv::ll::get_last_err_data(loop_ptr);
-                        oldcomm::send((*conn_data_ptr).result_ch,
-                                      ConnFailure(err_data));
+                        let result_ch = (*conn_data_ptr).result_ch.clone();
+                        result_ch.send(ConnFailure(err_data));
                     }
                 }
             }
         }
-        match oldcomm::recv(result_po) {
+        match result_po.recv() {
             ConnSuccess => {
                 log(debug, ~"tcp::connect - received success on result_po");
                 result::Ok(TcpSocket(socket_data))
             }
             ConnFailure(ref err_data) => {
-                oldcomm::recv(closed_signal_po);
+                closed_signal_po.recv();
                 log(debug, ~"tcp::connect - received failure on result_po");
                 // still have to free the malloc'd stream handle..
                 rustrt::rust_uv_current_kernel_free(stream_handle_ptr
@@ -1317,15 +1318,16 @@ struct WriteReqData {
 }
 
 struct ConnectReqData {
-    result_ch: oldcomm::Chan<ConnAttempt>,
-    closed_signal_ch: oldcomm::Chan<()>,
+    result_ch: SharedChan<ConnAttempt>,
+    closed_signal_ch: SharedChan<()>,
 }
 
 extern fn stream_error_close_cb(handle: *uv::ll::uv_tcp_t) {
     unsafe {
         let data = uv::ll::get_data_for_uv_handle(handle) as
             *ConnectReqData;
-        oldcomm::send((*data).closed_signal_ch, ());
+        let closed_signal_ch = (*data).closed_signal_ch.clone();
+        closed_signal_ch.send(());
         log(debug, fmt!("exiting steam_error_close_cb for %?", handle));
     }
 }
@@ -1341,14 +1343,14 @@ extern fn tcp_connect_on_connect_cb(connect_req_ptr: *uv::ll::uv_connect_t,
     unsafe {
         let conn_data_ptr = (uv::ll::get_data_for_req(connect_req_ptr)
                           as *ConnectReqData);
-        let result_ch = (*conn_data_ptr).result_ch;
+        let result_ch = (*conn_data_ptr).result_ch.clone();
         log(debug, fmt!("tcp_connect result_ch %?", result_ch));
         let tcp_stream_ptr =
             uv::ll::get_stream_handle_from_connect_req(connect_req_ptr);
         match status {
           0i32 => {
             log(debug, ~"successful tcp connection!");
-            oldcomm::send(result_ch, ConnSuccess);
+            result_ch.send(ConnSuccess);
           }
           _ => {
             log(debug, ~"error in tcp_connect_on_connect_cb");
@@ -1356,7 +1358,7 @@ extern fn tcp_connect_on_connect_cb(connect_req_ptr: *uv::ll::uv_connect_t,
             let err_data = uv::ll::get_last_err_data(loop_ptr);
             log(debug, fmt!("err_data %? %?", err_data.err_name,
                             err_data.err_msg));
-            oldcomm::send(result_ch, ConnFailure(err_data));
+            result_ch.send(ConnFailure(err_data));
             uv::ll::set_data_for_uv_handle(tcp_stream_ptr,
                                            conn_data_ptr);
             uv::ll::close(tcp_stream_ptr, stream_error_close_cb);
