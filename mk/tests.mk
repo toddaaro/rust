@@ -93,7 +93,7 @@ cleantmptestlogs:
 	$(Q)rm -f tmp/*.log
 
 cleantestlibs:
-	$(Q)find $(CFG_HOST_TRIPLE)/test \
+	$(Q)find $(CFG_BUILD_TRIPLE)/test \
          -name '*.[odasS]' -o \
          -name '*.so' -o      \
          -name '*.dylib' -o   \
@@ -192,11 +192,8 @@ check-stage$(1)-T-$(2)-H-$(3)-pretty-exec: \
 
 endef
 
-$(foreach host,$(CFG_TARGET_TRIPLES), \
- $(foreach target,$(CFG_TARGET_TRIPLES), \
-  $(foreach stage,$(STAGES), \
-    $(eval $(call DEF_TEST_SETS,$(stage),$(target),$(host))))))
-
+$(foreach host,$(CFG_HOST_TRIPLES), \
+ $(eval $(call DEF_DOC_TEST_HOST,$(host))))
 
 ######################################################################
 # Crate testing
@@ -598,6 +595,10 @@ $(foreach stage,$(STAGES), \
   $(foreach group,$(TEST_GROUPS), \
    $(eval $(call DEF_CHECK_FOR_STAGE_AND_HOSTS_AND_GROUP,$(stage),$(host),$(group))))))
 
+$(foreach host,$(CFG_HOST_TRIPLES), \
+ $(eval $(foreach target,$(CFG_TARGET_TRIPLES), \
+  $(eval $(foreach stage,$(STAGES), \
+   $(eval $(call TEST_STAGEN,$(stage),$(target),$(host))))))))
 
 ######################################################################
 # check-fast rules
@@ -644,11 +645,103 @@ check-fast-T-$(2)-H-$(3):     			\
 
 endef
 
-$(foreach host,$(CFG_TARGET_TRIPLES), \
+$(foreach host,$(CFG_HOST_TRIPLES), \
  $(eval $(foreach target,$(CFG_TARGET_TRIPLES), \
    $(eval $(call DEF_CHECK_FAST_FOR_T_H,,$(target),$(host))))))
 
-check-fast: tidy check-fast-H-$(CFG_HOST_TRIPLE)
+######################################################################
+# Shortcut rules
+######################################################################
+
+define DEF_CHECK_FOR_STAGE_H
+
+check-stage$(1)-H-$(2):					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2))
+check-stage$(1)-H-$(2)-perf:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-perf)
+check-stage$(1)-H-$(2)-rustc:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-rustc)
+check-stage$(1)-H-$(2)-core:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-core)
+check-stage$(1)-H-$(2)-std:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-std)
+check-stage$(1)-H-$(2)-syntax:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-syntax)
+check-stage$(1)-H-$(2)-rpass:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-rpass)
+check-stage$(1)-H-$(2)-rpass-full:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-rpass-full)
+check-stage$(1)-H-$(2)-rfail:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-rfail)
+check-stage$(1)-H-$(2)-cfail:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-cfail)
+check-stage$(1)-H-$(2)-bench:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-bench)
+check-stage$(1)-H-$(2)-pretty:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-pretty)
+check-stage$(1)-H-$(2)-pretty-rpass:				\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-pretty-rpass)
+check-stage$(1)-H-$(2)-pretty-rpass-full:				\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-pretty-rpass-full)
+check-stage$(1)-H-$(2)-pretty-rfail:				\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-pretty-rfail)
+check-stage$(1)-H-$(2)-pretty-bench:				\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-pretty-bench)
+check-stage$(1)-H-$(2)-pretty-pretty:				\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-pretty-pretty)
+check-stage$(1)-H-$(2)-rustdoc:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-rustdoc)
+check-stage$(1)-H-$(2)-rusti:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-rusti)
+check-stage$(1)-H-$(2)-cargo:					\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-cargo)
+check-stage$(1)-H-$(2)-doc:				\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-doc)
+check-stage$(1)-H-$(2)-doc-tutorial:				\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-doc-tutorial)
+check-stage$(1)-H-$(2)-doc-tutorial-ffi:			\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-doc-tutorial-ffi)
+check-stage$(1)-H-$(2)-doc-tutorial-macros:			\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-doc-tutorial-macros)
+check-stage$(1)-H-$(2)-doc-tutorial-borrowed-ptr:		\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-doc-tutorial-borrowed-ptr)
+check-stage$(1)-H-$(2)-doc-tutorial-tasks:		\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-doc-tutorial-tasks)
+check-stage$(1)-H-$(2)-doc-ref:				\
+	$$(foreach target,$$(CFG_TARGET_TRIPLES),	\
+	 check-stage$(1)-T-$$(target)-H-$(2)-doc-ref)
+
+endef
+
+$(foreach stage,$(STAGES),					\
+ $(eval $(foreach host,$(CFG_HOST_TRIPLES),			\
+  $(eval $(call DEF_CHECK_FOR_STAGE_H,$(stage),$(host))))))
 
 define DEF_CHECK_FAST_FOR_H
 
@@ -656,6 +749,116 @@ check-fast-H-$(1): 		check-fast-T-$(1)-H-$(1)
 
 endef
 
-$(foreach target,$(CFG_TARGET_TRIPLES),			\
- $(eval $(call DEF_CHECK_FAST_FOR_H,$(target))))
+$(foreach host,$(CFG_HOST_TRIPLES),			\
+ $(eval $(call DEF_CHECK_FAST_FOR_H,$(host))))
 
+define DEF_CHECK_ALL_FOR_STAGE
+
+check-stage$(1)-H-all: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target))
+check-stage$(1)-H-all-perf: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-perf)
+check-stage$(1)-H-all-rustc: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-rustc)
+check-stage$(1)-H-all-core: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-core)
+check-stage$(1)-H-all-std: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-std)
+check-stage$(1)-H-all-syntax: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-syntax)
+check-stage$(1)-H-all-rpass: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-rpass)
+check-stage$(1)-H-all-rpass-full: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-rpass-full)
+check-stage$(1)-H-all-rfail: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-rfail)
+check-stage$(1)-H-all-cfail: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-cfail)
+check-stage$(1)-H-all-bench: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-bench)
+check-stage$(1)-H-all-pretty: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-pretty)
+check-stage$(1)-H-all-pretty-rpass: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-pretty-rpass)
+check-stage$(1)-H-all-pretty-rpass-full: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-pretty-rpass-full)
+check-stage$(1)-H-all-pretty-rfail: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-pretty-rfail)
+check-stage$(1)-H-all-pretty-bench: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-pretty-bench)
+check-stage$(1)-H-all-pretty-pretty: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-pretty-pretty)
+check-stage$(1)-H-all-rustdoc: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-rustdoc)
+check-stage$(1)-H-all-rusti: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-rusti)
+check-stage$(1)-H-all-cargo: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-cargo)
+check-stage$(1)-H-all-doc-tutorial: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-doc-tutorial)
+check-stage$(1)-H-all-doc-ref: \
+	$$(foreach target,$$(CFG_HOST_TRIPLES),	\
+	 check-stage$(1)-H-$$(target)-doc-ref)
+
+endef
+
+$(foreach stage,$(STAGES),						\
+ $(eval $(call DEF_CHECK_ALL_FOR_STAGE,$(stage))))
+
+define DEF_CHECK_FOR_STAGE
+
+check-stage$(1): check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)
+check-stage$(1)-perf: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-perf
+check-stage$(1)-rustc: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-rustc
+check-stage$(1)-core: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-core
+check-stage$(1)-std: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-std
+check-stage$(1)-syntax: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-syntax
+check-stage$(1)-rpass: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-rpass
+check-stage$(1)-rpass-full: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-rpass-full
+check-stage$(1)-rfail: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-rfail
+check-stage$(1)-cfail: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-cfail
+check-stage$(1)-bench: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-bench
+check-stage$(1)-pretty: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-pretty
+check-stage$(1)-pretty-rpass: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-pretty-rpass
+check-stage$(1)-pretty-rpass-full: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-pretty-rpass-full
+check-stage$(1)-pretty-rfail: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-pretty-rfail
+check-stage$(1)-pretty-bench: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-pretty-bench
+check-stage$(1)-pretty-pretty: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-pretty-pretty
+check-stage$(1)-rustdoc: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-rustdoc
+check-stage$(1)-rusti: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-rusti
+check-stage$(1)-cargo: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-cargo
+check-stage$(1)-doc: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-doc
+check-stage$(1)-doc-tutorial: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-doc-tutorial
+check-stage$(1)-doc-tutorial-ffi: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-doc-tutorial-ffi
+check-stage$(1)-doc-tutorial-macros: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-doc-tutorial-macros
+check-stage$(1)-doc-tutorial-borrowed-ptr: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-doc-tutorial-borrowed-ptr
+check-stage$(1)-doc-tutorial-tasks: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-doc-tutorial-tasks
+check-stage$(1)-doc-ref: check-stage$(1)-H-$$(CFG_BUILD_TRIPLE)-doc-ref
+
+endef
+
+$(foreach stage,$(STAGES),						\
+ $(eval $(call DEF_CHECK_FOR_STAGE,$(stage))))
+
+check-fast: tidy check-fast-H-$(CFG_BUILD_TRIPLE)
