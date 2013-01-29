@@ -955,9 +955,9 @@ impl TcpSocketBuf: io::Writer {
 
 fn tear_down_socket_data(socket_data: @TcpSocketData) {
     unsafe {
-        let closed_po = oldcomm::Port::<()>();
-        let closed_ch = oldcomm::Chan(&closed_po);
-        let close_data = {
+        let (closed_po, closed_ch) = stream::<()>();
+        let closed_ch = SharedChan(closed_ch);
+        let close_data = TcpSocketCloseData {
             closed_ch: closed_ch
         };
         let close_data_ptr = ptr::addr_of(&close_data);
@@ -972,7 +972,7 @@ fn tear_down_socket_data(socket_data: @TcpSocketData) {
                 uv::ll::close(stream_handle_ptr, tcp_socket_dtor_close_cb);
             }
         };
-        oldcomm::recv(closed_po);
+        closed_po.recv();
         //the line below will most likely crash
         //log(debug, fmt!("about to free socket_data at %?", socket_data));
         rustrt::rust_uv_current_kernel_free(stream_handle_ptr
@@ -1208,7 +1208,7 @@ enum TcpWriteResult {
 }
 
 enum TcpReadStartResult {
-    TcpReadStartSuccess(oldcomm::Port<TcpReadResult>),
+    TcpReadStartSuccess(Port<TcpReadResult>),
     TcpReadStartError(TcpErrData)
 }
 
@@ -1278,15 +1278,15 @@ extern fn on_alloc_cb(handle: *libc::c_void,
 }
 
 struct TcpSocketCloseData {
-    closed_ch: oldcomm::Chan<()>,
+    closed_ch: SharedChan<()>,
 }
 
 extern fn tcp_socket_dtor_close_cb(handle: *uv::ll::uv_tcp_t) {
     unsafe {
         let data = uv::ll::get_data_for_uv_handle(handle)
             as *TcpSocketCloseData;
-        let closed_ch = (*data).closed_ch;
-        oldcomm::send(closed_ch, ());
+        let closed_ch = (*data).closed_ch.clone();
+        closed_ch.send(());
         log(debug, ~"tcp_socket_dtor_close_cb exiting..");
     }
 }
