@@ -17,28 +17,63 @@
 
 define TARGET_STAGE_N
 
+# yichoi added from here
+ifneq ($$(HOST_$(2)), arm)
 $$(TLIB$(1)_T_$(2)_H_$(3))/libmorestack.a: \
 		rt/$(2)/arch/$$(HOST_$(2))/libmorestack.a
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
+endif
+# yichoi added to here
 
+# yichoi added from here
+ifeq ($$(HOST_$(2)), arm)
+$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CROSS_RUNTIME): \
+		rt/$(2)/$$(CFG_CROSS_RUNTIME)
+	@$$(call E, cp: $$@)
+	$$(Q)cp $$< $$@
+else
 $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_RUNTIME): \
 		rt/$(2)/$$(CFG_RUNTIME)
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
+endif
+# yichoi added to here
 
+# yichoi added from here
+ifeq ($$(HOST_$(2)), arm)
+$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CROSS_CORELIB): \
+		$$(CORELIB_CRATE) $$(CORELIB_INPUTS) \
+		$$(TSREQ$(1)_T_$(2)_H_$(3))
+	@$$(call E, compile_and_link: $$@)
+	$$(STAGE$(1)_T_$(2)_H_$(3)) -o $$@ $$< && touch $$@
+else
 $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CORELIB): \
 		$$(CORELIB_CRATE) $$(CORELIB_INPUTS) \
 		$$(TSREQ$(1)_T_$(2)_H_$(3))
 	@$$(call E, compile_and_link: $$@)
 	$$(STAGE$(1)_T_$(2)_H_$(3)) -o $$@ $$< && touch $$@
+endif
+# yichoi added to here
 
+
+# yichoi added from here
+ifeq ($$(HOST_$(2)), arm)
+$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CROSS_STDLIB): \
+		$$(STDLIB_CRATE) $$(STDLIB_INPUTS) \
+	        $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CROSS_CORELIB) \
+		$$(TSREQ$(1)_T_$(2)_H_$(3))
+	@$$(call E, compile_and_link: $$@)
+	$$(STAGE$(1)_T_$(2)_H_$(3)) -o $$@ $$< && touch $$@
+else
 $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_STDLIB): \
 		$$(STDLIB_CRATE) $$(STDLIB_INPUTS) \
 	        $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CORELIB) \
 		$$(TSREQ$(1)_T_$(2)_H_$(3))
 	@$$(call E, compile_and_link: $$@)
 	$$(STAGE$(1)_T_$(2)_H_$(3)) -o $$@ $$< && touch $$@
+endif
+# yichoi added to here
 
 $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_LIBSYNTAX): \
                 $$(LIBSYNTAX_CRATE) $$(LIBSYNTAX_INPUTS) \

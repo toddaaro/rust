@@ -171,7 +171,9 @@ valopt() {
             DEFAULT="<none>"
         fi
         OP="${OP}=[${DEFAULT}]"
-        printf "    --%-30s %s\n" "$OP" "$DOC"
+# @@@@@@@@@@@@@@ yichoi - modified from here
+        printf "    --%-45s %s\n" "$OP" "$DOC"
+# @@@@@@@@@@@@@@ yichoi - modified to here
     fi
 }
 
@@ -349,6 +351,9 @@ valopt llvm-root "" "set LLVM root"
 valopt build-triple "${DEFAULT_BUILD_TRIPLE}" "LLVM build triple"
 valopt host-triples "${CFG_BUILD_TRIPLE}" "LLVM host triples"
 valopt target-triples "${CFG_HOST_TRIPLES}" "LLVM target triples"
+# @@@@@@@@@@@@@@ yichoi - add from here
+valopt android-ndk-path "/opt/ndk_standalone" "Android NDK Standalone path"
+# @@@@@@@@@@@@@@ yichoi - add to here
 
 # Validate Options
 step_msg "validating $CFG_SELF args"
@@ -529,6 +534,44 @@ else
     CFG_C_COMPILER="gcc"
 fi
 
+# @@@@@@@@@@@@@@ yichoi - add from here
+# copy to host-triples to target-tripels
+V_TEMP=""
+for i in $CFG_HOST_TRIPLES $CFG_TARGET_TRIPLES;
+do
+   echo "$V_TEMP" | grep -qF $i || V_TEMP="$V_TEMP${V_TEMP:+ }$i"
+done
+CFG_TARGET_TRIPLES=$V_TEMP
+
+# check target-specific tool-chains
+for i in $CFG_TARGET_TRIPLES
+do
+    case $i in
+        arm-unknown-android)
+
+            if [ ! -f $CFG_ANDROID_NDK_PATH/bin/arm-linux-androideabi-gcc ]
+            then
+                err "NDK $CFG_ANDROID_NDK_PATH/bin/arm-linux-androideabi-gcc not found"
+            fi
+            if [ ! -f $CFG_ANDROID_NDK_PATH/bin/arm-linux-androideabi-g++ ]
+            then
+                err "NDK $CFG_ANDROID_NDK_PATH/bin/arm-linux-androideabi-g++ not found"
+            fi
+            if [ ! -f $CFG_ANDROID_NDK_PATH/bin/arm-linux-androideabi-ar ]
+            then
+                err "NDK $CFG_ANDROID_NDK_PATH/bin/arm-linux-androideabi-ar not found"
+            fi
+
+            eval CFG_CROSS_PREFIX_arm=$CFG_ANDROID_NDK_PATH"/bin/arm\-linux\-androideabi\-"
+            ;;
+
+        *)
+            ;;
+     
+    esac
+done
+# @@@@@@@@@@@@@@ yichoi - add to here
+
 # a little post-processing of various config values
 
 CFG_PREFIX=${CFG_PREFIX%/}
@@ -570,13 +613,14 @@ do
     make_dir rustllvm/$t
 done
 
+# yichoi modified here
 make_dir rt
 for t in $CFG_TARGET_TRIPLES
 do
   make_dir rt/$t
   for i in                                          \
-    isaac linenoise sync test arch/i386 arch/x86_64    \
-    libuv
+    isaac linenoise sync test arch/i386 arch/x86_64 arch/arm   \
+    libuv libuv/src/ares libuv/src/eio libuv/src/ev
   do
     make_dir rt/$t/$i
   done
@@ -822,6 +866,9 @@ putvar CFG_TARGET_TRIPLES
 putvar CFG_C_COMPILER
 putvar CFG_LIBDIR
 putvar CFG_DISABLE_MANAGE_SUBMODULES
+# @@@@@@@@@@@@@@ yichoi - add from here
+putvar CFG_CROSS_PREFIX_arm
+# @@@@@@@@@@@@@@ yichoi - add to here
 
 if [ ! -z "$CFG_ENABLE_PAX_FLAGS" ]
 then

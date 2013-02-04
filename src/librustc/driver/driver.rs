@@ -520,7 +520,7 @@ pub fn host_triple() -> ~str {
     return if ht != ~"" {
             ht
         } else {
-            fail ~"rustc built without CFG_BUILD_TRIPLE"
+            fail!(~"rustc built without CFG_BUILD_TRIPLE")
         };
 }
 

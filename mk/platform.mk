@@ -87,6 +87,17 @@ ifneq ($(findstring linux,$(CFG_OSTYPE)),)
   CFG_INSTALL_NAME =
   # Linux requires LLVM to be built like this to get backtraces into Rust code
   CFG_LLVM_BUILD_ENV="CXXFLAGS=-fno-omit-frame-pointer"
+
+  # yichoi added from here
+  CFG_CROSS_LIB_NAME=lib$(1).so
+  CFG_CROSS_LIB_GLOB=lib$(1)-*.so
+  CFG_GCCISH_PRE_LIB_FLAGS_arm := -Wl,-whole-archive
+  CFG_GCCISH_POST_LIB_FLAGS_arm := -Wl,-no-whole-archive -Wl,-znoexecstack
+  CFG_GCCISH_CFLAGS_arm := -DRUST_NDEBUG -MMD -MP -fPIC -O2 -Wall -g -fno-omit-frame-pointer -D__arm__ -DANDROID -D__ANDROID__ 
+  CFG_GCCISH_LINK_FLAGS_arm := -shared -fPIC -ldl -g -lm -lsupc++ -lgnustl_shared
+  CFG_GCCISH_DEF_FLAG_arm := -Wl,--export-dynamic,--dynamic-list=
+  CFG_DEF_SUFFIX_arm := .android.def
+  # yichoi added to here 
 endif
 
 ifneq ($(findstring darwin,$(CFG_OSTYPE)),)
@@ -110,6 +121,17 @@ ifneq ($(findstring darwin,$(CFG_OSTYPE)),)
   CFG_DEF_SUFFIX := .darwin.def
   # Mac requires this flag to make rpath work
   CFG_INSTALL_NAME = -Wl,-install_name,@rpath/$(1)
+
+  # yichoi added from here
+  CFG_CROSS_LIB_NAME=lib$(1).so
+  CFG_CROSS_LIB_GLOB=lib$(1)-*.so
+  CFG_GCCISH_PRE_LIB_FLAGS_arm := -Wl,-whole-archive
+  CFG_GCCISH_POST_LIB_FLAGS_arm := -Wl,-no-whole-archive -Wl,-znoexecstack
+  CFG_GCCISH_CFLAGS_arm := -DRUST_NDEBUG -MMD -MP -fPIC -O2 -Wall -g -fno-omit-frame-pointer -D__arm__ -DANDROID -D__ANDROID__ 
+  CFG_GCCISH_LINK_FLAGS_arm := -shared -fPIC -ldl -g -lm -lsupc++ -lgnustl_shared
+  CFG_GCCISH_DEF_FLAG_arm := -Wl,--export-dynamic,--dynamic-list=
+  CFG_DEF_SUFFIX_arm := .android.def
+  # yichoi added to here 
 endif
 
 # Hack: not sure how to test if a file exists in make other than this
@@ -147,7 +169,9 @@ ifdef CFG_UNIXY
   CFG_RUN=$(2)
   CFG_RUN_TARG=$(call CFG_RUN,,$(2))
   CFG_RUN_TEST=$(call CFG_RUN,,$(CFG_VALGRIND) $(1))
-  CFG_LIBUV_LINK_FLAGS=-lpthread
+#yichoi modified here
+#  CFG_LIBUV_LINK_FLAGS=-lpthread
+  CFG_LIBUV_LINK_FLAGS=
   ifdef CFG_FBSD
     CFG_LIBUV_LINK_FLAGS=-lpthread -lkvm
   endif
@@ -223,8 +247,9 @@ ifeq ($(CFG_C_COMPILER),clang)
   ifeq ($(origin CXX),default)
     CXX=clang++
   endif
+  # yichoi modified here
   ifeq ($(origin CPP),default)
-    CPP=clang -E
+    CPP=clang
   endif
   CFG_GCCISH_CFLAGS += -Wall -Werror -g
   CFG_GCCISH_CXXFLAGS += -fno-rtti
@@ -269,8 +294,9 @@ ifeq ($(CFG_C_COMPILER),gcc)
   ifeq ($(origin CXX),default)
     CXX=g++
   endif
+  # yichoi modified here
   ifeq ($(origin CPP),default)
-    CPP=gcc -E
+    CPP=gcc
   endif
   CFG_GCCISH_CFLAGS += -Wall -Werror -g
   CFG_GCCISH_CXXFLAGS += -fno-rtti
@@ -307,8 +333,57 @@ ifeq ($(CFG_C_COMPILER),gcc)
         $$(call CFG_INSTALL_NAME,$$(4))
   endef
 
+  define CFG_MAKE_CC2
+  CFG_COMPILE_C_$(1) = $(2)$$(CC)  \
+      $$(CFG_GCCISH_CFLAGS_$$(HOST_$(1)))       \
+        $$(CFG_GCC_CFLAGS)                \
+        $$(CFG_GCC_CFLAGS_$$(HOST_$(1)))        \
+        $$(CFG_DEPEND_FLAGS)                            \
+        -c -o $$(1) $$(2)
+    CFG_LINK_C_$(1) = $(2)$$(CC) \
+        -o $$(1)      \
+    $$(CFG_GCCISH_LINK_FLAGS_$$(HOST_$(1)))   \
+        $$(CFG_GCCISH_DEF_FLAG_$$(HOST_$(1)))$$(3) $$(2) 
+  CFG_COMPILE_CXX_$(1) = $(2)$$(CXX)  \
+        $$(CFG_GCCISH_CXXFLAGS)           \
+      $$(CFG_GCCISH_CFLAGS_$$(HOST_$(1)))       \
+        $$(CFG_GCC_CFLAGS)                \
+        $$(CFG_GCC_CFLAGS_$$(HOST_$(1)))        \
+        $$(CFG_DEPEND_FLAGS)                            \
+        -c -o $$(1) $$(2)
+    CFG_LINK_CXX_$(1) = $(2)$$(CXX) \
+        -o $$(1)      \
+    $$(CFG_GCCISH_LINK_FLAGS_$$(HOST_$(1)))   \
+        $$(CFG_GCCISH_DEF_FLAG_$$(HOST_$(1)))$$(3) $$(2) 
+  endef
+
+# original
+#  $(foreach target,$(CFG_TARGET_TRIPLES), \
+#    $(eval $(call CFG_MAKE_CC,$(target))))
+
+# 1st success
+#  $(foreach target,$(CFG_TARGET_TRIPLES), \
+#   $(if $(findstring $(target),"arm-unknown-android"), \
+#     $(eval $(call CFG_MAKE_CC2,$(target),$(CFG_CROSS_PREFIX_arm)) $(info "arm")), \
+#     $(eval $(call CFG_MAKE_CC,$(target)) $(info "x86")) \
+#    ))
+#  $(info "======> yichoi")
+#  $(info $(CFG_COMPILE_C_arm-unknown-android))
+#  $(info $(CFG_COMPILE_C_x86_64-apple-darwin))
+
+# 2nd success
+#  $(foreach target,$(CFG_TARGET_TRIPLES), \
+#   $(if $(findstring $(target),"arm-unknown-android"), \
+#     $(eval $(call CFG_MAKE_CC2,$(target),$(CFG_CROSS_PREFIX_arm))) $(info $(target)), \
+#     $(eval $(call CFG_MAKE_CC2,$(target),$(CFG_GCCISH_CROSS))) $(info $(target)) \
+#    ))
+
   $(foreach target,$(CFG_TARGET_TRIPLES), \
-    $(eval $(call CFG_MAKE_CC,$(target))))
+   $(if $(findstring $(target),"arm-unknown-android"), \
+     $(eval $(call CFG_MAKE_CC2,$(target),$(CFG_CROSS_PREFIX_arm))), \
+     $(eval $(call CFG_MAKE_CC,$(target))) \
+    ))
+
 else
   CFG_ERR := $(error please try on a system with gcc or clang)
 endif
@@ -317,7 +392,7 @@ endif
 # We're using llvm-mc as our assembler because it supports
 # .cfi pseudo-ops on mac
 define CFG_MAKE_ASSEMBLER
-  CFG_ASSEMBLE_$(1)=$$(CPP) $$(CFG_DEPEND_FLAGS) $$(2) | \
+  CFG_ASSEMBLE_$(1)=$$(CPP) -E $$(CFG_DEPEND_FLAGS) $$(2) | \
                     $$(LLVM_MC_$$(CFG_BUILD_TRIPLE)) \
                     -assemble \
                     -filetype=obj \
@@ -325,5 +400,23 @@ define CFG_MAKE_ASSEMBLER
                     -o=$$(1)
 endef
 
-$(foreach target,$(CFG_TARGET_TRIPLES),\
-  $(eval $(call CFG_MAKE_ASSEMBLER,$(target))))
+define CFG_MAKE_ASSEMBLER2
+  CFG_ASSEMBLE_$(1)=$(2)$$(CPP) $$(CFG_DEPEND_FLAGS) $$(2) -c -o $$(1)
+endef
+
+# original
+#$(foreach target,$(CFG_TARGET_TRIPLES),\
+#  $(eval $(call CFG_MAKE_ASSEMBLER,$(target))))
+
+# 1st success
+#$(foreach target,$(CFG_TARGET_TRIPLES), \
+#  $(if $(findstring $(target),"arm-unknown-android"), \
+#    $(eval $(call CFG_MAKE_ASSEMBLER2,$(target),$(CFG_CROSS_PREFIX_arm))) $(info "Assembler" $(target)), \
+#    $(eval $(call CFG_MAKE_ASSEMBLER,$(target))) $(info "Assembler" $(target)) \
+#))
+
+$(foreach target,$(CFG_TARGET_TRIPLES), \
+  $(if $(findstring $(target),"arm-unknown-android"), \
+    $(eval $(call CFG_MAKE_ASSEMBLER2,$(target),$(CFG_CROSS_PREFIX_arm))), \
+    $(eval $(call CFG_MAKE_ASSEMBLER,$(target))) \
+))

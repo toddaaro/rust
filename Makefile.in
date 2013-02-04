@@ -69,7 +69,8 @@ include config.mk
 # and include all of the .d files in one fell swoop.
 ALL_OBJ_FILES :=
 
-MKFILE_DEPS := config.stamp $(call rwildcard,$(CFG_SRC_DIR)mk/,*)
+#MKFILE_DEPS := config.stamp $(call rwildcard,$(CFG_SRC_DIR)mk/,*)
+MKFILE_DEPS := config.stamp 
 NON_BUILD_HOST_TRIPLES = $(filter-out $(CFG_BUILD_TRIPLE),$(CFG_HOST_TRIPLES))
 NON_BUILD_TARGET_TRIPLES = $(filter-out $(CFG_BUILD_TRIPLE),$(CFG_TARGET_TRIPLES))
 
@@ -161,6 +162,11 @@ LIBRUSTDOC_DSYM_GLOB :=$(call CFG_LIB_DSYM_GLOB,rustdoc)
 LIBRUSTI_DSYM_GLOB :=$(call CFG_LIB_DSYM_GLOB,rusti)
 LIBRUST_DSYM_GLOB :=$(call CFG_LIB_DSYM_GLOB,rust)
 
+# yichoi
+CFG_CROSS_RUNTIME :=$(call CFG_CROSS_LIB_NAME,rustrt)
+CFG_CROSS_CORELIB :=$(call CFG_CROSS_LIB_NAME,core)
+CFG_CROSS_STDLIB :=$(call CFG_CROSS_LIB_NAME,std)
+
 # version-string calculation
 CFG_GIT_DIR := $(CFG_SRC_DIR).git
 CFG_RELEASE = 0.6
@@ -190,13 +196,13 @@ endif
 # Target-and-rule "utility variables"
 ######################################################################
 
-ifdef VERBOSE
+#ifdef VERBOSE
   Q :=
   E =
-else
-  Q := @
-  E = echo $(1)
-endif
+#else
+#  Q := @
+#  E = echo $(1)
+#endif
 
 S := $(CFG_SRC_DIR)
 X := $(CFG_EXE_SUFFIX)
@@ -296,6 +302,9 @@ export CFG_LLVM_ROOT
 export CFG_ENABLE_MINGW_CROSS
 export CFG_PREFIX
 export CFG_LIBDIR
+# @@@@@@@@@@@@@@ yichoi - add from here
+export CFG_TARGET_PREFIX
+# @@@@@@@@@@@@@@ yichoi - add to here
 
 ######################################################################
 # Subprograms
@@ -320,6 +329,18 @@ TROOT$(1)_T_$(2)_H_$(3) = $$(HLIB$(1)_H_$(3))/rustc/$(2)
 TBIN$(1)_T_$(2)_H_$(3) = $$(TROOT$(1)_T_$(2)_H_$(3))/bin
 TLIB$(1)_T_$(2)_H_$(3) = $$(TROOT$(1)_T_$(2)_H_$(3))/$$(CFG_LIBDIR)
 
+#yichoi modified from here
+ifeq ($$(HOST_$(2)), arm)
+  CFG_CORELIB_T_$(2)_H_$(3) :=$(call CFG_CROSS_LIB_NAME,core) 
+  CFG_STDLIB_T_$(2)_H_$(3) :=$(call CFG_CROSS_LIB_NAME,std) 
+  CFG_RUNTIME_T_$(2)_H_$(3) :=$(call CFG_CROSS_LIB_NAME,rustrt)
+else
+  CFG_CORELIB_T_$(2)_H_$(3) :=$(call CFG_LIB_NAME,core)
+  CFG_STDLIB_T_$(2)_H_$(3) :=$(call CFG_LIB_NAME,std)
+  CFG_RUNTIME_T_$(2)_H_$(3) :=$(call CFG_LIB_NAME,rustrt)
+endif
+#to here
+
 # The name of the core and standard libraries used by rustc
 ifdef CFG_DISABLE_SHAREDSTD
   HCORELIB_DEFAULT$(1)_H_$(3) = \
@@ -340,12 +361,12 @@ else
   HCORELIB_DEFAULT$(1)_H_$(3) = \
     $$(HLIB$(1)_H_$(3))/$(CFG_CORELIB)
   TCORELIB_DEFAULT$(1)_T_$(2)_H_$(3) = \
-    $$(TLIB$(1)_T_$(2)_H_$(3))/$(CFG_CORELIB)
+    $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CORELIB_T_$(2)_H_$(3))
 
   HSTDLIB_DEFAULT$(1)_H_$(3) = \
     $$(HLIB$(1)_H_$(3))/$(CFG_STDLIB)
   TSTDLIB_DEFAULT$(1)_T_$(2)_H_$(3) = \
-    $$(TLIB$(1)_T_$(2)_H_$(3))/$(CFG_STDLIB)
+    $$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_STDLIB_T_$(2)_H_$(3))
 
   HLIBRUSTC_DEFAULT$(1)_H_$(3) = \
     $$(HLIB$(1)_H_$(3))/$(CFG_LIBRUSTC)
@@ -365,16 +386,25 @@ HSREQ$(1)_H_$(3) = \
 	$$(MKFILE_DEPS)
 
 # Prerequisites for using the stageN compiler to build target artifacts
+
+#yichoi modified from here
+ifeq ($$(HOST_$(2)), arm)
 TSREQ$(1)_T_$(2)_H_$(3) = \
 	$$(HSREQ$(1)_H_$(3)) \
-	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_RUNTIME) \
+	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_RUNTIME_T_$(2)_H_$(3))
+else
+TSREQ$(1)_T_$(2)_H_$(3) = \
+	$$(HSREQ$(1)_H_$(3)) \
+	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_RUNTIME_T_$(2)_H_$(3)) \
 	$$(TLIB$(1)_T_$(2)_H_$(3))/libmorestack.a
+endif
+#yichoi modified to here
 
 # Prerequisites for a working stageN compiler and libraries, for a specific target
 SREQ$(1)_T_$(2)_H_$(3) = \
 	$$(TSREQ$(1)_T_$(2)_H_$(3)) \
-	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CORELIB) \
-	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_STDLIB)
+	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_CORELIB_T_$(2)_H_$(3)) \
+	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_STDLIB_T_$(2)_H_$(3))
 
 # Prerequisites for a working stageN compiler and libraries, for a specific target
 CSREQ$(1)_T_$(2)_H_$(3) = \

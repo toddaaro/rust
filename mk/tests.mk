@@ -192,8 +192,11 @@ check-stage$(1)-T-$(2)-H-$(3)-pretty-exec: \
 
 endef
 
-$(foreach host,$(CFG_HOST_TRIPLES), \
- $(eval $(call DEF_DOC_TEST_HOST,$(host))))
+$(foreach host,$(CFG_TARGET_TRIPLES), \
+ $(foreach target,$(CFG_TARGET_TRIPLES), \
+  $(foreach stage,$(STAGES), \
+    $(eval $(call DEF_TEST_SETS,$(stage),$(target),$(host))))))
+
 
 ######################################################################
 # Crate testing
@@ -595,10 +598,6 @@ $(foreach stage,$(STAGES), \
   $(foreach group,$(TEST_GROUPS), \
    $(eval $(call DEF_CHECK_FOR_STAGE_AND_HOSTS_AND_GROUP,$(stage),$(host),$(group))))))
 
-$(foreach host,$(CFG_HOST_TRIPLES), \
- $(eval $(foreach target,$(CFG_TARGET_TRIPLES), \
-  $(eval $(foreach stage,$(STAGES), \
-   $(eval $(call TEST_STAGEN,$(stage),$(target),$(host))))))))
 
 ######################################################################
 # check-fast rules
