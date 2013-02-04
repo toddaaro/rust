@@ -124,8 +124,7 @@ vec_reserve_shared_actual(type_desc* ty, rust_vec_box** vp,
 extern "C" CDECL void
 vec_reserve_shared(type_desc* ty, rust_vec_box** vp,
                    size_t n_elts) {
-    rust_task *task = rust_get_current_task();
-    reserve_vec_exact(task, vp, n_elts * ty->size);
+    reserve_vec_exact(vp, n_elts * ty->size);
 }
 
 extern "C" CDECL size_t
@@ -445,9 +444,8 @@ void tm_to_rust_tm(tm* in_tm, rust_tm* out_tm, int32_t gmtoff,
     out_tm->tm_nsec = nsec;
 
     if (zone != NULL) {
-        rust_task *task = rust_get_current_task();
         size_t size = strlen(zone);
-        reserve_vec_exact(task, &out_tm->tm_zone, size + 1);
+        reserve_vec_exact(&out_tm->tm_zone, size + 1);
         memcpy(out_tm->tm_zone->body.data, zone, size);
         out_tm->tm_zone->body.fill = size + 1;
         out_tm->tm_zone->body.data[size] = '\0';
@@ -823,20 +821,20 @@ extern "C" CDECL void      record_sp_limit(void *limit);
 
 class raw_thread: public rust_thread {
 public:
-    fn_env_pair *fn;
+    fn_env_pair fn;
 
-    raw_thread(fn_env_pair *fn) : fn(fn) { }
+    raw_thread(fn_env_pair fn) : fn(fn) { }
 
     virtual void run() {
         record_sp_limit(0);
-        fn->f(NULL, fn->env, NULL);
+        fn.f(NULL, fn.env, NULL);
     }
 };
 
 extern "C" raw_thread*
 rust_raw_thread_start(fn_env_pair *fn) {
     assert(fn);
-    raw_thread *thread = new raw_thread(fn);
+    raw_thread *thread = new raw_thread(*fn);
     thread->start();
     return thread;
 }
