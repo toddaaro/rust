@@ -584,6 +584,7 @@ done
 
 # On windows we just store the libraries in the bin directory because
 # there's no rpath
+# FIXME: Thise needs to parameterized over target triples. Do it in platform.mk
 CFG_LIBDIR=lib
 if [ "$CFG_OSTYPE" = "pc-mingw32" ]
 then
