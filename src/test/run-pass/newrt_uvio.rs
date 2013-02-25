@@ -3,7 +3,9 @@
 use super::uv::*;
 use super::io::*;
 use std::net::ip::IpAddr;
-use std::cell::{Cell, empty_cell};
+use core::cell::{Cell, empty_cell};
+use core::cast::transmute;
+use core::private::run_in_bare_thread;
 use super::StreamObject;
 use super::sched::Scheduler;
 use super::uv::*;
@@ -30,7 +32,7 @@ pub impl UvEventLoop {
     }
 }
 
-pub impl Drop for UvEventLoop {
+impl Drop for UvEventLoop {
     fn finalize(&self) {
         // XXX: Need mutable finalizer
         let self = unsafe { transmute::<&UvEventLoop, &mut UvEventLoop>(self) };
@@ -39,7 +41,7 @@ pub impl Drop for UvEventLoop {
     }
 }
 
-pub impl EventLoop for UvEventLoop {
+impl EventLoop for UvEventLoop {
 
     fn run(&mut self) {
         self.uvio.uv_loop().run();
@@ -83,7 +85,7 @@ pub impl UvIoFactory {
     }
 }
 
-pub impl IoFactory for UvIoFactory {
+impl IoFactory for UvIoFactory {
     // Connect to an address and return a new stream
     // NB: This blocks the task waiting on the connection.
     // It would probably be better to return a future
@@ -97,7 +99,7 @@ pub impl IoFactory for UvIoFactory {
             assert scheduler.in_task_context();
 
             // Block this task and take ownership, switch to scheduler context
-            do scheduler.block_running_task_and_then |task| {
+            do scheduler.block_running_task_and_then |scheduler, task| {
 
                 rtdebug!("connect: entered scheduler context");
                 assert !scheduler.in_task_context();
@@ -170,7 +172,7 @@ impl TcpListener for UvTcpListener {
         do Scheduler::local |scheduler| {
             assert scheduler.in_task_context();
 
-            do scheduler.block_running_task_and_then |task| {
+            do scheduler.block_running_task_and_then |_, task| {
                 let task_cell = Cell(task);
                 let mut server_tcp_watcher = server_tcp_watcher;
                 do server_tcp_watcher.listen |server_stream_watcher, status| {
@@ -227,7 +229,7 @@ impl Drop for UvStream {
     }
 }
 
-pub impl Stream for UvStream {
+impl Stream for UvStream {
     fn read(&mut self, buf: &mut [u8]) -> Result<uint, ()> {
         let result_cell = empty_cell();
         let result_cell_ptr: *Cell<Result<uint, ()>> = &result_cell;
@@ -236,7 +238,7 @@ pub impl Stream for UvStream {
             assert scheduler.in_task_context();
             let watcher = self.watcher();
             let buf_ptr: *&mut [u8] = &buf;
-            do scheduler.block_running_task_and_then |task| {
+            do scheduler.block_running_task_and_then |scheduler, task| {
                 rtdebug!("read: entered scheduler context");
                 assert !scheduler.in_task_context();
                 let mut watcher = watcher;
@@ -278,7 +280,7 @@ pub impl Stream for UvStream {
             assert scheduler.in_task_context();
             let watcher = self.watcher();
             let buf_ptr: *&[u8] = &buf;
-            do scheduler.block_running_task_and_then |task| {
+            do scheduler.block_running_task_and_then |_, task| {
                 let mut watcher = watcher;
                 let task_cell = Cell(task);
                 let buf = unsafe { &*buf_ptr };
@@ -402,7 +404,7 @@ fn test_read_and_block() {
                     do Scheduler::local |scheduler| {
                         // Yield to the other task in hopes that it will trigger
                         // a read callback while we are not ready for it
-                        do scheduler.block_running_task_and_then |task| {
+                        do scheduler.block_running_task_and_then |scheduler, task| {
                             scheduler.task_queue.push_back(task);
                         }
                     }

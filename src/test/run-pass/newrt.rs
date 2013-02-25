@@ -4,32 +4,30 @@
 extern mod std;
 
 // Some basic logging
-fn macros() {
-    macro_rules! rtdebug (
-        ($( $arg:expr),+) => ( {
-            dumb_println(fmt!( $($arg),+ ));
+macro_rules! rtdebug (
+    ($( $arg:expr),+) => ( {
+        dumb_println(fmt!( $($arg),+ ));
 
-            fn dumb_println(s: &str) {
-                use core::str::as_c_str;
-                use core::libc::c_char;
+        fn dumb_println(s: &str) {
+            use core::str::as_c_str;
+            use core::libc::c_char;
 
-                extern {
-                    fn printf(s: *c_char);
-                }
-
-                do as_c_str(s.to_str() + "\n") |s| {
-                    unsafe { printf(s); }
-                }
+            extern {
+                fn printf(s: *c_char);
             }
 
-        } )
-    )
+            do as_c_str(s.to_str() + "\n") |s| {
+                unsafe { printf(s); }
+            }
+        }
 
-    // An alternate version with no output, for turning off logging
-    macro_rules! rtdebug_ (
-        ($( $arg:expr),+) => ( { } )
-    )
-}
+    } )
+)
+
+// An alternate version with no output, for turning off logging
+macro_rules! rtdebug_ (
+    ($( $arg:expr),+) => ( { } )
+)
 
 // FIXME #4981: Wish I would write these `mod sched #[path = "newrt_sched.rs"];`
 #[path = "newrt_sched.rs"] mod sched;

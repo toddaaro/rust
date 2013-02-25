@@ -23,27 +23,37 @@ pub struct Scheduler {
     stack_pool: StackPool,
     /// The event loop used to drive the scheduler and perform I/O
     /// NOTE: This should be ~SchedEventLoop
-    /// FIXME #4830: priv doesn't parse
-    /*priv*/ event_loop: ~EventLoopObject,
+    event_loop: ~EventLoopObject,
     /// The scheduler's saved context.
     /// Always valid when a task is executing, otherwise not
-    /*priv*/ saved_context: Context,
+    priv saved_context: Context,
     /// The currently executing task
-    /*priv*/ current_task: Option<~Task>,
+    priv current_task: Option<~Task>,
     /// A queue of jobs to perform immediately upon return from task
     /// context to scheduler context.
     /// FIXME: This probably should be a single cleanup action and it
     /// should run after a context switch, not on return from the scheduler
-    /*priv*/ cleanup_jobs: ~[CleanupJob]
+    priv cleanup_jobs: ~[CleanupJob]
+}
+
+// FIXME: Some hacks to put a &fn in Scheduler without borrowck complaining
+type UnsafeTaskReceiver = sys::Closure;
+trait HackAroundBorrowCk {
+    static fn from_fn(&fn(&mut Scheduler, ~Task)) -> Self;
+    fn to_fn(self) -> &fn(&mut Scheduler, ~Task);
+}
+impl HackAroundBorrowCk for UnsafeTaskReceiver {
+    static fn from_fn(f: &fn(&mut Scheduler, ~Task)) -> UnsafeTaskReceiver { unsafe { transmute(f) } }
+    fn to_fn(self) -> &fn(&mut Scheduler, ~Task) { unsafe { transmute(self) } }
 }
 
 enum CleanupJob {
     RescheduleTask(~Task),
     RecycleTask(~Task),
-    GiveTask(~Task, &fn(~Task))
+    GiveTask(~Task, UnsafeTaskReceiver)
 }
 
-impl Scheduler {
+pub impl Scheduler {
 
     static fn new(event_loop: ~EventLoopObject) -> Scheduler {
         Scheduler {
@@ -140,7 +150,6 @@ impl Scheduler {
         let dead_task = self.current_task.swap_unwrap();
         self.enqueue_cleanup_job(RecycleTask(dead_task));
         let dead_task = self.task_from_last_cleanup_job();
-
         self.swap_out_task(dead_task);
     }
 
@@ -152,14 +161,15 @@ impl Scheduler {
     /// The closure here is a *stack* closure that lives in the running task.
     /// It gets transmuted to the scheduler's lifetime and called while the task
     /// is blocked.
-    fn block_running_task_and_then(&mut self, f: &fn(~Task)) {
+    fn block_running_task_and_then(&mut self, f: &fn(&mut Scheduler, ~Task)) {
         assert self.in_task_context();
 
         rtdebug!("blocking task");
 
         let blocked_task = self.current_task.swap_unwrap();
-        let f_fake_region = unsafe { transmute::<&fn(~Task), &fn(~Task)>(f) };
-        self.enqueue_cleanup_job(GiveTask(blocked_task, f_fake_region));
+        let f_fake_region = unsafe { transmute::<&fn(&mut Scheduler, ~Task), &fn(&mut Scheduler, ~Task)>(f) };
+        let f_opaque = HackAroundBorrowCk::from_fn(f_fake_region);
+        self.enqueue_cleanup_job(GiveTask(blocked_task, f_opaque));
         let blocked_task = self.task_from_last_cleanup_job();
 
         self.swap_out_task(blocked_task);
@@ -215,7 +225,7 @@ impl Scheduler {
 
     fn in_task_context(&self) -> bool { self.current_task.is_some() }
 
-    fn enqueue_cleanup_job(&mut self, job: CleanupJob/&self) {
+    fn enqueue_cleanup_job(&mut self, job: CleanupJob) {
         self.cleanup_jobs.unshift(job);
     }
 
@@ -230,12 +240,14 @@ impl Scheduler {
                     self.task_queue.push_front(task);
                 }
                 RecycleTask(task) => task.recycle(&mut self.stack_pool),
-                GiveTask(task, f) => f(task)
+                GiveTask(task, f) => (f.to_fn())(self, task)
             }
         }
     }
 
-    fn task_from_last_cleanup_job(&mut self) -> &self/mut Task {
+    // FIXME: Hack. This should return &self/mut but I don't know how to make the
+    // borrowcheck happy
+    fn task_from_last_cleanup_job(&mut self) -> &mut Task {
         assert !self.cleanup_jobs.is_empty();
         let last_job: &self/mut CleanupJob = &mut self.cleanup_jobs[0];
         let last_task: &self/Task = match last_job {
@@ -253,12 +265,12 @@ const TASK_MIN_STACK_SIZE: uint = 10000000; // XXX: Too much stack
 
 pub struct Task {
     /// The task entry point, saved here for later destruction
-    /*priv*/ start: ~~fn(),
+    priv start: ~~fn(),
     /// The segment of stack on which the task is currently running or,
     /// if the task is blocked, on which the task will resume execution
-    /*priv*/ current_stack_segment: StackSegment,
+    priv current_stack_segment: StackSegment,
     /// These are always valid when the task is not running, unless the task is dead
-    /*priv*/ saved_context: Context,
+    priv saved_context: Context,
 }
 
 impl Task {
@@ -515,7 +527,7 @@ fn test_block_task() {
         let task = ~do Task::new(&mut sched.stack_pool) {
             do Scheduler::local |sched| {
                 assert sched.in_task_context();
-                do sched.block_running_task_and_then() |task| {
+                do sched.block_running_task_and_then() |sched, task| {
                     assert !sched.in_task_context();
                     sched.task_queue.push_back(task);
                 }

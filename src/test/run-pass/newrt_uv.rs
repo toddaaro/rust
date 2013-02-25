@@ -29,11 +29,11 @@ via `close` and `delete` methods.
 use core::private::run_in_bare_thread;
 use core::str::raw::from_c_str;
 use core::libc::{c_void, c_int, size_t, malloc, free, ssize_t};
-use core::cast::transmute;
+use core::cast::{transmute, transmute_mut_region};
 use core::ptr::null;
 use core::sys::size_of;
+use core::cell::Cell;
 use std::net::ip::*;
-use std::cell::Cell;
 use uvll = std::uv::ll;
 use super::thread::Thread;
 
@@ -78,7 +78,7 @@ pub impl Loop {
     }
 }
 
-pub impl NativeHandle<*uvll::uv_loop_t> for Loop {
+impl NativeHandle<*uvll::uv_loop_t> for Loop {
     static fn from_native_handle(handle: *uvll::uv_loop_t) -> Loop {
         Loop { handle: handle }
     }
@@ -147,7 +147,7 @@ pub impl IdleWatcher {
     }
 }
 
-pub impl NativeHandle<*uvll::uv_idle_t> for IdleWatcher {
+impl NativeHandle<*uvll::uv_idle_t> for IdleWatcher {
     static fn from_native_handle(handle: *uvll::uv_idle_t) -> IdleWatcher {
         IdleWatcher(handle)
     }
@@ -169,13 +169,14 @@ type ReadCallback = ~fn(StreamWatcher, int, Buf, Option<UvError>);
 impl Callback for ReadCallback { }
 
 // XXX: The uv alloc callback also has a *uv_handle_t arg
-type AllocCallback = ~fn(uint) -> Buf;
+pub type AllocCallback = ~fn(uint) -> Buf;
 impl Callback for AllocCallback { }
 
 pub impl StreamWatcher {
 
     fn read_start(&mut self, alloc: AllocCallback, cb: ReadCallback) {
-        let data = get_watcher_data(self);
+        // FIXME: Borrowchk problems
+        let data = get_watcher_data(unsafe { transmute_mut_region(self) });
         data.alloc_cb = Some(alloc);
         data.read_cb = Some(cb);
 
@@ -211,7 +212,8 @@ pub impl StreamWatcher {
 
     // FIXME: Needs to take &[u8], not ~[u8]
     fn write(&mut self, msg: ~[u8], cb: ConnectionCallback) {
-        let data = get_watcher_data(self);
+        // FIXME: Borrowck
+        let data = get_watcher_data(unsafe { transmute_mut_region(self) });
         assert data.write_cb.is_none();
         data.write_cb = Some(cb);
 
@@ -263,7 +265,7 @@ pub impl StreamWatcher {
     }
 }
 
-pub impl NativeHandle<*uvll::uv_stream_t> for StreamWatcher {
+impl NativeHandle<*uvll::uv_stream_t> for StreamWatcher {
     static fn from_native_handle(handle: *uvll::uv_stream_t) -> StreamWatcher {
         StreamWatcher(handle)
     }
@@ -334,7 +336,8 @@ pub impl TcpWatcher {
     }
 
     fn listen(&mut self, cb: ConnectionCallback) {
-        let data = get_watcher_data(self);
+        // FIXME: Borrowck
+        let data = get_watcher_data(unsafe { transmute_mut_region(self) });
         assert data.connect_cb.is_none();
         data.connect_cb = Some(cb);
 
@@ -358,7 +361,7 @@ pub impl TcpWatcher {
     }
 }
 
-pub impl NativeHandle<*uvll::uv_tcp_t> for TcpWatcher {
+impl NativeHandle<*uvll::uv_tcp_t> for TcpWatcher {
     static fn from_native_handle(handle: *uvll::uv_tcp_t) -> TcpWatcher {
         TcpWatcher(handle)
     }
@@ -398,7 +401,7 @@ impl ConnectRequest {
     }
 }
 
-pub impl NativeHandle<*uvll::uv_connect_t> for ConnectRequest {
+impl NativeHandle<*uvll::uv_connect_t> for ConnectRequest {
     static fn from_native_handle(handle: *uvll:: uv_connect_t) -> ConnectRequest {
         ConnectRequest(handle)
     }
@@ -432,7 +435,7 @@ impl WriteRequest {
     }
 }
 
-pub impl NativeHandle<*uvll::uv_write_t> for WriteRequest {
+impl NativeHandle<*uvll::uv_write_t> for WriteRequest {
     static fn from_native_handle(handle: *uvll:: uv_write_t) -> WriteRequest {
         WriteRequest(handle)
     }
@@ -498,7 +501,7 @@ fn status_to_maybe_uv_error<T>(handle: *T, status: c_int) -> Option<UvError> {
 }
 
 /// Get the uv event loop from a Watcher
-fn loop_from_watcher<H, W: Watcher + NativeHandle<*H>>(watcher: &W) -> Loop {
+pub fn loop_from_watcher<H, W: Watcher + NativeHandle<*H>>(watcher: &W) -> Loop {
     let handle = watcher.native_handle();
     let loop_ = unsafe { uvll::get_loop_for_uv_handle(handle) };
     NativeHandle::from_native_handle(loop_)
@@ -610,10 +613,10 @@ fn test_slice_to_uv_buf() {
 }
 
 /// The uv buffer type
-type Buf = uvll::uv_buf_t;
+pub type Buf = uvll::uv_buf_t;
 
 /// Borrow a slice to a Buf
-fn slice_to_uv_buf(v: &[u8]) -> Buf {
+pub fn slice_to_uv_buf(v: &[u8]) -> Buf {
     let data = unsafe { vec::raw::to_ptr(v) };
     unsafe { uvll::buf_init(data, v.len()) }
 }

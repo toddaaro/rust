@@ -4,7 +4,7 @@ pub struct StackSegment {
     buf: ~[u8]
 }
 
-impl StackSegment {
+pub impl StackSegment {
     static fn new(size: uint) -> StackSegment {
         // Crate a block of uninitialized values
         let mut stack = vec::with_capacity(size);

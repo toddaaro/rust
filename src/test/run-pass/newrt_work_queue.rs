@@ -4,7 +4,7 @@ pub struct WorkQueue<T> {
     priv queue: ~[T]
 }
 
-impl<T> WorkQueue<T> {
+pub impl<T> WorkQueue<T> {
     static fn new() -> WorkQueue<T> {
         WorkQueue {
             queue: ~[]
