@@ -37,10 +37,21 @@ pub struct Scheduler {
     /*priv*/ cleanup_jobs: ~[CleanupJob]
 }
 
+// FIXME: Some hacks to put a &fn in Scheduler without borrowck complaining
+type UnsafeTaskReceiver = sys::Closure;
+trait HackAroundBorrowCk {
+    static fn from_fn(&fn(~Task)) -> Self;
+    fn to_fn(self) -> &fn(~Task);
+}
+impl HackAroundBorrowCk for UnsafeTaskReceiver {
+    static fn from_fn(f: &fn(~Task)) -> UnsafeTaskReceiver { unsafe { transmute(f) } }
+    fn to_fn(self) -> &fn(~Task) { unsafe { transmute(self) } }
+}
+
 enum CleanupJob {
     RescheduleTask(~Task),
     RecycleTask(~Task),
-    GiveTask(~Task, &fn(~Task))
+    GiveTask(~Task, UnsafeTaskReceiver)
 }
 
 impl Scheduler {
@@ -138,10 +149,13 @@ impl Scheduler {
         rtdebug!("ending running task");
 
         let dead_task = self.current_task.swap_unwrap();
-        self.enqueue_cleanup_job(RecycleTask(dead_task));
-        let dead_task = self.task_from_last_cleanup_job();
-
-        self.swap_out_task(dead_task);
+        {
+            self.enqueue_cleanup_job(RecycleTask(dead_task));
+            {
+                let dead_task = self.task_from_last_cleanup_job();
+                { self.swap_out_task(dead_task) };
+            }
+        }
     }
 
     /// Block a running task, context switch to the scheduler, then pass the
@@ -159,7 +173,8 @@ impl Scheduler {
 
         let blocked_task = self.current_task.swap_unwrap();
         let f_fake_region = unsafe { transmute::<&fn(~Task), &fn(~Task)>(f) };
-        self.enqueue_cleanup_job(GiveTask(blocked_task, f_fake_region));
+        let f_opaque = HackAroundBorrowCk::from_fn(f_fake_region);
+        self.enqueue_cleanup_job(GiveTask(blocked_task, f_opaque));
         let blocked_task = self.task_from_last_cleanup_job();
 
         self.swap_out_task(blocked_task);
@@ -215,7 +230,7 @@ impl Scheduler {
 
     fn in_task_context(&self) -> bool { self.current_task.is_some() }
 
-    fn enqueue_cleanup_job(&mut self, job: CleanupJob/&self) {
+    fn enqueue_cleanup_job(&mut self, job: CleanupJob) {
         self.cleanup_jobs.unshift(job);
     }
 
@@ -230,7 +245,7 @@ impl Scheduler {
                     self.task_queue.push_front(task);
                 }
                 RecycleTask(task) => task.recycle(&mut self.stack_pool),
-                GiveTask(task, f) => f(task)
+                GiveTask(task, f) => (f.to_fn())(task)
             }
         }
     }
