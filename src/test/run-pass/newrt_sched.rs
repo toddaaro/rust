@@ -144,18 +144,29 @@ impl Scheduler {
     /// Called by a running task to end execution, after which it will
     /// be recycled by the scheduler for reuse in a new task.
     fn terminate_current_task(&mut self) {
-        assert self.in_task_context();
+        //assert self.in_task_context();
 
         rtdebug!("ending running task");
 
+        //self.enqueue_cleanup_job(RecycleTask(dead_task));
         let dead_task = self.current_task.swap_unwrap();
-        {
-            self.enqueue_cleanup_job(RecycleTask(dead_task));
-            {
-                let dead_task = self.task_from_last_cleanup_job();
-                { self.swap_out_task(dead_task) };
-            }
-        }
+        let cleanup_jobs = &mut self.cleanup_jobs;
+        cleanup_jobs.unshift(RecycleTask(dead_task));
+        let scheduler_context = &self.saved_context;
+        //let cleanup_jobs = &mut self.cleanup_jobs;
+        let last_job: &mut CleanupJob = &mut self.cleanup_jobs[0];
+        let last_task: &Task = match last_job {
+            &RescheduleTask(~ref task) => task,
+            &RecycleTask(~ref task) => task,
+            &GiveTask(~ref task, _) => task,
+        };
+        // FIXME: Pattern matching mutable pointers above doesn't work
+        // because borrowck thinks the three patterns are conflicting borrows
+        let last_task = unsafe { transmute::<&Task, &mut Task>(last_task) };
+        let dead_task = last_task;
+        let dead_task_context = &mut dead_task.saved_context;
+        Context::swap(dead_task_context, scheduler_context);
+        //self.swap_out_task(dead_task);
     }
 
     /// Block a running task, context switch to the scheduler, then pass the
