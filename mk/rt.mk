@@ -26,6 +26,7 @@
 # Hack for passing flags into LIBUV, see below.
 LIBUV_FLAGS_i386 = -m32 -fPIC
 LIBUV_FLAGS_x86_64 = -m64 -fPIC
+LIBUV_FLAGS_arm = -fPIC -DANDROID -std=gnu99
 
 # when we're doing a snapshot build, we intentionally degrade as many
 # features in libuv and the runtime as possible, to ease portability.
@@ -73,7 +74,8 @@ RUNTIME_CXXS_$(1) := \
               rt/memory_region.cpp \
               rt/boxed_region.cpp \
               rt/arch/$$(HOST_$(1))/context.cpp \
-              rt/arch/$$(HOST_$(1))/gpr.cpp
+              rt/arch/$$(HOST_$(1))/gpr.cpp \
+              rt/rust_android_dummy.cpp
 
 RUNTIME_CS_$(1) := rt/linenoise/linenoise.c rt/linenoise/utf8.c
 
@@ -89,6 +91,9 @@ else ifeq ($(CFG_OSTYPE_$(1)), apple-darwin)
   LIBUV_LIB_$(1) := rt/$(1)/libuv/libuv.a
 else ifeq ($(CFG_OSTYPE_$(1)), unknown-freebsd)
   LIBUV_OSTYPE_$(1) := unix/freebsd
+  LIBUV_LIB_$(1) := rt/$(1)/libuv/libuv.a
+else ifeq ($(CFG_OSTYPE_$(1)), unknown-android)
+  LIBUV_OSTYPE_$(1) := unix/android
   LIBUV_LIB_$(1) := rt/$(1)/libuv/libuv.a
 else
   LIBUV_OSTYPE_$(1) := unix/linux
@@ -106,6 +111,7 @@ RUNTIME_OBJS_$(1) := $$(RUNTIME_CXXS_$(1):rt/%.cpp=rt/$(1)/%.o) \
 ALL_OBJ_FILES += $$(RUNTIME_OBJS_$(1))
 
 MORESTACK_OBJ_$(1) := rt/$(1)/arch/$$(HOST_$(1))/morestack.o
+
 ALL_OBJ_FILES += $$(MORESTACK_OBJS_$(1))
 
 RUNTIME_LIBS_$(1) := $$(LIBUV_LIB_$(1))
@@ -152,11 +158,25 @@ LIBUV_DEPS := $$(wildcard \
               $$(S)src/libuv/*/*/*/*)
 endif
 
+# FIXME: Clean this up so we don't have a different rule for each OS
 ifdef CFG_WINDOWSY_$(1)
 $$(LIBUV_LIB_$(1)): $$(LIBUV_DEPS)
 	$$(Q)$$(MAKE) -C $$(S)src/libuv/ \
 		builddir_name="$$(CFG_BUILD_DIR)/rt/$(1)/libuv" \
 		OS=mingw \
+		V=$$(VERBOSE)
+else
+ifeq ($(1),arm-unknown-android)
+$$(LIBUV_LIB_$(1)): $$(LIBUV_DEPS)
+	$$(Q)$$(MAKE) -C $$(S)src/libuv/ \
+		CFLAGS="$$(LIBUV_FLAGS_$$(HOST_$(1))) $$(SNAP_DEFINES)" \
+                LDFLAGS="$$(LIBUV_FLAGS_$$(HOST_$(1)))" \
+		CC="$$(CC_$(1))" \
+		CXX="$$(CXX_$(1))" \
+		AR="$$(AR_$(1))" \
+		BUILDTYPE=Release \
+		builddir_name="$$(CFG_BUILD_DIR)/rt/$(1)/libuv" \
+                host=android OS=linux \
 		V=$$(VERBOSE)
 else
 $$(LIBUV_LIB_$(1)): $$(LIBUV_DEPS)
@@ -165,7 +185,7 @@ $$(LIBUV_LIB_$(1)): $$(LIBUV_DEPS)
 		builddir_name="$$(CFG_BUILD_DIR)/rt/$(1)/libuv" \
 		V=$$(VERBOSE)
 endif
-
+endif
 
 # These could go in rt.mk or rustllvm.mk, they're needed for both.
 
@@ -185,6 +205,12 @@ endif
 %.darwin.def:	%.def.in $$(MKFILE_DEPS)
 	@$$(call E, def: $$@)
 	$$(Q)sed 's/^./_&/' $$< > $$@
+
+%.android.def:	%.def.in $$(MKFILE_DEPS)
+	@$$(call E, def: $$@)
+	$$(Q)echo "{" > $$@
+	$$(Q)sed 's/.$$$$/&;/' $$< >> $$@
+	$$(Q)echo "};" >> $$@
 
 ifdef CFG_WINDOWSY_$(1)
 %.def:	%.def.in $$(MKFILE_DEPS)

@@ -313,6 +313,7 @@ export CFG_LLVM_ROOT
 export CFG_ENABLE_MINGW_CROSS
 export CFG_PREFIX
 export CFG_LIBDIR
+export CFG_ANDROID_NDK_PATH
 
 ######################################################################
 # Subprograms
@@ -382,6 +383,7 @@ HSREQ$(1)_H_$(3) = \
 	$$(MKFILE_DEPS)
 
 # Prerequisites for using the stageN compiler to build target artifacts
+
 TSREQ$(1)_T_$(2)_H_$(3) = \
 	$$(HSREQ$(1)_H_$(3)) \
 	$$(TLIB$(1)_T_$(2)_H_$(3))/$$(CFG_RUNTIME_$(2)) \
@@ -442,14 +444,16 @@ STAGE$(1)_T_$(2)_H_$(3) := 						\
 		$$(CFG_VALGRIND_COMPILE$(1)) 			\
 		$$(HBIN$(1)_H_$(3))/rustc$$(X_$(3))			\
 		--cfg $$(CFGFLAG$(1)_T_$(2)_H_$(3))			\
-		$$(CFG_RUSTC_FLAGS) $$(EXTRAFLAGS_STAGE$(1)) --target=$(2))
+		$$(CFG_RUSTC_FLAGS) $$(EXTRAFLAGS_STAGE$(1)) --target=$(2)) \
+                $$(RUSTC_FLAGS_$(2))
 
 PERF_STAGE$(1)_T_$(2)_H_$(3) := 				\
 	$$(Q)$$(call CFG_RUN_TARG_$(2),$(1),				\
 		$$(CFG_PERF_TOOL) 						\
 		$$(HBIN$(1)_H_$(3))/rustc$$(X_$(3))			\
 		--cfg $$(CFGFLAG$(1)_T_$(2)_H_$(3))			\
-		$$(CFG_RUSTC_FLAGS) $$(EXTRAFLAGS_STAGE$(1)) --target=$(2))
+		$$(CFG_RUSTC_FLAGS) $$(EXTRAFLAGS_STAGE$(1)) --target=$(2)) \
+                $$(RUSTC_FLAGS_$(2))
 
 endef
 

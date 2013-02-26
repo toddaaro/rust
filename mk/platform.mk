@@ -98,6 +98,7 @@ ifeq (x86_64,$$(HOST_$(1)))
 endif
 
 ifneq ($$(findstring freebsd,$$(OSTYPE_$(1))),)
+  CFG_UNIXY_$(1) := 1
   CFG_LIB_NAME_$(1)=lib$$(1).so
   CFG_LIB_GLOB_$(1)=lib$$(1)-*.so
   CFG_GCCISH_CFLAGS_$(1) += -fPIC -I/usr/local/include
@@ -105,15 +106,16 @@ ifneq ($$(findstring freebsd,$$(OSTYPE_$(1))),)
   CFG_GCCISH_DEF_FLAG_$(1) := -Wl,--export-dynamic,--dynamic-list=
   CFG_GCCISH_PRE_LIB_FLAGS_$(1) := -Wl,-whole-archive
   CFG_GCCISH_POST_LIB_FLAGS_$(1) := -Wl,-no-whole-archive
-  CFG_UNIXY_$(1) := 1
   CFG_FBSD_$(1) := 1
   CFG_LDENV_$(1) := LD_LIBRARY_PATH
   CFG_DEF_SUFFIX_$(1) := .bsd.def
   CFG_INSTALL_NAME_$(1) =
   CFG_PERF_TOOL_$(1) := /usr/bin/time
+  CFG_LIBUV_LINK_FLAGS_$(1) := -lpthread -lkvm
 endif
 
 ifneq ($$(findstring linux,$$(OSTYPE_$(1))),)
+  CFG_UNIXY_$(1) := 1
   CFG_LIB_NAME_$(1)=lib$$(1).so
   CFG_LIB_GLOB_$(1)=lib$$(1)-*.so
   CFG_GCCISH_CFLAGS_$(1) += -fPIC
@@ -123,19 +125,18 @@ ifneq ($$(findstring linux,$$(OSTYPE_$(1))),)
   # -znoexecstack is here because librt is for some reason being created
   # with executable stack and Fedora (or SELinux) doesn't like that (#798)
   CFG_GCCISH_POST_LIB_FLAGS_$(1) := -Wl,-no-whole-archive -Wl,-znoexecstack
-  CFG_UNIXY_$(1) := 1
   CFG_LDENV_$(1) := LD_LIBRARY_PATH
   CFG_DEF_SUFFIX_$(1) := .linux.def
   CFG_INSTALL_NAME_$(1) =
   # Linux requires LLVM to be built like this to get backtraces into Rust code
   CFG_LLVM_BUILD_ENV_$(1)="CXXFLAGS=-fno-omit-frame-pointer"
+  CFG_LIBUV_LINK_FLAGS_$(1) := -lpthread
 endif
 
 ifneq ($$(findstring darwin,$$(OSTYPE_$(1))),)
   CFG_UNIXY_$(1) := 1
   CFG_LIB_NAME_$(1)=lib$$(1).dylib
   CFG_LIB_GLOB_$(1)=lib$$(1)-*.dylib
-  CFG_UNIXY_$(1) := 1
   CFG_LDENV_$(1) := DYLD_LIBRARY_PATH
   CFG_GCCISH_LINK_FLAGS_$(1) += -dynamiclib -lpthread -framework CoreServices -Wl,-no_compact_unwind
   CFG_GCCISH_DEF_FLAG_$(1) := -Wl,-exported_symbols_list,
@@ -155,6 +156,20 @@ ifneq ($$(findstring darwin,$$(OSTYPE_$(1))),)
   CFG_DEF_SUFFIX_$(1) := .darwin.def
   # Mac requires this flag to make rpath work
   CFG_INSTALL_NAME_$(1) = -Wl,-install_name,@rpath/$$(1)
+  CFG_LIBUV_LINK_FLAGS_$(1) := -lpthread
+endif
+
+ifneq ($$(findstring android,$$(OSTYPE_$(1))),)
+  CFG_UNIXY_$(1) := 1
+  CFG_LIB_NAME_$(1)=lib$$(1).so
+  CFG_LIB_GLOB_$(1)=lib$$(1)-*.so
+  CFG_GCCISH_CFLAGS_$(1)=-DRUST_NDEBUG -MMD -MP -fPIC -O2 -Wall -g -fno-omit-frame-pointer -D__arm__ -DANDROID -D__ANDROID__
+  CFG_GCCISH_LINK_FLAGS_$(1)=-shared -fPIC -ldl -g -lm -lsupc++ -lgnustl_shared
+  CFG_GCCISH_DEF_FLAG_$(1)=-Wl,--export-dynamic,--dynamic-list=
+  CFG_GCCISH_PRE_LIB_FLAGS_$(1) := -Wl,-whole-archive
+  CFG_GCCISH_POST_LIB_FLAGS_$(1) := -Wl,-no-whole-archive -Wl,-znoexecstack
+  CFG_DEF_SUFFIX_$(1) := .android.def
+  CFG_LIBUV_LINK_FLAGS_$(1) :=
 endif
 
 ifdef CFG_UNIXY_$(1)
@@ -165,10 +180,6 @@ ifdef CFG_UNIXY_$(1)
   CFG_LDPATH_$(1) :=
   CFG_RUN_$(1)=$$(2)
   CFG_RUN_TARG_$(1)=$$(call CFG_RUN_$(1),,$$(2))
-  CFG_LIBUV_LINK_FLAGS_$(1)=-lpthread
-  ifdef CFG_FBSD
-    CFG_LIBUV_LINK_FLAGS_$(1)=-lpthread -lkvm
-  endif
 
   # FIXME: This is surely super broken
   # ifdef CFG_ENABLE_MINGW_CROSS
@@ -267,8 +278,20 @@ ifeq ($(CFG_C_COMPILER),gcc)
   CFG_SPECIFIC_CC_CFLAGS_$(1) += $$(CFG_GCC_CFLAGS_$(1))
 
 else
+
   CFG_ERR := $$(error please try on a system with gcc or clang)
 endif
+endif
+
+AR_$(1)=ar
+
+# Finally, set up the tool chain for the Android cross
+ifneq ($$(findstring android,$$(OSTYPE_$(1))),)
+  CC_$(1)=$$(CFG_ANDROID_NDK_PATH)/bin/arm-linux-androideabi-gcc
+  CXX_$(1)=$$(CFG_ANDROID_NDK_PATH)/bin/arm-linux-androideabi-g++
+  CPP_$(1)=$$(CFG_ANDROID_NDK_PATH)/bin/arm-linux-androideabi-gcc -E
+  AR_$(1)=$$(CFG_ANDROID_NDK_PATH)/bin/arm-linux-androideabi-ar
+  RUSTC_FLAGS_$(1)=--android-ndk-path='$$(CFG_ANDROID_NDK_PATH)'
 endif
 
   CFG_COMPILE_C_$(1) = $$(CC_$(1))  \
@@ -293,6 +316,8 @@ endif
         $$(CFG_GCCISH_DEF_FLAG_$(1))$$(3) $$(2)      \
         $$(call CFG_INSTALL_NAME_$(1),$$(4))
 
+
+ifeq ($$(findstring android,$$(OSTYPE_$(1))),)
   # We're using llvm-mc as our assembler because it supports
   # .cfi pseudo-ops on mac
   CFG_ASSEMBLE_$(1)=$$(CPP_$(1)) $$(CFG_DEPEND_FLAGS_$(1)) $$(2) | \
@@ -301,6 +326,11 @@ endif
                     -filetype=obj \
                     -triple=$(1) \
                     -o=$$(1)
+else
+  # But android uses the Android NDK assembler
+  CFG_ASSEMBLE_$(1)=$$(CC_$(1)) $$(CFG_DEPEND_FLAGS_$(1)) $$(2) -c -o $$(1)
+endif
+
 endef
 
 $(foreach target,$(CFG_TARGET_TRIPLES),\

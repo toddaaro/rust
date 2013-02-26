@@ -349,6 +349,7 @@ valopt llvm-root "" "set LLVM root"
 valopt build-triple "${DEFAULT_BUILD_TRIPLE}" "LLVM build triple"
 valopt host-triples "${CFG_BUILD_TRIPLE}" "LLVM host triples"
 valopt target-triples "${CFG_HOST_TRIPLES}" "LLVM target triples"
+valopt android-ndk-path "/opt/ndk_standalone" "Android NDK Standalone path"
 
 # Validate Options
 step_msg "validating $CFG_SELF args"
@@ -534,6 +535,39 @@ fi
 CFG_PREFIX=${CFG_PREFIX%/}
 CFG_TARGET_TRIPLES="$(echo $CFG_TARGET_TRIPLES | tr ',' ' ')"
 
+# copy host-triples to target-triples so that hosts are a subset of targets
+V_TEMP=""
+for i in $CFG_HOST_TRIPLES $CFG_TARGET_TRIPLES;
+do
+   echo "$V_TEMP" | grep -qF $i || V_TEMP="$V_TEMP${V_TEMP:+ }$i"
+done
+CFG_TARGET_TRIPLES=$V_TEMP
+
+# check target-specific tool-chains
+for i in $CFG_TARGET_TRIPLES
+do
+    case $i in
+        arm-unknown-android)
+
+            if [ ! -f $CFG_ANDROID_NDK_PATH/bin/arm-linux-androideabi-gcc ]
+            then
+                err "NDK $CFG_ANDROID_NDK_PATH/bin/arm-linux-androideabi-gcc not found"
+            fi
+            if [ ! -f $CFG_ANDROID_NDK_PATH/bin/arm-linux-androideabi-g++ ]
+            then
+                err "NDK $CFG_ANDROID_NDK_PATH/bin/arm-linux-androideabi-g++ not found"
+            fi
+            if [ ! -f $CFG_ANDROID_NDK_PATH/bin/arm-linux-androideabi-ar ]
+            then
+                err "NDK $CFG_ANDROID_NDK_PATH/bin/arm-linux-androideabi-ar not found"
+            fi
+            ;;
+
+        *)
+            ;;
+    esac
+done
+
 if [ -z "$CFG_ENABLE_CLANG" -a -z "$CFG_GCC" ]
 then
     err "either clang or gcc is required"
@@ -575,8 +609,8 @@ for t in $CFG_TARGET_TRIPLES
 do
   make_dir rt/$t
   for i in                                          \
-    isaac linenoise sync test arch/i386 arch/x86_64    \
-    libuv
+    isaac linenoise sync test arch/i386 arch/x86_64 arch/arm   \
+    libuv libuv/src/ares libuv/src/eio libuv/src/ev
   do
     make_dir rt/$t/$i
   done
@@ -823,6 +857,7 @@ putvar CFG_TARGET_TRIPLES
 putvar CFG_C_COMPILER
 putvar CFG_LIBDIR
 putvar CFG_DISABLE_MANAGE_SUBMODULES
+putvar CFG_ANDROID_NDK_PATH
 
 if [ ! -z "$CFG_ENABLE_PAX_FLAGS" ]
 then
