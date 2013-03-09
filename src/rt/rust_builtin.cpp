@@ -870,6 +870,26 @@ rust_dec_kernel_live_count() {
     task->kernel->dec_live_count();
 }
 
+struct rust_dbg_struct {
+    uintptr_t a;
+    uintptr_t b;
+};
+
+extern "C" void
+rust_dbg_pass_struct(struct rust_dbg_struct s) {
+    assert(s.a == 10);
+    assert(s.b == 20);
+}
+
+extern "C" rust_dbg_struct
+rust_dbg_return_struct() {
+    struct rust_dbg_struct s;
+    s.a = 10;
+    s.b = 20;
+    return s;
+}
+
+
 //
 // Local Variables:
 // mode: C++
