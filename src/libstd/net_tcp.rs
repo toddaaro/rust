@@ -1463,7 +1463,6 @@ pub mod test {
     pub mod tcp_ipv4_server_and_client_test {
         #[cfg(target_arch="x86_64")]
         pub mod impl64 {
-            use net::tcp::test::*;
 
             #[test]
             fn test_gl_tcp_server_and_client_ipv4() {

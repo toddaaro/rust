@@ -45,8 +45,6 @@ use ptr::null;
 use super::uvll;
 use unstable::finally::Finally;
 
-#[cfg(test)] use unstable::run_in_bare_thread;
-
 pub use self::file::{FsRequest, FsCallback};
 pub use self::net::{StreamWatcher, TcpWatcher};
 pub use self::net::{ReadCallback, AllocCallback, ConnectionCallback, ConnectCallback};
@@ -204,14 +202,6 @@ impl ToStr for UvError {
     }
 }
 
-#[test]
-fn error_smoke_test() {
-    let err = uvll::uv_err_t { code: 1, sys_errno_: 1 };
-    let err: UvError = UvError(err);
-    assert!(err.to_str() == ~"EOF: end of file");
-}
-
-
 /// Given a uv handle, convert a callback status to a UvError
 // XXX: Follow the pattern below by parameterizing over T: Watcher, not T
 pub fn status_to_maybe_uv_error<T>(handle: *T, status: c_int) -> Option<UvError> {
@@ -336,23 +326,6 @@ pub fn drop_watcher_data<H, W: Watcher + NativeHandle<*H>>(watcher: &mut W) {
     }
 }
 
-#[test]
-fn test_slice_to_uv_buf() {
-    let slice = [0, .. 20];
-    let buf = slice_to_uv_buf(slice);
-
-    assert!(buf.len == 20);
-
-    unsafe {
-        let base = transmute::<*u8, *mut u8>(buf.base);
-        (*base) = 1;
-        (*ptr::mut_offset(base, 1)) = 2;
-    }
-
-    assert!(slice[0] == 1);
-    assert!(slice[1] == 2);
-}
-
 /// The uv buffer type
 pub type Buf = uvll::uv_buf_t;
 
@@ -388,65 +361,102 @@ pub fn vec_from_uv_buf(buf: Buf) -> Option<~[u8]> {
     }
 }
 
-#[test]
-fn loop_smoke_test() {
-    do run_in_bare_thread {
-        let mut loop_ = Loop::new();
-        loop_.run();
-        loop_.close();
-    }
-}
+#[cfg(test)]
+mod test {
 
-#[test]
-#[ignore(reason = "valgrind - loop destroyed before watcher?")]
-fn idle_new_then_close() {
-    do run_in_bare_thread {
-        let mut loop_ = Loop::new();
-        let mut idle_watcher = { IdleWatcher::new(&mut loop_) };
-        idle_watcher.close();
-    }
-}
+    use super::*;
+    use ptr;
+    use cast::transmute;
+    use super::super::uvll;
+    use super::super::uvll::*;
+    use unstable::run_in_bare_thread;
 
-#[test]
-fn idle_smoke_test() {
-    do run_in_bare_thread {
-        let mut loop_ = Loop::new();
-        let mut idle_watcher = { IdleWatcher::new(&mut loop_) };
-        let mut count = 10;
-        let count_ptr: *mut int = &mut count;
-        do idle_watcher.start |idle_watcher, status| {
-            let mut idle_watcher = idle_watcher;
-            assert!(status.is_none());
-            if unsafe { *count_ptr == 10 } {
-                idle_watcher.stop();
-                idle_watcher.close();
-            } else {
-                unsafe { *count_ptr = *count_ptr + 1; }
-            }
+    #[test]
+    fn error_smoke_test() {
+        let err = uvll::uv_err_t { code: 1, sys_errno_: 1 };
+        let err: UvError = UvError(err);
+        fail_unless!(err.to_str() == ~"EOF: end of file");
+    }
+
+
+    #[test]
+    fn test_slice_to_uv_buf() {
+        let slice = [0, .. 20];
+        let buf = slice_to_uv_buf(slice);
+
+        fail_unless!(buf.len == 20);
+
+        unsafe {
+            let base = transmute::<*u8, *mut u8>(buf.base);
+            (*base) = 1;
+            (*ptr::mut_offset(base, 1)) = 2;
         }
-        loop_.run();
-        loop_.close();
-        assert!(count == 10);
-    }
-}
 
-#[test]
-fn idle_start_stop_start() {
-    do run_in_bare_thread {
-        let mut loop_ = Loop::new();
-        let mut idle_watcher = { IdleWatcher::new(&mut loop_) };
-        do idle_watcher.start |idle_watcher, status| {
-            let mut idle_watcher = idle_watcher;
-            assert!(status.is_none());
-            idle_watcher.stop();
+        fail_unless!(slice[0] == 1);
+        fail_unless!(slice[1] == 2);
+    }
+
+    #[test]
+    fn loop_smoke_test() {
+        do run_in_bare_thread {
+            let mut loop_ = Loop::new();
+            loop_.run();
+            loop_.close();
+        }
+    }
+
+    #[test]
+    #[ignore(reason = "valgrind - loop destroyed before watcher?")]
+    fn idle_new_then_close() {
+        do run_in_bare_thread {
+            let mut loop_ = Loop::new();
+            let mut idle_watcher = { IdleWatcher::new(&mut loop_) };
+            idle_watcher.close();
+        }
+    }
+
+    #[test]
+    fn idle_smoke_test() {
+        do run_in_bare_thread {
+            let mut loop_ = Loop::new();
+            let mut idle_watcher = { IdleWatcher::new(&mut loop_) };
+            let mut count = 10;
+            let count_ptr: *mut int = &mut count;
             do idle_watcher.start |idle_watcher, status| {
-                assert!(status.is_none());
                 let mut idle_watcher = idle_watcher;
-                idle_watcher.stop();
-                idle_watcher.close();
+                fail_unless!(status.is_none());
+                if unsafe { *count_ptr == 10 } {
+                    idle_watcher.stop();
+                    idle_watcher.close();
+                } else {
+                    unsafe { *count_ptr = *count_ptr + 1; }
+                }
             }
+            loop_.run();
+            loop_.close();
+            fail_unless!(count == 10);
         }
-        loop_.run();
-        loop_.close();
     }
+
+    #[test]
+    fn idle_start_stop_start() {
+        do run_in_bare_thread {
+            let mut loop_ = Loop::new();
+            let mut idle_watcher = { IdleWatcher::new(&mut loop_) };
+            do idle_watcher.start |idle_watcher, status| {
+                let mut idle_watcher = idle_watcher;
+                fail_unless!(status.is_none());
+                idle_watcher.stop();
+                do idle_watcher.start |idle_watcher, status| {
+                    fail_unless!(status.is_none());
+                    let mut idle_watcher = idle_watcher;
+                    idle_watcher.stop();
+                    idle_watcher.close();
+                }
+            }
+            loop_.run();
+            loop_.close();
+        }
+    }
+
 }
