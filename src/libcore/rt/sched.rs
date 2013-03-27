@@ -121,6 +121,7 @@ pub impl Scheduler {
         return tlsched.take_scheduler();
     }
 
+    // XXX: This doesn't need to take a block, just return a bogus region
     fn local(f: &fn(&mut Scheduler)) {
         let mut tlsched = ThreadLocalScheduler::new();
         f(tlsched.get_scheduler());
@@ -333,9 +334,10 @@ pub impl Task {
 }
 
 // NB: This is a type so we can use make use of the &self region.
-struct ThreadLocalScheduler(tls::Key);
+// XXX: This interface is overdesigned. Shouldn't be using an instance.
+pub struct ThreadLocalScheduler(tls::Key);
 
-impl ThreadLocalScheduler {
+pub impl ThreadLocalScheduler {
     fn new() -> ThreadLocalScheduler {
         unsafe {
             // NB: This assumes that the TLS key has been created prior.
@@ -351,6 +353,14 @@ impl ThreadLocalScheduler {
             let key = match self { &ThreadLocalScheduler(key) => key };
             let value: *mut c_void = transmute::<~Scheduler, *mut c_void>(scheduler);
             tls::set(key, value);
+        }
+    }
+
+    fn have_scheduler(&self) -> bool {
+        unsafe {
+            let key = match self { &ThreadLocalScheduler(key) => key };
+            let mut value: *mut c_void = tls::get(key);
+            return value.is_not_null();
         }
     }
 
