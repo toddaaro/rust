@@ -883,7 +883,8 @@ do
         need_ok "LLVM configure failed"
 
         # Hack the tools Makefile to turn off the clang build
-        cat tools/Makefile | sed 's/clang//g' > tools/Makefile
+        cat tools/Makefile | sed 's/clang//g' > tools/Makefile-tmp
+        mv tools/Makefile-tmp tools/Makefile
 
         cd $CFG_BUILD_DIR
     fi
