@@ -2,15 +2,26 @@
 
 # Introduction
 
-The designers of Rust designed the language from the ground up to support pervasive
-and safe concurrency through lightweight, memory-isolated tasks and
-message passing.
+Rust supports pervasive and safe concurrency primarily through a combination
+of lightweight, memory-isolated tasks and message passing.
+This tutorial will describe the concurrency model in Rust and how it
+relates to the Rust type system, and introduce
+the fundamental library abstractions for constructing concurrent programs.
 
-Rust tasks are not the same as traditional threads: rather, they are more like
-_green threads_. The Rust runtime system schedules tasks cooperatively onto a
-small number of operating system threads. Because tasks are significantly
+Rust tasks are not the same as traditional threads: rather,
+they are considered _green threads_, lightweight units of execution that the Rust
+runtime schedules cooperatively onto a small number of operating system threads.
+On a multi-core system Rust tasks will be scheduled in parallel by default.
+Because tasks are significantly
 cheaper to create than traditional threads, Rust can create hundreds of
 thousands of concurrent tasks on a typical 32-bit system.
+
+In order to make efficient use of memory Rust tasks have dynamically sized stacks.
+A task begins its life with a small
+amount of stack space (currently in the low thousands of bytes, depending on
+platform), and acquires more stack as needed.
+Unlike in languages such as C, a Rust task cannot accidentally write to
+memory beyond the end of the stack, causing crashes or worse.
 
 Tasks provide failure isolation and recovery. When an exception occurs in Rust
 code (as a result of an explicit call to `fail!()`, an assertion failure, or
@@ -18,50 +29,28 @@ another invalid operation), the runtime system destroys the entire
 task. Unlike in languages such as Java and C++, there is no way to `catch` an
 exception. Instead, tasks may monitor each other for failure.
 
-Rust tasks have dynamically sized stacks. A task begins its life with a small
-amount of stack space (currently in the low thousands of bytes, depending on
-platform), and acquires more stack as needed. Unlike in languages such as C, a
-Rust task cannot run off the end of the stack. However, tasks do have a stack
-budget. If a Rust task exceeds its stack budget, then it will fail safely:
-with a checked exception.
-
 Tasks use Rust's type system to provide strong memory safety guarantees. In
 particular, the type system guarantees that tasks cannot share mutable state
 with each other. Tasks communicate with each other by transferring _owned_
 data through the global _exchange heap_.
-
-This tutorial explains the basics of tasks and communication in Rust,
-explores some typical patterns in concurrent Rust code, and finally
-discusses some of the more unusual synchronization types in the standard
-library.
-
-> ***Warning:*** This tutorial is incomplete
 
 ## A note about the libraries
 
 While Rust's type system provides the building blocks needed for safe
 and efficient tasks, all of the task functionality itself is implemented
 in the core and standard libraries, which are still under development
-and do not always present a consistent interface.
-
-In particular, there are currently two independent modules that provide a
-message passing interface to Rust code: `core::comm` and `core::pipes`.
-`core::comm` is an older, less efficient system that is being phased out in
-favor of `pipes`. At some point, we will remove the existing `core::comm` API
-and move the user-facing portions of `core::pipes` to `core::comm`. In this
-tutorial, we discuss `pipes` and ignore the `comm` API.
+and do not always present a consistent or complete interface.
 
 For your reference, these are the standard modules involved in Rust
 concurrency at this writing.
 
 * [`core::task`] - All code relating to tasks and task scheduling
-* [`core::comm`] - The deprecated message passing API
-* [`core::pipes`] - The new message passing infrastructure and API
-* [`std::comm`] - Higher level messaging types based on `core::pipes`
+* [`core::comm`] - The message passing interface
+* [`core::pipes`] - The underlying messaging infrastructure
+* [`std::comm`] - Additional messaging types based on `core::pipes`
 * [`std::sync`] - More exotic synchronization tools, including locks
-* [`std::arc`] - The ARC (atomic reference counted) type, for safely sharing
-  immutable data
-* [`std::par`] - Some basic tools for implementing parallel algorithms
+* [`std::arc`] - The ARC (atomically reference counted) type,
+  for safely sharing immutable data
 
 [`core::task`]: core/task.html
 [`core::comm`]: core/comm.html
@@ -69,32 +58,69 @@ concurrency at this writing.
 [`std::comm`]: std/comm.html
 [`std::sync`]: std/sync.html
 [`std::arc`]: std/arc.html
-[`std::par`]: std/par.html
 
-# Basics
+# Your first concurrent Rust program
 
-The programming interface for creating and managing tasks lives
-in the `task` module of the `core` library, and is thus available to all
-Rust code by default. At its simplest, creating a task is a matter of
-calling the `spawn` function with a closure argument. `spawn` executes the
-closure in the new task.
+Let's start by constructing a real program to solve a simple computation.
+We're going to pass some numbers to a few tasks, perform computations on them,
+have each of them pass their results to yet another task to format them as a string
+Finally we'll print the string in the main task.
 
-~~~~
-# use core::io::println;
-use core::task::spawn;
+Specifically:
 
-// Print something profound in a different task using a named function
-fn print_message() { println("I am running in a different task!"); }
-spawn(print_message);
+1) The main task spawns 3 tasks.
+2) Task 1 multiplies `10 * 2`, sends result to task 3
+4) Task 2 adds `30 + 40`, sends result to task 3
+5) Task 3 receives the three results, sums and formats them as a string, then sends them to main
+6) The main task receives the string from task 3 and prints it to stdout
 
-// Print something more profound in a different task using a lambda expression
-spawn( || println("I am also running in a different task!") );
+I like getting the big picture to start with, so I'll show you the solution,
+then we'll walk through it step by step.
 
-// The canonical way to spawn is using `do` notation
-do spawn {
-    println("I too am running in a different task!");
+~~~
+fn main() {
+    let (port1, chan1): (Port<int>, Chan<int>) = stream();
+    let (port2, chan2) = stream();
+    let (port3, chan3) = stream();
+    let (result_port, result_chan) = stream();
+
+    do spawn {
+        chan1.send(10 * 2);
+    }
+
+    do spawn {
+        chan2.send(30 + 40);
+    }
+
+    do spawn {
+        let x = chan1.recv();
+        let y = chan2.recv();
+        let result_str = fmt!("%d + %d = %d", x, y, x + y);
+        result_chan.send(result);
+    }
+
+    let result_str = result_port.recv();
+    println(result_str);
 }
-~~~~
+~~~
+
+This is just a simple program contained entirely within the `main` function.
+Notice that we don't import anything with `use` statements - everything
+needed for creating simple concurrent programs is imported by default.
+
+# Setting up the pipes
+
+Rust tasks communicate by passing *messages* over *pipes*, which have
+a sending endpoint and a receiving endpoint.
+Messages are simply values, and pipes are types implemented in the core library
+that know how to transfer values efficiently.
+Pipes come in several forms but the most common is the `Port` and `Chan` (i.e. 'channel')
+pair, created by calling `stream`.
+Ports receive data and Chan's send.
+
+
+# Oldjunk
+
 
 In Rust, there is nothing special about creating tasks: a task is not a
 concept that appears in the language semantics. Instead, Rust's type system

@@ -28,7 +28,7 @@
  *
  * ~~~
  * do spawn {
- *     log(error, "Hello, World!");
+ *     println("Hello, World!");
  * }
  * ~~~
  */
