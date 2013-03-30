@@ -2,7 +2,7 @@
 
 # Introduction
 
-Rust supports pervasive and safe concurrency primarily through a combination
+Rust provides safe concurrency primarily through a combination
 of lightweight, memory-isolated tasks and message passing.
 This tutorial will describe the concurrency model in Rust and how it
 relates to the Rust type system, and introduce
@@ -15,6 +15,7 @@ On a multi-core system Rust tasks will be scheduled in parallel by default.
 Because tasks are significantly
 cheaper to create than traditional threads, Rust can create hundreds of
 thousands of concurrent tasks on a typical 32-bit system.
+In general, all Rust code executes inside a task, including the `main` function.
 
 In order to make efficient use of memory Rust tasks have dynamically sized stacks.
 A task begins its life with a small
@@ -23,9 +24,9 @@ platform), and acquires more stack as needed.
 Unlike in languages such as C, a Rust task cannot accidentally write to
 memory beyond the end of the stack, causing crashes or worse.
 
-Tasks provide failure isolation and recovery. When an exception occurs in Rust
-code (as a result of an explicit call to `fail!()`, an assertion failure, or
-another invalid operation), the runtime system destroys the entire
+Tasks provide failure isolation and recovery. When a fatal error occurs in Rust
+code as a result of an explicit call to `fail!()`, an assertion failure, or
+another invalid operation, the runtime system destroys the entire
 task. Unlike in languages such as Java and C++, there is no way to `catch` an
 exception. Instead, tasks may monitor each other for failure.
 
@@ -63,7 +64,7 @@ concurrency at this writing.
 
 Let's start by constructing a real program to solve a simple computation.
 We're going to pass some numbers to a few tasks, perform computations on them,
-have each of them pass their results to yet another task to format them as a string
+and have each of them pass their results to yet another task to format them as a string.
 Finally we'll print the string in the main task.
 
 Specifically:
@@ -79,27 +80,26 @@ then we'll walk through it step by step.
 
 ~~~
 fn main() {
-    let (port1, chan1): (Port<int>, Chan<int>) = stream();
-    let (port2, chan2) = stream();
-    let (port3, chan3) = stream();
-    let (result_port, result_chan) = stream();
+    let (out1, in1): (Port<int>, Chan<int>) = stream();
+    let (out2, in2): (Port<int>, Chan<int>) = stream();
+    let (out_result, in_result): (Port<~str>, Chan<~str>) = stream();
 
     do spawn {
-        chan1.send(10 * 2);
+        in1.send(10 * 2);
     }
 
     do spawn {
-        chan2.send(30 + 40);
+        in2.send(30 + 40);
     }
 
     do spawn {
-        let x = chan1.recv();
-        let y = chan2.recv();
+        let x = out1.recv();
+        let y = out2.recv();
         let result_str = fmt!("%d + %d = %d", x, y, x + y);
-        result_chan.send(result);
+        in_result.send(result_str);
     }
 
-    let result_str = result_port.recv();
+    let result_str = out_result.recv();
     println(result_str);
 }
 ~~~
@@ -108,60 +108,106 @@ This is just a simple program contained entirely within the `main` function.
 Notice that we don't import anything with `use` statements - everything
 needed for creating simple concurrent programs is imported by default.
 
-# Setting up the pipes
+## Setting up the pipes
 
-Rust tasks communicate by passing *messages* over *pipes*, which have
-a sending endpoint and a receiving endpoint.
-Messages are simply values, and pipes are types implemented in the core library
-that know how to transfer values efficiently.
+Rust tasks communicate by passing *messages* over *pipes*.
+Messages are simply Rust values.
+Pipes are types in the core library that send values in a single direction,
+from a sending endpoint to a receiving endpoint.
 Pipes come in several forms but the most common is the `Port` and `Chan` (i.e. 'channel')
-pair, created by calling `stream`.
-Ports receive data and Chan's send.
+pair, created by calling `stream`. 
 
+~~~
+let (out1, in1): (Port<int>, Chan<int>) = stream();
+~~~
 
-# Oldjunk
+`stream` returns a tuple, which is
+destructured here into the variables `out1` and `in1`.
+For clarity, this declarition is annotated with the type returned by stream,
+`(Port<int>, Chan<int>)`, but in practice you may want to leave such
+declarations unannotated and rely on type inferrence.
+Alternately, the call to `stream` may be passed an explicit type parameter,
+as in `stream::<int>`.
+This is a slightly less verbose way to provide a type annotation in this scenario.
 
+The 'out' side is a `Port<int>`. A `Port` has a `recv` method which you can use
+to try to get a value out of a pipe, waiting until a value is available if the pipe is empty.
+`Port` is a generic type that that is parameterized over the type that it can receive.
+In this case we have a `Port<int>` so we can receive only `int`s.
 
-In Rust, there is nothing special about creating tasks: a task is not a
-concept that appears in the language semantics. Instead, Rust's type system
-provides all the tools necessary to implement safe concurrency: particularly,
-_owned types_. The language leaves the implementation details to the core
-library.
+The 'in' side is a `Chan<int>`. A `Chan` has a `send` method which you can use
+to send a value of the proper type across the pipe.
+Again, `Chan` is generic, parameterized over the type that it sends.
 
-The `spawn` function has a very simple type signature: `fn spawn(f:
-~fn())`. Because it accepts only owned closures, and owned closures
+The `(out1, in1)` pair will be used to communicate the result from task 1,
+and the second `(out2, in2)` pair likewise used for task 2.
+The final pipe will be used to send a string containing the result.
+This is where Rust's owned types come into play to allow very efficient
+communication between tasks while still being completely safe from data races.
+
+Remember that Rust tasks do not share memory.
+Allowing parallel threads of execution to have pointers to the same
+objects in memory makes it possible to create *race conditions*,
+- where two parallel threads try to modify or access the same data at the same time -
+and race conditions can result in crashes.
+Avoiding race conditions with shared memory is very difficult,
+so Rust does not allow shared memory by default.
+
+Owned values are guaranteed to be pointed to be only a single pointer.
+When you call `chan.send(~"value")` that value's ownership is transferred
+from the sending task, through the pipe, to the receiving task.
+This is very effecient because all that is transferred is a pointer,
+not a complete copy of the data, but it is also safe from race conditions
+because only a single task at a time may point to the sent value.
+
+## Setting up the task
+
+The way to create and run a new task is the `spawn` function.
+`spawn` has a very simple type signature: `fn spawn(f:
+~fn())`. You give it a function or closure to run and it arranges for that
+function to run in its own task.
+A closure is like a function, but it gets to grab variables from the denclosing scope.
+Because `spawn` accepts only owned closures, `~fn()`, and owned closures
 contain only owned data, `spawn` can safely move the entire closure
 and all its associated state into an entirely different task for
-execution. Like any closure, the function passed to `spawn` may capture
-an environment that it carries across tasks.
+execution.
+In our first task we use this to move a port across tasks:
 
 ~~~
-# use core::io::println;
-# use core::task::spawn;
-# fn generate_task_number() -> int { 0 }
-// Generate some state locally
-let child_task_number = generate_task_number();
-
-do spawn {
-   // Capture it in the remote task
-   println(fmt!("I am child number %d", child_task_number));
-}
-~~~
-
-By default, the scheduler multiplexes tasks across the available cores, running
-in parallel. Thus, on a multicore machine, running the following code
-should interleave the output in vaguely random order.
-
-~~~
-# use core::io::print;
-# use core::task::spawn;
-
-for int::range(0, 20) |child_task_number| {
+#    let (out1, in1): (Port<int>, Chan<int>) = stream();
     do spawn {
-       print(fmt!("I am child number %d\n", child_task_number));
+        in1.send(10 * 2);
     }
-}
 ~~~
+
+Though this is just a small block of code there is a lot going on here.
+This is a call to the `spawn` function using Rust's `do` notation and the stuff in curly braces is an owned closure.
+It could equivalently be written `spawn(|| in1.send(10 * 2))` using the normal
+function call and closure syntax.
+Our previously-created channel, `in1`, is *captured* in the closure.
+Capturing a variable in an owned closure *moves* the value into the closure,
+transferring ownership to the spawned task.
+As a result, the compiler will not let you use `in1` subsequently in `main` -
+it understands that this value now belongs to the other task.
+
+
+
+~~~
+    let (out1, in1): (Port<int>, Chan<int>) = stream();
+    let (out2, in2): (Port<int>, Chan<int>) = stream();
+    let (out_result, in_result): (Port<~str>, Chan<~str>) = stream();
+
+    in1.send(10 * 2);
+    in2.send(30 + 40);
+
+    do spawn {
+        let x = out1.recv();
+        let y = out2.recv();
+        let result_str = fmt!("%d + %d = %d", x, y, x + y);
+        in_result.send(result_str);
+    }
+~~~
+
 
 ## Communication
 
@@ -478,74 +524,4 @@ fail!();
 // It will take MAX(time1,time2) for the program to finish.
 # };
 ~~~
-
-## Creating a task with a bi-directional communication path
-
-A very common thing to do is to spawn a child task where the parent
-and child both need to exchange messages with each other. The
-function `std::comm::DuplexStream()` supports this pattern.  We'll
-look briefly at how to use it.
-
-To see how `DuplexStream()` works, we will create a child task
-that repeatedly receives a `uint` message, converts it to a string, and sends
-the string in response.  The child terminates when it receives `0`.
-Here is the function that implements the child task:
-
-~~~~
-# use std::comm::DuplexStream;
-fn stringifier(channel: &DuplexStream<~str, uint>) {
-    let mut value: uint;
-    loop {
-        value = channel.recv();
-        channel.send(uint::to_str(value));
-        if value == 0 { break; }
-    }
-}
-~~~~
-
-The implementation of `DuplexStream` supports both sending and
-receiving. The `stringifier` function takes a `DuplexStream` that can
-send strings (the first type parameter) and receive `uint` messages
-(the second type parameter). The body itself simply loops, reading
-from the channel and then sending its response back.  The actual
-response itself is simply the stringified version of the received value,
-`uint::to_str(value)`.
-
-Here is the code for the parent task:
-
-~~~~
-# use core::task::spawn;
-# use std::comm::DuplexStream;
-# fn stringifier(channel: &DuplexStream<~str, uint>) {
-#     let mut value: uint;
-#     loop {
-#         value = channel.recv();
-#         channel.send(uint::to_str(value));
-#         if value == 0u { break; }
-#     }
-# }
-# fn main() {
-
-let (from_child, to_child) = DuplexStream();
-
-do spawn {
-    stringifier(&to_child);
-};
-
-from_child.send(22);
-fail_unless!(from_child.recv() == ~"22");
-
-from_child.send(23);
-from_child.send(0);
-
-fail_unless!(from_child.recv() == ~"23");
-fail_unless!(from_child.recv() == ~"0");
-
-# }
-~~~~
-
-The parent task first calls `DuplexStream` to create a pair of bidirectional
-endpoints. It then uses `task::spawn` to create the child task, which captures
-one end of the communication channel.  As a result, both parent and child can
-send and receive data to and from the other.
 
