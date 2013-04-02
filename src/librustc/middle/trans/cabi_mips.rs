@@ -216,6 +216,6 @@ impl ABIInfo for MIPS_ABIInfo {
     }
 }
 
-pub fn mips_abi_info() -> @ABIInfo {
+pub fn abi_info() -> @ABIInfo {
     return @MIPS_ABIInfo as @ABIInfo;
 }
