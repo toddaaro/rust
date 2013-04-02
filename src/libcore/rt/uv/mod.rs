@@ -375,7 +375,7 @@ mod test {
     fn error_smoke_test() {
         let err = uvll::uv_err_t { code: 1, sys_errno_: 1 };
         let err: UvError = UvError(err);
-        fail_unless!(err.to_str() == ~"EOF: end of file");
+        assert!(err.to_str() == ~"EOF: end of file");
     }
 
 
@@ -384,7 +384,7 @@ mod test {
         let slice = [0, .. 20];
         let buf = slice_to_uv_buf(slice);
 
-        fail_unless!(buf.len == 20);
+        assert!(buf.len == 20);
 
         unsafe {
             let base = transmute::<*u8, *mut u8>(buf.base);
@@ -392,8 +392,8 @@ mod test {
             (*ptr::mut_offset(base, 1)) = 2;
         }
 
-        fail_unless!(slice[0] == 1);
-        fail_unless!(slice[1] == 2);
+        assert!(slice[0] == 1);
+        assert!(slice[1] == 2);
     }
 
     #[test]
@@ -424,7 +424,7 @@ mod test {
             let count_ptr: *mut int = &mut count;
             do idle_watcher.start |idle_watcher, status| {
                 let mut idle_watcher = idle_watcher;
-                fail_unless!(status.is_none());
+                assert!(status.is_none());
                 if unsafe { *count_ptr == 10 } {
                     idle_watcher.stop();
                     idle_watcher.close();
@@ -434,7 +434,7 @@ mod test {
             }
             loop_.run();
             loop_.close();
-            fail_unless!(count == 10);
+            assert!(count == 10);
         }
     }
 
@@ -445,10 +445,10 @@ mod test {
             let mut idle_watcher = { IdleWatcher::new(&mut loop_) };
             do idle_watcher.start |idle_watcher, status| {
                 let mut idle_watcher = idle_watcher;
-                fail_unless!(status.is_none());
+                assert!(status.is_none());
                 idle_watcher.stop();
                 do idle_watcher.start |idle_watcher, status| {
-                    fail_unless!(status.is_none());
+                    assert!(status.is_none());
                     let mut idle_watcher = idle_watcher;
                     idle_watcher.stop();
                     idle_watcher.close();
