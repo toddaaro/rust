@@ -17,7 +17,7 @@ use super::stack::{StackPool, StackSegment};
 use super::rtio::{EventLoop, EventLoopObject};
 use super::context::Context;
 
-#[cfg(test)] use super::uvio::UvEventLoop;
+#[cfg(test)] use super::rtio::BasicEventLoop;
 #[cfg(test)] use unstable::run_in_bare_thread;
 #[cfg(test)] use int;
 
@@ -352,7 +352,7 @@ fn test_simple_scheduling() {
         let mut task_ran = false;
         let task_ran_ptr: *mut bool = &mut task_ran;
 
-        let mut sched = ~UvEventLoop::new_scheduler();
+        let mut sched = ~Scheduler::new(~BasicEventLoop::new());
         let task = ~do Task::new(&mut sched.stack_pool) {
             unsafe { *task_ran_ptr = true; }
         };
@@ -369,7 +369,7 @@ fn test_several_tasks() {
         let mut task_count = 0;
         let task_count_ptr: *mut int = &mut task_count;
 
-        let mut sched = ~UvEventLoop::new_scheduler();
+        let mut sched = ~Scheduler::new(~BasicEventLoop::new());
         for int::range(0, total) |_| {
             let task = ~do Task::new(&mut sched.stack_pool) {
                 unsafe { *task_count_ptr = *task_count_ptr + 1; }
@@ -387,7 +387,7 @@ fn test_swap_tasks() {
         let mut count = 0;
         let count_ptr: *mut int = &mut count;
 
-        let mut sched = ~UvEventLoop::new_scheduler();
+        let mut sched = ~Scheduler::new(~BasicEventLoop::new());
         let task1 = ~do Task::new(&mut sched.stack_pool) {
             unsafe { *count_ptr = *count_ptr + 1; }
             do Scheduler::local |sched| {
@@ -412,7 +412,7 @@ fn test_run_a_lot_of_tasks_queued() {
         let mut count = 0;
         let count_ptr: *mut int = &mut count;
 
-        let mut sched = ~UvEventLoop::new_scheduler();
+        let mut sched = ~Scheduler::new(~BasicEventLoop::new());
 
         let start_task = ~do Task::new(&mut sched.stack_pool) {
             run_task(count_ptr);
@@ -445,7 +445,7 @@ fn test_run_a_lot_of_tasks_direct() {
         let mut count = 0;
         let count_ptr: *mut int = &mut count;
 
-        let mut sched = ~UvEventLoop::new_scheduler();
+        let mut sched = ~Scheduler::new(~BasicEventLoop::new());
 
         let start_task = ~do Task::new(&mut sched.stack_pool) {
             run_task(count_ptr);
@@ -475,7 +475,7 @@ fn test_run_a_lot_of_tasks_direct() {
 #[test]
 fn test_block_task() {
     do run_in_bare_thread {
-        let mut sched = ~UvEventLoop::new_scheduler();
+        let mut sched = ~Scheduler::new(~BasicEventLoop::new());
         let task = ~do Task::new(&mut sched.stack_pool) {
             do Scheduler::local |sched| {
                 assert!(sched.in_task_context());

@@ -43,3 +43,55 @@ pub enum IpAddr {
     Ipv4(u8, u8, u8, u8, u16),
     Ipv6
 }
+
+/// A simple default implementation of EventLoop, without I/O
+pub struct BasicEventLoop {
+    queue: ~[~fn()]
+}
+
+impl BasicEventLoop {
+    pub fn new() -> BasicEventLoop {
+        BasicEventLoop {
+            queue: ~[]
+        }
+    }
+
+    pub fn run(&mut self) {
+        while !self.queue.is_empty() {
+            let next_cb = self.queue.shift();
+            (next_cb)();
+        }
+    }
+    pub fn callback(&mut self, cb: ~fn()) {
+        self.queue.push(cb);
+    }
+    pub fn io(&mut self) -> Option<&'self mut IoFactoryObject> { None }
+}
+
+#[cfg(test)]
+mod test {
+    use super::BasicEventLoop;
+
+    #[test]
+    fn basic_event_loop_smoke_test() {
+        let mut count = 0;
+        let count_ptr: *mut int = &mut count;
+        let mut event_loop = BasicEventLoop::new();
+
+        do event_loop.callback {
+            unsafe { *count_ptr +=1 };
+        }
+
+        do event_loop.callback {
+            unsafe { *count_ptr +=1 };
+        }
+
+        do event_loop.callback {
+            unsafe { *count_ptr +=1 };
+        }
+
+        event_loop.run();
+
+        assert!(count == 3);
+    }
+}
