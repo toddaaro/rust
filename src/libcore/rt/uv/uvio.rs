@@ -329,10 +329,12 @@ impl RtioTcpStream for UvTcpStream {
 #[test]
 fn test_simple_io_no_connect() {
     do run_in_newsched_task {
-        let io = unsafe { local_sched::unsafe_borrow_io() };
-        let addr = next_test_ip4();
-        let maybe_chan = io.tcp_connect(addr);
-        assert!(maybe_chan.is_err());
+        unsafe {
+            let io = local_sched::unsafe_borrow_io();
+            let addr = next_test_ip4();
+            let maybe_chan = (*io).tcp_connect(addr);
+            assert!(maybe_chan.is_err());
+        }
     }
 }
 
@@ -345,7 +347,7 @@ fn test_simple_tcp_server_and_client() {
         do spawntask_immediately {
             unsafe {
                 let io = local_sched::unsafe_borrow_io();
-                let mut listener = io.tcp_bind(addr).unwrap();
+                let mut listener = (*io).tcp_bind(addr).unwrap();
                 let mut stream = listener.accept().unwrap();
                 let mut buf = [0, .. 2048];
                 let nread = stream.read(buf).unwrap();
@@ -362,7 +364,7 @@ fn test_simple_tcp_server_and_client() {
         do spawntask_immediately {
             unsafe {
                 let io = local_sched::unsafe_borrow_io();
-                let mut stream = io.tcp_connect(addr).unwrap();
+                let mut stream = (*io).tcp_connect(addr).unwrap();
                 stream.write([0, 1, 2, 3, 4, 5, 6, 7]);
                 stream.close();
             }
@@ -377,7 +379,7 @@ fn test_read_and_block() {
 
         do spawntask_immediately {
             let io = unsafe { local_sched::unsafe_borrow_io() };
-            let mut listener = io.tcp_bind(addr).unwrap();
+            let mut listener = unsafe { (*io).tcp_bind(addr).unwrap() };
             let mut stream = listener.accept().unwrap();
             let mut buf = [0, .. 2048];
 
@@ -414,13 +416,15 @@ fn test_read_and_block() {
         }
 
         do spawntask_immediately {
-            let io = unsafe { local_sched::unsafe_borrow_io() };
-            let mut stream = io.tcp_connect(addr).unwrap();
-            stream.write([0, 1, 2, 3, 4, 5, 6, 7]);
-            stream.write([0, 1, 2, 3, 4, 5, 6, 7]);
-            stream.write([0, 1, 2, 3, 4, 5, 6, 7]);
-            stream.write([0, 1, 2, 3, 4, 5, 6, 7]);
-            stream.close();
+            unsafe {
+                let io = local_sched::unsafe_borrow_io();
+                let mut stream = (*io).tcp_connect(addr).unwrap();
+                stream.write([0, 1, 2, 3, 4, 5, 6, 7]);
+                stream.write([0, 1, 2, 3, 4, 5, 6, 7]);
+                stream.write([0, 1, 2, 3, 4, 5, 6, 7]);
+                stream.write([0, 1, 2, 3, 4, 5, 6, 7]);
+                stream.close();
+            }
         }
 
     }
@@ -435,7 +439,7 @@ fn test_read_read_read() {
         do spawntask_immediately {
             unsafe {
                 let io = local_sched::unsafe_borrow_io();
-                let mut listener = io.tcp_bind(addr).unwrap();
+                let mut listener = (*io).tcp_bind(addr).unwrap();
                 let mut stream = listener.accept().unwrap();
                 let mut buf = [1, .. 2048];
                 let mut total_bytes_written = 0;
@@ -449,20 +453,22 @@ fn test_read_read_read() {
         }
 
         do spawntask_immediately {
-            let io = unsafe { local_sched::unsafe_borrow_io() };
-            let mut stream = io.tcp_connect(addr).unwrap();
-            let mut buf = [0, .. 2048];
-            let mut total_bytes_read = 0;
-            while total_bytes_read < MAX {
-                let nread = stream.read(buf).unwrap();
-                rtdebug!("read %u bytes", nread as uint);
-                total_bytes_read += nread;
-                for uint::range(0, nread) |i| {
-                    assert!(buf[i] == 1);
+            unsafe {
+                let io = local_sched::unsafe_borrow_io();
+                let mut stream = (*io).tcp_connect(addr).unwrap();
+                let mut buf = [0, .. 2048];
+                let mut total_bytes_read = 0;
+                while total_bytes_read < MAX {
+                    let nread = stream.read(buf).unwrap();
+                    rtdebug!("read %u bytes", nread as uint);
+                    total_bytes_read += nread;
+                    for uint::range(0, nread) |i| {
+                        assert!(buf[i] == 1);
+                    }
                 }
+                rtdebug!("read %u bytes total", total_bytes_read as uint);
+                stream.close();
             }
-            rtdebug!("read %u bytes total", total_bytes_read as uint);
-            stream.close();
         }
     }
 }
