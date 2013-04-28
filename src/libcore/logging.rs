@@ -50,13 +50,41 @@ pub fn log_type<T>(level: u32, object: &T) {
     use libc;
     use repr;
     use vec;
+    use rt;
+    use rt::local_services::unsafe_try_borrow_local_services;
 
     let bytes = do io::with_bytes_writer |writer| {
         repr::write_repr(writer, object);
     };
-    unsafe {
-        let len = bytes.len() as libc::size_t;
-        rustrt::rust_log_str(level, transmute(vec::raw::to_ptr(bytes)), len);
+
+    match rt::context() {
+        rt::OldTaskContex => {
+            unsafe {
+                let len = bytes.len() as libc::size_t;
+                rustrt::rust_log_str(level, transmute(vec::raw::to_ptr(bytes)), len);
+            }
+        }
+        _ => {
+            // XXX: Bad allocation
+            let msg = bytes.to_str();
+            newsched_log_str(msg);
+        }
     }
 }
 
+fn newsched_log_str(msg: ~str) {
+    unsafe {
+        let local = unsafe_try_borrow_local_services();
+        match local {
+            Some(local) => local.logger.log_str(msg),
+            None => {
+                use io::WriterUtil;
+
+                let dbg = ::libc::STDERR_FILENO as ::io::fd_t;
+                dbg.write_str(s);
+                dbg.write_str("\n");
+                dbg.flush();
+            }
+        }
+    }
+}

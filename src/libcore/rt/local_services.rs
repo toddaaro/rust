@@ -154,6 +154,17 @@ impl Unwinder {
     }
 }
 
+impl Logger {
+    pub fn log_str(s: ~str) {
+        use io::WriterUtil;
+
+        let dbg = ::libc::STDERR_FILENO as ::io::fd_t;
+        dbg.write_str(s);
+        dbg.write_str("\n");
+        dbg.flush();
+    }
+}
+
 /// Borrow a pointer to the installed local services.
 /// Fails (likely aborting the process) if local services are not available.
 pub fn borrow_local_services(f: &fn(&mut LocalServices)) {
@@ -181,6 +192,14 @@ pub unsafe fn unsafe_borrow_local_services() -> *mut LocalServices {
                 abort!("no local services for schedulers yet")
             }
         }
+    }
+}
+
+pub unsafe fn unsafe_try_borrow_local_services() -> Option<*mut LocalServices> {
+    if local_sched::exists() {
+        Some(unsafe_borrow_local_services())
+    } else {
+        None
     }
 }
 
