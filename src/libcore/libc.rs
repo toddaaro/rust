@@ -181,7 +181,7 @@ pub mod types {
     // Standard types that are opaque or common, so are not per-target.
     pub mod common {
         pub mod c95 {
-            pub enum c_void {}
+            pub type c_void = ::void::Void;
             pub enum FILE {}
             pub enum fpos_t {}
         }

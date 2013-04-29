@@ -58,6 +58,7 @@ pub use vec::{CopyableVector, ImmutableVector};
 pub use vec::{ImmutableEqVector, ImmutableCopyableVector};
 pub use vec::{OwnedVector, OwnedCopyableVector, MutableVector};
 pub use io::{Reader, ReaderUtil, Writer, WriterUtil};
+pub use void::Void;
 
 /* Reexported runtime types */
 pub use comm::{stream, Port, Chan, GenericChan, GenericSmartChan, GenericPort, Peekable};
