@@ -72,32 +72,32 @@ pub fn all_values(blk: &fn(v: bool)) {
 }
 
 /// converts truth value to an 8 bit byte
-#[inline(always)]
+#[inline]
 pub fn to_bit(v: bool) -> u8 { if v { 1u8 } else { 0u8 } }
 
 #[cfg(notest)]
 impl Ord for bool {
-    #[inline(always)]
+    #[inline]
     fn lt(&self, other: &bool) -> bool { to_bit(*self) < to_bit(*other) }
-    #[inline(always)]
+    #[inline]
     fn le(&self, other: &bool) -> bool { to_bit(*self) <= to_bit(*other) }
-    #[inline(always)]
+    #[inline]
     fn gt(&self, other: &bool) -> bool { to_bit(*self) > to_bit(*other) }
-    #[inline(always)]
+    #[inline]
     fn ge(&self, other: &bool) -> bool { to_bit(*self) >= to_bit(*other) }
 }
 
 #[cfg(notest)]
 impl TotalOrd for bool {
-    #[inline(always)]
+    #[inline]
     fn cmp(&self, other: &bool) -> Ordering { to_bit(*self).cmp(&to_bit(*other)) }
 }
 
 #[cfg(notest)]
 impl Eq for bool {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &bool) -> bool { (*self) == (*other) }
-    #[inline(always)]
+    #[inline]
     fn ne(&self, other: &bool) -> bool { (*self) != (*other) }
 }
 

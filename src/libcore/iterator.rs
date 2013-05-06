@@ -49,53 +49,53 @@ pub trait IteratorUtil<A> {
 ///
 /// In the future these will be default methods instead of a utility trait.
 impl<A, T: Iterator<A>> IteratorUtil<A> for T {
-    #[inline(always)]
+    #[inline]
     fn chain<U: Iterator<A>>(self, other: U) -> ChainIterator<T, U> {
         ChainIterator{a: self, b: other, flag: false}
     }
 
-    #[inline(always)]
+    #[inline]
     fn zip<B, U: Iterator<B>>(self, other: U) -> ZipIterator<T, U> {
         ZipIterator{a: self, b: other}
     }
 
     // FIXME: #5898: should be called map
-    #[inline(always)]
+    #[inline]
     fn transform<'r, B>(self, f: &'r fn(A) -> B) -> MapIterator<'r, A, B, T> {
         MapIterator{iter: self, f: f}
     }
 
-    #[inline(always)]
+    #[inline]
     fn filter<'r>(self, predicate: &'r fn(&A) -> bool) -> FilterIterator<'r, A, T> {
         FilterIterator{iter: self, predicate: predicate}
     }
 
-    #[inline(always)]
+    #[inline]
     fn enumerate(self) -> EnumerateIterator<T> {
         EnumerateIterator{iter: self, count: 0}
     }
 
-    #[inline(always)]
+    #[inline]
     fn skip_while<'r>(self, predicate: &'r fn(&A) -> bool) -> SkipWhileIterator<'r, A, T> {
         SkipWhileIterator{iter: self, flag: false, predicate: predicate}
     }
 
-    #[inline(always)]
+    #[inline]
     fn take_while<'r>(self, predicate: &'r fn(&A) -> bool) -> TakeWhileIterator<'r, A, T> {
         TakeWhileIterator{iter: self, flag: false, predicate: predicate}
     }
 
-    #[inline(always)]
+    #[inline]
     fn skip(self, n: uint) -> SkipIterator<T> {
         SkipIterator{iter: self, n: n}
     }
 
-    #[inline(always)]
+    #[inline]
     fn take(self, n: uint) -> TakeIterator<T> {
         TakeIterator{iter: self, n: n}
     }
 
-    #[inline(always)]
+    #[inline]
     fn scan<'r, St, B>(self, initial_state: St, f: &'r fn(&mut St, A) -> Option<B>)
         -> ScanIterator<'r, A, B, T, St> {
         ScanIterator{iter: self, f: f, state: initial_state}
@@ -355,14 +355,14 @@ pub struct Counter<A> {
 }
 
 pub impl<A> Counter<A> {
-    #[inline(always)]
+    #[inline]
     fn new(start: A, step: A) -> Counter<A> {
         Counter{state: start, step: step}
     }
 }
 
 impl<A: Add<A, A> + Clone> Iterator<A> for Counter<A> {
-    #[inline(always)]
+    #[inline]
     fn next(&mut self) -> Option<A> {
         let result = self.state.clone();
         self.state = self.state.add(&self.step); // FIXME: #6050

@@ -152,7 +152,7 @@ priv impl<T> DList<T> {
     }
     // Link two nodes together. If either of them are 'none', also sets
     // the head and/or tail pointers appropriately.
-    #[inline(always)]
+    #[inline]
     fn link(&mut self, before: DListLink<T>, after: DListLink<T>) {
         match before {
             Some(neighbour) => neighbour.next = after,
@@ -526,7 +526,7 @@ impl<T> BaseIter<T> for @mut DList<T> {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn size_hint(&self) -> Option<uint> { Some(self.len()) }
 }
 

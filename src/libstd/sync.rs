@@ -323,7 +323,7 @@ pub impl<'self> Condvar<'self> {
 
 // Checks whether a condvar ID was out of bounds, and fails if so, or does
 // something else next on success.
-#[inline(always)]
+#[inline]
 #[doc(hidden)]
 fn check_cvar_bounds<U>(out_of_bounds: Option<uint>, id: uint, act: &str,
                         blk: &fn() -> U) -> U {

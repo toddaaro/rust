@@ -34,46 +34,46 @@ pub mod inst {
 
     impl Primitive for uint {
         #[cfg(target_word_size = "32")]
-        #[inline(always)]
+        #[inline]
         fn bits() -> uint { 32 }
 
         #[cfg(target_word_size = "64")]
-        #[inline(always)]
+        #[inline]
         fn bits() -> uint { 64 }
 
-        #[inline(always)]
+        #[inline]
         fn bytes() -> uint { Primitive::bits::<uint>() / 8 }
     }
 
     #[cfg(target_word_size = "32")]
-    #[inline(always)]
+    #[inline]
     impl BitCount for uint {
         /// Counts the number of bits set. Wraps LLVM's `ctpop` intrinsic.
-        #[inline(always)]
+        #[inline]
         fn population_count(&self) -> uint { (*self as i32).population_count() as uint }
 
         /// Counts the number of leading zeros. Wraps LLVM's `ctlz` intrinsic.
-        #[inline(always)]
+        #[inline]
         fn leading_zeros(&self) -> uint { (*self as i32).leading_zeros() as uint }
 
         /// Counts the number of trailing zeros. Wraps LLVM's `cttz` intrinsic.
-        #[inline(always)]
+        #[inline]
         fn trailing_zeros(&self) -> uint { (*self as i32).trailing_zeros() as uint }
     }
 
     #[cfg(target_word_size = "64")]
-    #[inline(always)]
+    #[inline]
     impl BitCount for uint {
         /// Counts the number of bits set. Wraps LLVM's `ctpop` intrinsic.
-        #[inline(always)]
+        #[inline]
         fn population_count(&self) -> uint { (*self as i64).population_count() as uint }
 
         /// Counts the number of leading zeros. Wraps LLVM's `ctlz` intrinsic.
-        #[inline(always)]
+        #[inline]
         fn leading_zeros(&self) -> uint { (*self as i64).leading_zeros() as uint }
 
         /// Counts the number of trailing zeros. Wraps LLVM's `cttz` intrinsic.
-        #[inline(always)]
+        #[inline]
         fn trailing_zeros(&self) -> uint { (*self as i64).trailing_zeros() as uint }
     }
 
@@ -155,7 +155,7 @@ pub mod inst {
     }
 
     impl iter::Times for uint {
-        #[inline(always)]
+        #[inline]
         ///
         /// A convenience form for basic iteration. Given a uint `x`,
         /// `for x.times { ... }` executes the given block x times.
@@ -176,7 +176,7 @@ pub mod inst {
     }
 
     /// Returns the smallest power of 2 greater than or equal to `n`
-    #[inline(always)]
+    #[inline]
     pub fn next_power_of_two(n: uint) -> uint {
         let halfbits: uint = sys::size_of::<uint>() * 4u;
         let mut tmp: uint = n - 1u;

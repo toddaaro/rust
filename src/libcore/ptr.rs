@@ -40,31 +40,31 @@ pub mod libc_ {
 }
 
 /// Calculate the offset from a pointer
-#[inline(always)]
+#[inline]
 pub fn offset<T>(ptr: *T, count: uint) -> *T {
     (ptr as uint + count * sys::size_of::<T>()) as *T
 }
 
 /// Calculate the offset from a const pointer
-#[inline(always)]
+#[inline]
 pub fn const_offset<T>(ptr: *const T, count: uint) -> *const T {
     (ptr as uint + count * sys::size_of::<T>()) as *T
 }
 
 /// Calculate the offset from a mut pointer
-#[inline(always)]
+#[inline]
 pub fn mut_offset<T>(ptr: *mut T, count: uint) -> *mut T {
     (ptr as uint + count * sys::size_of::<T>()) as *mut T
 }
 
 /// Return the offset of the first null pointer in `buf`.
-#[inline(always)]
+#[inline]
 pub unsafe fn buf_len<T>(buf: **T) -> uint {
     position(buf, |i| *i == null())
 }
 
 /// Return the first offset `i` such that `f(buf[i]) == true`.
-#[inline(always)]
+#[inline]
 pub unsafe fn position<T>(buf: *T, f: &fn(&T) -> bool) -> uint {
     let mut i = 0;
     loop {
@@ -74,19 +74,19 @@ pub unsafe fn position<T>(buf: *T, f: &fn(&T) -> bool) -> uint {
 }
 
 /// Create an unsafe null pointer
-#[inline(always)]
+#[inline]
 pub fn null<T>() -> *T { unsafe { cast::transmute(0u) } }
 
 /// Create an unsafe mutable null pointer
-#[inline(always)]
+#[inline]
 pub fn mut_null<T>() -> *mut T { unsafe { cast::transmute(0u) } }
 
 /// Returns true if the pointer is equal to the null pointer.
-#[inline(always)]
+#[inline]
 pub fn is_null<T>(ptr: *const T) -> bool { ptr == null() }
 
 /// Returns true if the pointer is not equal to the null pointer.
-#[inline(always)]
+#[inline]
 pub fn is_not_null<T>(ptr: *const T) -> bool { !is_null(ptr) }
 
 /**
@@ -95,14 +95,14 @@ pub fn is_not_null<T>(ptr: *const T) -> bool { !is_null(ptr) }
  * Copies `count` elements (not bytes) from `src` to `dst`. The source
  * and destination may overlap.
  */
-#[inline(always)]
+#[inline]
 #[cfg(target_word_size = "32")]
 pub unsafe fn copy_memory<T>(dst: *mut T, src: *const T, count: uint) {
     use unstable::intrinsics::memmove32;
     let n = count * sys::size_of::<T>();
     memmove32(dst as *mut u8, src as *u8, n as u32);
 }
-#[inline(always)]
+#[inline]
 #[cfg(target_word_size = "64")]
 pub unsafe fn copy_memory<T>(dst: *mut T, src: *const T, count: uint) {
     use unstable::intrinsics::memmove64;
@@ -110,7 +110,7 @@ pub unsafe fn copy_memory<T>(dst: *mut T, src: *const T, count: uint) {
     memmove64(dst as *mut u8, src as *u8, n as u64);
 }
 
-#[inline(always)]
+#[inline]
 pub unsafe fn set_memory<T>(dst: *mut T, c: int, count: uint) {
     let n = count * sys::size_of::<T>();
     libc_::memset(dst as *mut c_void, c as libc::c_int, n as size_t);
@@ -121,7 +121,7 @@ pub unsafe fn set_memory<T>(dst: *mut T, c: int, count: uint) {
   This is safe, but is implemented with an unsafe block due to
   transmute.
 */
-#[inline(always)]
+#[inline]
 pub fn to_unsafe_ptr<T>(thing: &T) -> *T {
     unsafe { cast::transmute(thing) }
 }
@@ -131,7 +131,7 @@ pub fn to_unsafe_ptr<T>(thing: &T) -> *T {
   *const T. This is safe, but is implemented with an unsafe block due to
   transmute.
 */
-#[inline(always)]
+#[inline]
 pub fn to_const_unsafe_ptr<T>(thing: &const T) -> *const T {
     unsafe { cast::transmute(thing) }
 }
@@ -141,7 +141,7 @@ pub fn to_const_unsafe_ptr<T>(thing: &const T) -> *const T {
   *mut T. This is safe, but is implemented with an unsafe block due to
   transmute.
 */
-#[inline(always)]
+#[inline]
 pub fn to_mut_unsafe_ptr<T>(thing: &mut T) -> *mut T {
     unsafe { cast::transmute(thing) }
 }
@@ -153,7 +153,7 @@ pub fn to_mut_unsafe_ptr<T>(thing: &mut T) -> *mut T {
 
   (I couldn't think of a cutesy name for this one.)
 */
-#[inline(always)]
+#[inline]
 pub fn to_uint<T>(thing: &T) -> uint {
     unsafe {
         cast::transmute(thing)
@@ -161,7 +161,7 @@ pub fn to_uint<T>(thing: &T) -> uint {
 }
 
 /// Determine if two borrowed pointers point to the same thing.
-#[inline(always)]
+#[inline]
 pub fn ref_eq<'a,'b,T>(thing: &'a T, other: &'b T) -> bool {
     to_uint(thing) == to_uint(other)
 }
@@ -215,37 +215,37 @@ pub trait Ptr<T> {
 /// Extension methods for immutable pointers
 impl<T> Ptr<T> for *T {
     /// Returns true if the pointer is equal to the null pointer.
-    #[inline(always)]
+    #[inline]
     fn is_null(&const self) -> bool { is_null(*self) }
 
     /// Returns true if the pointer is not equal to the null pointer.
-    #[inline(always)]
+    #[inline]
     fn is_not_null(&const self) -> bool { is_not_null(*self) }
 
     /// Calculates the offset from a pointer.
-    #[inline(always)]
+    #[inline]
     fn offset(&self, count: uint) -> *T { offset(*self, count) }
 }
 
 /// Extension methods for mutable pointers
 impl<T> Ptr<T> for *mut T {
     /// Returns true if the pointer is equal to the null pointer.
-    #[inline(always)]
+    #[inline]
     fn is_null(&const self) -> bool { is_null(*self) }
 
     /// Returns true if the pointer is not equal to the null pointer.
-    #[inline(always)]
+    #[inline]
     fn is_not_null(&const self) -> bool { is_not_null(*self) }
 
     /// Calculates the offset from a mutable pointer.
-    #[inline(always)]
+    #[inline]
     fn offset(&self, count: uint) -> *mut T { mut_offset(*self, count) }
 }
 
 // Equality for pointers
 #[cfg(notest)]
 impl<T> Eq for *const T {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &*const T) -> bool {
         unsafe {
             let a: uint = cast::transmute(*self);
@@ -253,14 +253,14 @@ impl<T> Eq for *const T {
             return a == b;
         }
     }
-    #[inline(always)]
+    #[inline]
     fn ne(&self, other: &*const T) -> bool { !(*self).eq(other) }
 }
 
 // Comparison for pointers
 #[cfg(notest)]
 impl<T> Ord for *const T {
-    #[inline(always)]
+    #[inline]
     fn lt(&self, other: &*const T) -> bool {
         unsafe {
             let a: uint = cast::transmute(*self);
@@ -268,7 +268,7 @@ impl<T> Ord for *const T {
             return a < b;
         }
     }
-    #[inline(always)]
+    #[inline]
     fn le(&self, other: &*const T) -> bool {
         unsafe {
             let a: uint = cast::transmute(*self);
@@ -276,7 +276,7 @@ impl<T> Ord for *const T {
             return a <= b;
         }
     }
-    #[inline(always)]
+    #[inline]
     fn ge(&self, other: &*const T) -> bool {
         unsafe {
             let a: uint = cast::transmute(*self);
@@ -284,7 +284,7 @@ impl<T> Ord for *const T {
             return a >= b;
         }
     }
-    #[inline(always)]
+    #[inline]
     fn gt(&self, other: &*const T) -> bool {
         unsafe {
             let a: uint = cast::transmute(*self);
@@ -297,11 +297,11 @@ impl<T> Ord for *const T {
 // Equality for region pointers
 #[cfg(notest)]
 impl<'self,T:Eq> Eq for &'self const T {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: & &'self const T) -> bool {
         return *(*self) == *(*other);
     }
-    #[inline(always)]
+    #[inline]
     fn ne(&self, other: & &'self const T) -> bool {
         return *(*self) != *(*other);
     }
@@ -310,19 +310,19 @@ impl<'self,T:Eq> Eq for &'self const T {
 // Comparison for region pointers
 #[cfg(notest)]
 impl<'self,T:Ord> Ord for &'self const T {
-    #[inline(always)]
+    #[inline]
     fn lt(&self, other: & &'self const T) -> bool {
         *(*self) < *(*other)
     }
-    #[inline(always)]
+    #[inline]
     fn le(&self, other: & &'self const T) -> bool {
         *(*self) <= *(*other)
     }
-    #[inline(always)]
+    #[inline]
     fn ge(&self, other: & &'self const T) -> bool {
         *(*self) >= *(*other)
     }
-    #[inline(always)]
+    #[inline]
     fn gt(&self, other: & &'self const T) -> bool {
         *(*self) > *(*other)
     }

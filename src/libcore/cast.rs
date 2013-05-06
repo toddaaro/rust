@@ -44,7 +44,7 @@ pub unsafe fn transmute_copy<T, U>(src: &T) -> U {
  * can be used for various acts of magick, particularly when using
  * reinterpret_cast on pointer types.
  */
-#[inline(always)]
+#[inline]
 pub unsafe fn forget<T>(thing: T) { rusti::forget(thing); }
 
 /**
@@ -63,53 +63,53 @@ pub unsafe fn bump_box_refcount<T>(t: @T) { forget(t); }
  *
  *     assert!(transmute("L") == ~[76u8, 0u8]);
  */
-#[inline(always)]
+#[inline]
 pub unsafe fn transmute<L, G>(thing: L) -> G {
     rusti::transmute(thing)
 }
 
 /// Coerce an immutable reference to be mutable.
-#[inline(always)]
+#[inline]
 pub unsafe fn transmute_mut<'a,T>(ptr: &'a T) -> &'a mut T { transmute(ptr) }
 
 /// Coerce a mutable reference to be immutable.
-#[inline(always)]
+#[inline]
 pub unsafe fn transmute_immut<'a,T>(ptr: &'a mut T) -> &'a T {
     transmute(ptr)
 }
 
 /// Coerce a borrowed pointer to have an arbitrary associated region.
-#[inline(always)]
+#[inline]
 pub unsafe fn transmute_region<'a,'b,T>(ptr: &'a T) -> &'b T {
     transmute(ptr)
 }
 
 /// Coerce an immutable reference to be mutable.
-#[inline(always)]
+#[inline]
 pub unsafe fn transmute_mut_unsafe<T>(ptr: *const T) -> *mut T {
     transmute(ptr)
 }
 
 /// Coerce an immutable reference to be mutable.
-#[inline(always)]
+#[inline]
 pub unsafe fn transmute_immut_unsafe<T>(ptr: *const T) -> *T {
     transmute(ptr)
 }
 
 /// Coerce a borrowed mutable pointer to have an arbitrary associated region.
-#[inline(always)]
+#[inline]
 pub unsafe fn transmute_mut_region<'a,'b,T>(ptr: &'a mut T) -> &'b mut T {
     transmute(ptr)
 }
 
 /// Transforms lifetime of the second pointer to match the first.
-#[inline(always)]
+#[inline]
 pub unsafe fn copy_lifetime<'a,S,T>(_ptr: &'a S, ptr: &T) -> &'a T {
     transmute_region(ptr)
 }
 
 /// Transforms lifetime of the second pointer to match the first.
-#[inline(always)]
+#[inline]
 pub unsafe fn copy_lifetime_vec<'a,S,T>(_ptr: &'a [S], ptr: &T) -> &'a T {
     transmute_region(ptr)
 }

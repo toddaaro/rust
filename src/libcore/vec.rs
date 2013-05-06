@@ -111,7 +111,7 @@ pub fn reserve_at_least<T>(v: &mut ~[T], n: uint) {
 }
 
 /// Returns the number of elements the vector can hold without reallocating
-#[inline(always)]
+#[inline]
 pub fn capacity<T>(v: &const ~[T]) -> uint {
     unsafe {
         let repr: **raw::VecRepr = transmute(v);
@@ -120,7 +120,7 @@ pub fn capacity<T>(v: &const ~[T]) -> uint {
 }
 
 /// Returns the length of a vector
-#[inline(always)]
+#[inline]
 pub fn len<T>(v: &const [T]) -> uint {
     as_const_buf(v, |_p, len| len)
 }
@@ -189,7 +189,7 @@ pub fn with_capacity<T>(capacity: uint) -> ~[T] {
  *             as an argument a function that will push an element
  *             onto the vector being constructed.
  */
-#[inline(always)]
+#[inline]
 pub fn build_sized<A>(size: uint, builder: &fn(push: &fn(v: A))) -> ~[A] {
     let mut vec = with_capacity(size);
     builder(|x| vec.push(x));
@@ -206,7 +206,7 @@ pub fn build_sized<A>(size: uint, builder: &fn(push: &fn(v: A))) -> ~[A] {
  *             as an argument a function that will push an element
  *             onto the vector being constructed.
  */
-#[inline(always)]
+#[inline]
 pub fn build<A>(builder: &fn(push: &fn(v: A))) -> ~[A] {
     build_sized(4, builder)
 }
@@ -223,7 +223,7 @@ pub fn build<A>(builder: &fn(push: &fn(v: A))) -> ~[A] {
  *             as an argument a function that will push an element
  *             onto the vector being constructed.
  */
-#[inline(always)]
+#[inline]
 pub fn build_sized_opt<A>(size: Option<uint>,
                           builder: &fn(push: &fn(v: A)))
                        -> ~[A] {
@@ -271,7 +271,7 @@ pub fn last_opt<'r,T>(v: &'r [T]) -> Option<&'r T> {
 }
 
 /// Return a slice that points into another slice.
-#[inline(always)]
+#[inline]
 pub fn slice<'r,T>(v: &'r [T], start: uint, end: uint) -> &'r [T] {
     assert!(start <= end);
     assert!(end <= len(v));
@@ -284,7 +284,7 @@ pub fn slice<'r,T>(v: &'r [T], start: uint, end: uint) -> &'r [T] {
 }
 
 /// Return a slice that points into another slice.
-#[inline(always)]
+#[inline]
 pub fn mut_slice<'r,T>(v: &'r mut [T], start: uint, end: uint)
                     -> &'r mut [T] {
     assert!(start <= end);
@@ -298,7 +298,7 @@ pub fn mut_slice<'r,T>(v: &'r mut [T], start: uint, end: uint)
 }
 
 /// Return a slice that points into another slice.
-#[inline(always)]
+#[inline]
 pub fn const_slice<'r,T>(v: &'r const [T], start: uint, end: uint)
                       -> &'r const [T] {
     assert!(start <= end);
@@ -617,7 +617,7 @@ pub fn swap_remove<T>(v: &mut ~[T], index: uint) -> T {
 }
 
 /// Append an element to a vector
-#[inline(always)]
+#[inline]
 pub fn push<T>(v: &mut ~[T], initval: T) {
     unsafe {
         let repr: **raw::VecRepr = transmute(&mut *v);
@@ -632,7 +632,7 @@ pub fn push<T>(v: &mut ~[T], initval: T) {
 }
 
 // This doesn't bother to make sure we have space.
-#[inline(always)] // really pretty please
+#[inline] // really pretty please
 unsafe fn push_fast<T>(v: &mut ~[T], initval: T) {
     let repr: **mut raw::VecRepr = transmute(v);
     let fill = (**repr).unboxed.fill;
@@ -649,7 +649,7 @@ fn push_slow<T>(v: &mut ~[T], initval: T) {
     unsafe { push_fast(v, initval) }
 }
 
-#[inline(always)]
+#[inline]
 pub fn push_all<T:Copy>(v: &mut ~[T], rhs: &const [T]) {
     let new_len = v.len() + rhs.len();
     reserve(&mut *v, new_len);
@@ -659,7 +659,7 @@ pub fn push_all<T:Copy>(v: &mut ~[T], rhs: &const [T]) {
     }
 }
 
-#[inline(always)]
+#[inline]
 pub fn push_all_move<T>(v: &mut ~[T], mut rhs: ~[T]) {
     let new_len = v.len() + rhs.len();
     reserve(&mut *v, new_len);
@@ -733,14 +733,14 @@ pub fn dedup<T:Eq>(v: &mut ~[T]) {
 
 
 // Appending
-#[inline(always)]
+#[inline]
 pub fn append<T:Copy>(lhs: ~[T], rhs: &const [T]) -> ~[T] {
     let mut v = lhs;
     v.push_all(rhs);
     v
 }
 
-#[inline(always)]
+#[inline]
 pub fn append_one<T>(lhs: ~[T], x: T) -> ~[T] {
     let mut v = lhs;
     v.push(x);
@@ -1402,7 +1402,7 @@ pub fn reversed<T:Copy>(v: &const [T]) -> ~[T] {
  * }
  * ~~~
  */
-#[inline(always)]
+#[inline]
 pub fn each<'r,T>(v: &'r [T], f: &fn(&'r T) -> bool) {
     //             ^^^^
     // NB---this CANNOT be &const [T]!  The reason
@@ -1426,7 +1426,7 @@ pub fn each<'r,T>(v: &'r [T], f: &fn(&'r T) -> bool) {
 /// Like `each()`, but for the case where you have
 /// a vector with mutable contents and you would like
 /// to mutate the contents as you iterate.
-#[inline(always)]
+#[inline]
 pub fn each_mut<'r,T>(v: &'r mut [T], f: &fn(elem: &'r mut T) -> bool) {
     do vec::as_mut_buf(v) |p, n| {
         let mut n = n;
@@ -1446,7 +1446,7 @@ pub fn each_mut<'r,T>(v: &'r mut [T], f: &fn(elem: &'r mut T) -> bool) {
 
 /// Like `each()`, but for the case where you have a vector that *may or may
 /// not* have mutable contents.
-#[inline(always)]
+#[inline]
 pub fn each_const<T>(v: &const [T], f: &fn(elem: &const T) -> bool) {
     let mut i = 0;
     let n = v.len();
@@ -1463,7 +1463,7 @@ pub fn each_const<T>(v: &const [T], f: &fn(elem: &const T) -> bool) {
  *
  * Return true to continue, false to break.
  */
-#[inline(always)]
+#[inline]
 pub fn eachi<'r,T>(v: &'r [T], f: &fn(uint, v: &'r T) -> bool) {
     let mut i = 0;
     for each(v) |p| {
@@ -1477,7 +1477,7 @@ pub fn eachi<'r,T>(v: &'r [T], f: &fn(uint, v: &'r T) -> bool) {
  *
  * Return true to continue, false to break.
  */
-#[inline(always)]
+#[inline]
 pub fn eachi_mut<'r,T>(v: &'r mut [T], f: &fn(uint, v: &'r mut T) -> bool) {
     let mut i = 0;
     for each_mut(v) |p| {
@@ -1493,7 +1493,7 @@ pub fn eachi_mut<'r,T>(v: &'r mut [T], f: &fn(uint, v: &'r mut T) -> bool) {
  *
  * Return true to continue, false to break.
  */
-#[inline(always)]
+#[inline]
 pub fn each_reverse<'r,T>(v: &'r [T], blk: &fn(v: &'r T) -> bool) {
     eachi_reverse(v, |_i, v| blk(v))
 }
@@ -1503,7 +1503,7 @@ pub fn each_reverse<'r,T>(v: &'r [T], blk: &fn(v: &'r T) -> bool) {
  *
  * Return true to continue, false to break.
  */
-#[inline(always)]
+#[inline]
 pub fn eachi_reverse<'r,T>(v: &'r [T], blk: &fn(i: uint, v: &'r T) -> bool) {
     let mut i = v.len();
     while i > 0 {
@@ -1591,7 +1591,7 @@ pub fn windowed<'r, T>(n: uint, v: &'r [T], it: &fn(&'r [T]) -> bool) {
  * Allows for unsafe manipulation of vector contents, which is useful for
  * foreign interop.
  */
-#[inline(always)]
+#[inline]
 pub fn as_imm_buf<T,U>(s: &[T],
                        /* NB---this CANNOT be const, see below */
                        f: &fn(*T, uint) -> U) -> U {
@@ -1610,7 +1610,7 @@ pub fn as_imm_buf<T,U>(s: &[T],
 }
 
 /// Similar to `as_imm_buf` but passing a `*const T`
-#[inline(always)]
+#[inline]
 pub fn as_const_buf<T,U>(s: &const [T], f: &fn(*const T, uint) -> U) -> U {
     unsafe {
         let v : *(*const T,uint) = transmute(&s);
@@ -1620,7 +1620,7 @@ pub fn as_const_buf<T,U>(s: &const [T], f: &fn(*const T, uint) -> U) -> U {
 }
 
 /// Similar to `as_imm_buf` but passing a `*mut T`
-#[inline(always)]
+#[inline]
 pub fn as_mut_buf<T,U>(s: &mut [T], f: &fn(*mut T, uint) -> U) -> U {
     unsafe {
         let v : *(*mut T,uint) = transmute(&s);
@@ -1657,49 +1657,49 @@ fn equals<T: TotalEq>(a: &[T], b: &[T]) -> bool {
 
 #[cfg(notest)]
 impl<'self,T:Eq> Eq for &'self [T] {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: & &'self [T]) -> bool { eq(*self, *other) }
-    #[inline(always)]
+    #[inline]
     fn ne(&self, other: & &'self [T]) -> bool { !self.eq(other) }
 }
 
 #[cfg(notest)]
 impl<T:Eq> Eq for ~[T] {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &~[T]) -> bool { eq(*self, *other) }
-    #[inline(always)]
+    #[inline]
     fn ne(&self, other: &~[T]) -> bool { !self.eq(other) }
 }
 
 #[cfg(notest)]
 impl<T:Eq> Eq for @[T] {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &@[T]) -> bool { eq(*self, *other) }
-    #[inline(always)]
+    #[inline]
     fn ne(&self, other: &@[T]) -> bool { !self.eq(other) }
 }
 
 #[cfg(notest)]
 impl<'self,T:TotalEq> TotalEq for &'self [T] {
-    #[inline(always)]
+    #[inline]
     fn equals(&self, other: & &'self [T]) -> bool { equals(*self, *other) }
 }
 
 #[cfg(notest)]
 impl<T:TotalEq> TotalEq for ~[T] {
-    #[inline(always)]
+    #[inline]
     fn equals(&self, other: &~[T]) -> bool { equals(*self, *other) }
 }
 
 #[cfg(notest)]
 impl<T:TotalEq> TotalEq for @[T] {
-    #[inline(always)]
+    #[inline]
     fn equals(&self, other: &@[T]) -> bool { equals(*self, *other) }
 }
 
 #[cfg(notest)]
 impl<'self,T:Eq> Equiv<~[T]> for &'self [T] {
-    #[inline(always)]
+    #[inline]
     fn equiv(&self, other: &~[T]) -> bool { eq(*self, *other) }
 }
 
@@ -1721,19 +1721,19 @@ fn cmp<T: TotalOrd>(a: &[T], b: &[T]) -> Ordering {
 
 #[cfg(notest)]
 impl<'self,T:TotalOrd> TotalOrd for &'self [T] {
-    #[inline(always)]
+    #[inline]
     fn cmp(&self, other: & &'self [T]) -> Ordering { cmp(*self, *other) }
 }
 
 #[cfg(notest)]
 impl<T: TotalOrd> TotalOrd for ~[T] {
-    #[inline(always)]
+    #[inline]
     fn cmp(&self, other: &~[T]) -> Ordering { cmp(*self, *other) }
 }
 
 #[cfg(notest)]
 impl<T: TotalOrd> TotalOrd for @[T] {
-    #[inline(always)]
+    #[inline]
     fn cmp(&self, other: &@[T]) -> Ordering { cmp(*self, *other) }
 }
 
@@ -1758,37 +1758,37 @@ fn gt<T:Ord>(a: &[T], b: &[T]) -> bool { lt(b, a)  }
 
 #[cfg(notest)]
 impl<'self,T:Ord> Ord for &'self [T] {
-    #[inline(always)]
+    #[inline]
     fn lt(&self, other: & &'self [T]) -> bool { lt((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn le(&self, other: & &'self [T]) -> bool { le((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn ge(&self, other: & &'self [T]) -> bool { ge((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn gt(&self, other: & &'self [T]) -> bool { gt((*self), (*other)) }
 }
 
 #[cfg(notest)]
 impl<T:Ord> Ord for ~[T] {
-    #[inline(always)]
+    #[inline]
     fn lt(&self, other: &~[T]) -> bool { lt((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn le(&self, other: &~[T]) -> bool { le((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn ge(&self, other: &~[T]) -> bool { ge((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn gt(&self, other: &~[T]) -> bool { gt((*self), (*other)) }
 }
 
 #[cfg(notest)]
 impl<T:Ord> Ord for @[T] {
-    #[inline(always)]
+    #[inline]
     fn lt(&self, other: &@[T]) -> bool { lt((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn le(&self, other: &@[T]) -> bool { le((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn ge(&self, other: &@[T]) -> bool { ge((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn gt(&self, other: &@[T]) -> bool { gt((*self), (*other)) }
 }
 
@@ -1799,7 +1799,7 @@ pub mod traits {
     use vec::append;
 
     impl<'self,T:Copy> Add<&'self const [T],~[T]> for ~[T] {
-        #[inline(always)]
+        #[inline]
         fn add(&self, rhs: & &'self const [T]) -> ~[T] {
             append(copy *self, (*rhs))
         }
@@ -1980,7 +1980,7 @@ impl<'self,T> ImmutableVector<'self, T> for &'self [T] {
 
     /// Returns a pointer to the element at the given index, without doing
     /// bounds checking.
-    #[inline(always)]
+    #[inline]
     unsafe fn unsafe_ref(&self, index: uint) -> *T {
         let (ptr, _): (*T, uint) = transmute(*self);
         ptr.offset(index)
@@ -2075,7 +2075,7 @@ impl<'self,T:Copy> ImmutableCopyableVector<T> for &'self [T] {
     }
 
     /// Returns the element at the given index, without doing bounds checking.
-    #[inline(always)]
+    #[inline]
     unsafe fn unsafe_get(&self, index: uint) -> T {
         *self.unsafe_ref(index)
     }
@@ -2225,14 +2225,14 @@ pub trait MutableVector<T> {
 }
 
 impl<'self,T> MutableVector<T> for &'self mut [T] {
-    #[inline(always)]
+    #[inline]
     unsafe fn unsafe_mut_ref(&self, index: uint) -> *mut T {
         let pair_ptr: &(*mut T, uint) = transmute(self);
         let (ptr, _) = *pair_ptr;
         ptr.offset(index)
     }
 
-    #[inline(always)]
+    #[inline]
     unsafe fn unsafe_set(&self, index: uint, val: T) {
         *self.unsafe_mut_ref(index) = val;
     }
@@ -2287,7 +2287,7 @@ pub mod raw {
      * modifing its buffers, so it is up to the caller to ensure that
      * the vector is actually the specified size.
      */
-    #[inline(always)]
+    #[inline]
     pub unsafe fn set_len<T>(v: &mut ~[T], new_len: uint) {
         let repr: **mut VecRepr = transmute(v);
         (**repr).unboxed.fill = new_len * sys::nonzero_size_of::<T>();
@@ -2302,21 +2302,21 @@ pub mod raw {
      * Modifying the vector may cause its buffer to be reallocated, which
      * would also make any pointers to it invalid.
      */
-    #[inline(always)]
+    #[inline]
     pub unsafe fn to_ptr<T>(v: &[T]) -> *T {
         let repr: **SliceRepr = transmute(&v);
         transmute(&((**repr).data))
     }
 
     /** see `to_ptr()` */
-    #[inline(always)]
+    #[inline]
     pub unsafe fn to_const_ptr<T>(v: &const [T]) -> *const T {
         let repr: **SliceRepr = transmute(&v);
         transmute(&((**repr).data))
     }
 
     /** see `to_ptr()` */
-    #[inline(always)]
+    #[inline]
     pub unsafe fn to_mut_ptr<T>(v: &mut [T]) -> *mut T {
         let repr: **SliceRepr = transmute(&v);
         transmute(&((**repr).data))
@@ -2326,7 +2326,7 @@ pub mod raw {
      * Form a slice from a pointer and length (as a number of units,
      * not bytes).
      */
-    #[inline(always)]
+    #[inline]
     pub unsafe fn buf_as_slice<T,U>(p: *T,
                                     len: uint,
                                     f: &fn(v: &[T]) -> U) -> U {
@@ -2339,7 +2339,7 @@ pub mod raw {
      * Form a slice from a pointer and length (as a number of units,
      * not bytes).
      */
-    #[inline(always)]
+    #[inline]
     pub unsafe fn mut_buf_as_slice<T,U>(p: *mut T,
                                         len: uint,
                                         f: &fn(v: &mut [T]) -> U) -> U {
@@ -2351,7 +2351,7 @@ pub mod raw {
     /**
      * Unchecked vector indexing.
      */
-    #[inline(always)]
+    #[inline]
     pub unsafe fn get<T:Copy>(v: &const [T], i: uint) -> T {
         as_const_buf(v, |p, _len| *ptr::const_offset(p, i))
     }
@@ -2361,7 +2361,7 @@ pub mod raw {
      * old value and hence is only suitable when the vector
      * is newly allocated.
      */
-    #[inline(always)]
+    #[inline]
     pub unsafe fn init_elem<T>(v: &mut [T], i: uint, val: T) {
         let mut box = Some(val);
         do as_mut_buf(v) |p, _len| {
@@ -2381,7 +2381,7 @@ pub mod raw {
     * * elts - The number of elements in the buffer
     */
     // Was in raw, but needs to be called by net_tcp::on_tcp_read_cb
-    #[inline(always)]
+    #[inline]
     pub unsafe fn from_buf_raw<T>(ptr: *T, elts: uint) -> ~[T] {
         let mut dst = with_capacity(elts);
         set_len(&mut dst, elts);
@@ -2395,7 +2395,7 @@ pub mod raw {
       * Copies `count` bytes from `src` to `dst`. The source and destination
       * may overlap.
       */
-    #[inline(always)]
+    #[inline]
     pub unsafe fn copy_memory<T>(dst: &mut [T], src: &const [T],
                                  count: uint) {
         assert!(dst.len() >= count);
@@ -2461,7 +2461,7 @@ pub mod bytes {
       * Copies `count` bytes from `src` to `dst`. The source and destination
       * may overlap.
       */
-    #[inline(always)]
+    #[inline]
     pub fn copy_memory(dst: &mut [u8], src: &const [u8], count: uint) {
         // Bound checks are done at vec::raw::copy_memory.
         unsafe { vec::raw::copy_memory(dst, src, count) }
@@ -2472,30 +2472,30 @@ pub mod bytes {
 // ITERATION TRAIT METHODS
 
 impl<'self,A> old_iter::BaseIter<A> for &'self [A] {
-    #[inline(always)]
+    #[inline]
     fn each<'a>(&'a self, blk: &fn(v: &'a A) -> bool) { each(*self, blk) }
-    #[inline(always)]
+    #[inline]
     fn size_hint(&self) -> Option<uint> { Some(self.len()) }
 }
 
 // FIXME(#4148): This should be redundant
 impl<A> old_iter::BaseIter<A> for ~[A] {
-    #[inline(always)]
+    #[inline]
     fn each<'a>(&'a self, blk: &fn(v: &'a A) -> bool) { each(*self, blk) }
-    #[inline(always)]
+    #[inline]
     fn size_hint(&self) -> Option<uint> { Some(self.len()) }
 }
 
 // FIXME(#4148): This should be redundant
 impl<A> old_iter::BaseIter<A> for @[A] {
-    #[inline(always)]
+    #[inline]
     fn each<'a>(&'a self, blk: &fn(v: &'a A) -> bool) { each(*self, blk) }
-    #[inline(always)]
+    #[inline]
     fn size_hint(&self) -> Option<uint> { Some(self.len()) }
 }
 
 impl<'self,A> old_iter::MutableIter<A> for &'self mut [A] {
-    #[inline(always)]
+    #[inline]
     fn each_mut<'a>(&'a mut self, blk: &fn(v: &'a mut A) -> bool) {
         each_mut(*self, blk)
     }
@@ -2503,7 +2503,7 @@ impl<'self,A> old_iter::MutableIter<A> for &'self mut [A] {
 
 // FIXME(#4148): This should be redundant
 impl<A> old_iter::MutableIter<A> for ~[A] {
-    #[inline(always)]
+    #[inline]
     fn each_mut<'a>(&'a mut self, blk: &fn(v: &'a mut A) -> bool) {
         each_mut(*self, blk)
     }
@@ -2511,7 +2511,7 @@ impl<A> old_iter::MutableIter<A> for ~[A] {
 
 // FIXME(#4148): This should be redundant
 impl<A> old_iter::MutableIter<A> for @mut [A] {
-    #[inline(always)]
+    #[inline]
     fn each_mut(&mut self, blk: &fn(v: &mut A) -> bool) {
         each_mut(*self, blk)
     }
@@ -2543,7 +2543,7 @@ impl<'self,A> old_iter::ExtendedIter<A> for &'self [A] {
 }
 
 impl<'self,A> old_iter::ExtendedMutableIter<A> for &'self mut [A] {
-    #[inline(always)]
+    #[inline]
     pub fn eachi_mut(&mut self, blk: &fn(uint, v: &mut A) -> bool) {
         eachi_mut(*self, blk)
     }

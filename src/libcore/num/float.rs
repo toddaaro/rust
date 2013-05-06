@@ -94,7 +94,7 @@ pub mod consts {
 ///
 /// * num - The float value
 ///
-#[inline(always)]
+#[inline]
 pub fn to_str(num: float) -> ~str {
     let (r, _) = strconv::to_str_common(
         &num, 10u, true, strconv::SignNeg, strconv::DigAll);
@@ -108,7 +108,7 @@ pub fn to_str(num: float) -> ~str {
 ///
 /// * num - The float value
 ///
-#[inline(always)]
+#[inline]
 pub fn to_str_hex(num: float) -> ~str {
     let (r, _) = strconv::to_str_common(
         &num, 16u, true, strconv::SignNeg, strconv::DigAll);
@@ -129,7 +129,7 @@ pub fn to_str_hex(num: float) -> ~str {
 /// possible misinterpretation of the result at higher bases. If those values
 /// are expected, use `to_str_radix_special()` instead.
 ///
-#[inline(always)]
+#[inline]
 pub fn to_str_radix(num: float, radix: uint) -> ~str {
     let (r, special) = strconv::to_str_common(
         &num, radix, true, strconv::SignNeg, strconv::DigAll);
@@ -147,7 +147,7 @@ pub fn to_str_radix(num: float, radix: uint) -> ~str {
 /// * num - The float value
 /// * radix - The base to use
 ///
-#[inline(always)]
+#[inline]
 pub fn to_str_radix_special(num: float, radix: uint) -> (~str, bool) {
     strconv::to_str_common(&num, radix, true,
                            strconv::SignNeg, strconv::DigAll)
@@ -162,7 +162,7 @@ pub fn to_str_radix_special(num: float, radix: uint) -> (~str, bool) {
 /// * num - The float value
 /// * digits - The number of significant digits
 ///
-#[inline(always)]
+#[inline]
 pub fn to_str_exact(num: float, digits: uint) -> ~str {
     let (r, _) = strconv::to_str_common(
         &num, 10u, true, strconv::SignNeg, strconv::DigExact(digits));
@@ -178,7 +178,7 @@ pub fn to_str_exact(num: float, digits: uint) -> ~str {
 /// * num - The float value
 /// * digits - The number of significant digits
 ///
-#[inline(always)]
+#[inline]
 pub fn to_str_digits(num: float, digits: uint) -> ~str {
     let (r, _) = strconv::to_str_common(
         &num, 10u, true, strconv::SignNeg, strconv::DigMax(digits));
@@ -186,12 +186,12 @@ pub fn to_str_digits(num: float, digits: uint) -> ~str {
 }
 
 impl to_str::ToStr for float {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str { to_str_digits(*self, 8) }
 }
 
 impl num::ToStrRadix for float {
-    #[inline(always)]
+    #[inline]
     fn to_str_radix(&self, radix: uint) -> ~str {
         to_str_radix(*self, radix)
     }
@@ -224,7 +224,7 @@ impl num::ToStrRadix for float {
 /// `none` if the string did not represent a valid number.  Otherwise,
 /// `Some(n)` where `n` is the floating-point number represented by `num`.
 ///
-#[inline(always)]
+#[inline]
 pub fn from_str(num: &str) -> Option<float> {
     strconv::from_str_common(num, 10u, true, true, true,
                              strconv::ExpDec, false, false)
@@ -257,7 +257,7 @@ pub fn from_str(num: &str) -> Option<float> {
 /// `none` if the string did not represent a valid number.  Otherwise,
 /// `Some(n)` where `n` is the floating-point number represented by `[num]`.
 ///
-#[inline(always)]
+#[inline]
 pub fn from_str_hex(num: &str) -> Option<float> {
     strconv::from_str_common(num, 16u, true, true, true,
                              strconv::ExpBin, false, false)
@@ -282,19 +282,19 @@ pub fn from_str_hex(num: &str) -> Option<float> {
 /// `none` if the string did not represent a valid number. Otherwise,
 /// `Some(n)` where `n` is the floating-point number represented by `num`.
 ///
-#[inline(always)]
+#[inline]
 pub fn from_str_radix(num: &str, radix: uint) -> Option<float> {
     strconv::from_str_common(num, radix, true, true, false,
                              strconv::ExpNone, false, false)
 }
 
 impl FromStr for float {
-    #[inline(always)]
+    #[inline]
     fn from_str(val: &str) -> Option<float> { from_str(val) }
 }
 
 impl num::FromStrRadix for float {
-    #[inline(always)]
+    #[inline]
     fn from_str_radix(val: &str, radix: uint) -> Option<float> {
         from_str_radix(val, radix)
     }
@@ -336,27 +336,27 @@ pub fn pow_with_uint(base: uint, pow: uint) -> float {
     return total;
 }
 
-#[inline(always)]
+#[inline]
 pub fn abs(x: float) -> float {
     f64::abs(x as f64) as float
 }
-#[inline(always)]
+#[inline]
 pub fn sqrt(x: float) -> float {
     f64::sqrt(x as f64) as float
 }
-#[inline(always)]
+#[inline]
 pub fn atan(x: float) -> float {
     f64::atan(x as f64) as float
 }
-#[inline(always)]
+#[inline]
 pub fn sin(x: float) -> float {
     f64::sin(x as f64) as float
 }
-#[inline(always)]
+#[inline]
 pub fn cos(x: float) -> float {
     f64::cos(x as f64) as float
 }
-#[inline(always)]
+#[inline]
 pub fn tan(x: float) -> float {
     f64::tan(x as f64) as float
 }
@@ -365,74 +365,74 @@ impl Num for float {}
 
 #[cfg(notest)]
 impl Eq for float {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &float) -> bool { (*self) == (*other) }
-    #[inline(always)]
+    #[inline]
     fn ne(&self, other: &float) -> bool { (*self) != (*other) }
 }
 
 #[cfg(notest)]
 impl Ord for float {
-    #[inline(always)]
+    #[inline]
     fn lt(&self, other: &float) -> bool { (*self) < (*other) }
-    #[inline(always)]
+    #[inline]
     fn le(&self, other: &float) -> bool { (*self) <= (*other) }
-    #[inline(always)]
+    #[inline]
     fn ge(&self, other: &float) -> bool { (*self) >= (*other) }
-    #[inline(always)]
+    #[inline]
     fn gt(&self, other: &float) -> bool { (*self) > (*other) }
 }
 
 impl Orderable for float {
     /// Returns `NaN` if either of the numbers are `NaN`.
-    #[inline(always)]
+    #[inline]
     fn min(&self, other: &float) -> float {
         (*self as f64).min(&(*other as f64)) as float
     }
 
     /// Returns `NaN` if either of the numbers are `NaN`.
-    #[inline(always)]
+    #[inline]
     fn max(&self, other: &float) -> float {
         (*self as f64).max(&(*other as f64)) as float
     }
 
     /// Returns the number constrained within the range `mn <= self <= mx`.
     /// If any of the numbers are `NaN` then `NaN` is returned.
-    #[inline(always)]
+    #[inline]
     fn clamp(&self, mn: &float, mx: &float) -> float {
         (*self as f64).clamp(&(*mn as f64), &(*mx as f64)) as float
     }
 }
 
 impl Zero for float {
-    #[inline(always)]
+    #[inline]
     fn zero() -> float { 0.0 }
 
     /// Returns true if the number is equal to either `0.0` or `-0.0`
-    #[inline(always)]
+    #[inline]
     fn is_zero(&self) -> bool { *self == 0.0 || *self == -0.0 }
 }
 
 impl One for float {
-    #[inline(always)]
+    #[inline]
     fn one() -> float { 1.0 }
 }
 
 impl Round for float {
     /// Round half-way cases toward `neg_infinity`
-    #[inline(always)]
+    #[inline]
     fn floor(&self) -> float { floor(*self as f64) as float }
 
     /// Round half-way cases toward `infinity`
-    #[inline(always)]
+    #[inline]
     fn ceil(&self) -> float { ceil(*self as f64) as float }
 
     /// Round half-way cases away from `0.0`
-    #[inline(always)]
+    #[inline]
     fn round(&self) -> float { round(*self as f64) as float }
 
     /// The integer part of the number (rounds towards `0.0`)
-    #[inline(always)]
+    #[inline]
     fn trunc(&self) -> float { trunc(*self as f64) as float }
 
     ///
@@ -442,124 +442,124 @@ impl Round for float {
     /// assert!(x == trunc(x) + fract(x))
     /// ~~~
     ///
-    #[inline(always)]
+    #[inline]
     fn fract(&self) -> float { *self - self.trunc() }
 }
 
 impl Fractional for float {
     /// The reciprocal (multiplicative inverse) of the number
-    #[inline(always)]
+    #[inline]
     fn recip(&self) -> float { 1.0 / *self }
 }
 
 impl Algebraic for float {
-    #[inline(always)]
+    #[inline]
     fn pow(&self, n: float) -> float {
         (*self as f64).pow(n as f64) as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn sqrt(&self) -> float {
         (*self as f64).sqrt() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn rsqrt(&self) -> float {
         (*self as f64).rsqrt() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn cbrt(&self) -> float {
         (*self as f64).cbrt() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn hypot(&self, other: float) -> float {
         (*self as f64).hypot(other as f64) as float
     }
 }
 
 impl Trigonometric for float {
-    #[inline(always)]
+    #[inline]
     fn sin(&self) -> float {
         (*self as f64).sin() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn cos(&self) -> float {
         (*self as f64).cos() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn tan(&self) -> float {
         (*self as f64).tan() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn asin(&self) -> float {
         (*self as f64).asin() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn acos(&self) -> float {
         (*self as f64).acos() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn atan(&self) -> float {
         (*self as f64).atan() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn atan2(&self, other: float) -> float {
         (*self as f64).atan2(other as f64) as float
     }
 }
 
 impl Exponential for float {
-    #[inline(always)]
+    #[inline]
     fn exp(&self) -> float {
         (*self as f64).exp() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn exp2(&self) -> float {
         (*self as f64).exp2() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn expm1(&self) -> float {
         (*self as f64).expm1() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn log(&self) -> float {
         (*self as f64).log() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn log2(&self) -> float {
         (*self as f64).log2() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn log10(&self) -> float {
         (*self as f64).log10() as float
     }
 }
 
 impl Hyperbolic for float {
-    #[inline(always)]
+    #[inline]
     fn sinh(&self) -> float {
         (*self as f64).sinh() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn cosh(&self) -> float {
         (*self as f64).cosh() as float
     }
 
-    #[inline(always)]
+    #[inline]
     fn tanh(&self) -> float {
         (*self as f64).tanh() as float
     }
@@ -567,150 +567,150 @@ impl Hyperbolic for float {
 
 impl Real for float {
     /// Archimedes' constant
-    #[inline(always)]
+    #[inline]
     fn pi() -> float { 3.14159265358979323846264338327950288 }
 
     /// 2.0 * pi
-    #[inline(always)]
+    #[inline]
     fn two_pi() -> float { 6.28318530717958647692528676655900576 }
 
     /// pi / 2.0
-    #[inline(always)]
+    #[inline]
     fn frac_pi_2() -> float { 1.57079632679489661923132169163975144 }
 
     /// pi / 3.0
-    #[inline(always)]
+    #[inline]
     fn frac_pi_3() -> float { 1.04719755119659774615421446109316763 }
 
     /// pi / 4.0
-    #[inline(always)]
+    #[inline]
     fn frac_pi_4() -> float { 0.785398163397448309615660845819875721 }
 
     /// pi / 6.0
-    #[inline(always)]
+    #[inline]
     fn frac_pi_6() -> float { 0.52359877559829887307710723054658381 }
 
     /// pi / 8.0
-    #[inline(always)]
+    #[inline]
     fn frac_pi_8() -> float { 0.39269908169872415480783042290993786 }
 
     /// 1.0 / pi
-    #[inline(always)]
+    #[inline]
     fn frac_1_pi() -> float { 0.318309886183790671537767526745028724 }
 
     /// 2.0 / pi
-    #[inline(always)]
+    #[inline]
     fn frac_2_pi() -> float { 0.636619772367581343075535053490057448 }
 
     /// 2 .0/ sqrt(pi)
-    #[inline(always)]
+    #[inline]
     fn frac_2_sqrtpi() -> float { 1.12837916709551257389615890312154517 }
 
     /// sqrt(2.0)
-    #[inline(always)]
+    #[inline]
     fn sqrt2() -> float { 1.41421356237309504880168872420969808 }
 
     /// 1.0 / sqrt(2.0)
-    #[inline(always)]
+    #[inline]
     fn frac_1_sqrt2() -> float { 0.707106781186547524400844362104849039 }
 
     /// Euler's number
-    #[inline(always)]
+    #[inline]
     fn e() -> float { 2.71828182845904523536028747135266250 }
 
     /// log2(e)
-    #[inline(always)]
+    #[inline]
     fn log2_e() -> float { 1.44269504088896340735992468100189214 }
 
     /// log10(e)
-    #[inline(always)]
+    #[inline]
     fn log10_e() -> float { 0.434294481903251827651128918916605082 }
 
     /// log(2.0)
-    #[inline(always)]
+    #[inline]
     fn log_2() -> float { 0.693147180559945309417232121458176568 }
 
     /// log(10.0)
-    #[inline(always)]
+    #[inline]
     fn log_10() -> float { 2.30258509299404568401799145468436421 }
 
     /// Converts to degrees, assuming the number is in radians
-    #[inline(always)]
+    #[inline]
     fn to_degrees(&self) -> float { (*self as f64).to_degrees() as float }
 
     /// Converts to radians, assuming the number is in degrees
-    #[inline(always)]
+    #[inline]
     fn to_radians(&self) -> float { (*self as f64).to_radians() as float }
 }
 
 impl RealExt for float {
-    #[inline(always)]
+    #[inline]
     fn lgamma(&self) -> (int, float) {
         let mut sign = 0;
         let result = lgamma(*self as f64, &mut sign);
         (sign as int, result as float)
     }
 
-    #[inline(always)]
+    #[inline]
     fn tgamma(&self) -> float { tgamma(*self as f64) as float }
 
-    #[inline(always)]
+    #[inline]
     fn j0(&self) -> float { j0(*self as f64) as float }
 
-    #[inline(always)]
+    #[inline]
     fn j1(&self) -> float { j1(*self as f64) as float }
 
-    #[inline(always)]
+    #[inline]
     fn jn(&self, n: int) -> float { jn(n as c_int, *self as f64) as float }
 
-    #[inline(always)]
+    #[inline]
     fn y0(&self) -> float { y0(*self as f64) as float }
 
-    #[inline(always)]
+    #[inline]
     fn y1(&self) -> float { y1(*self as f64) as float }
 
-    #[inline(always)]
+    #[inline]
     fn yn(&self, n: int) -> float { yn(n as c_int, *self as f64) as float }
 }
 
 #[cfg(notest)]
 impl Add<float,float> for float {
-    #[inline(always)]
+    #[inline]
     fn add(&self, other: &float) -> float { *self + *other }
 }
 
 #[cfg(notest)]
 impl Sub<float,float> for float {
-    #[inline(always)]
+    #[inline]
     fn sub(&self, other: &float) -> float { *self - *other }
 }
 
 #[cfg(notest)]
 impl Mul<float,float> for float {
-    #[inline(always)]
+    #[inline]
     fn mul(&self, other: &float) -> float { *self * *other }
 }
 
 #[cfg(notest)]
 impl Div<float,float> for float {
-    #[inline(always)]
+    #[inline]
     fn div(&self, other: &float) -> float { *self / *other }
 }
 
 #[cfg(notest)]
 impl Rem<float,float> for float {
-    #[inline(always)]
+    #[inline]
     fn rem(&self, other: &float) -> float { *self % *other }
 }
 #[cfg(notest)]
 impl Neg<float> for float {
-    #[inline(always)]
+    #[inline]
     fn neg(&self) -> float { -*self }
 }
 
 impl Signed for float {
     /// Computes the absolute value. Returns `NaN` if the number is `NaN`.
-    #[inline(always)]
+    #[inline]
     fn abs(&self) -> float { abs(*self) }
 
     ///
@@ -720,81 +720,81 @@ impl Signed for float {
     /// - `-1.0` if the number is negative, `-0.0` or `neg_infinity`
     /// - `NaN` if the number is NaN
     ///
-    #[inline(always)]
+    #[inline]
     fn signum(&self) -> float {
         if self.is_NaN() { NaN } else { f64::copysign(1.0, *self as f64) as float }
     }
 
     /// Returns `true` if the number is positive, including `+0.0` and `infinity`
-    #[inline(always)]
+    #[inline]
     fn is_positive(&self) -> bool { *self > 0.0 || (1.0 / *self) == infinity }
 
     /// Returns `true` if the number is negative, including `-0.0` and `neg_infinity`
-    #[inline(always)]
+    #[inline]
     fn is_negative(&self) -> bool { *self < 0.0 || (1.0 / *self) == neg_infinity }
 }
 
 impl Bounded for float {
-    #[inline(always)]
+    #[inline]
     fn min_value() -> float { Bounded::min_value::<f64>() as float }
 
-    #[inline(always)]
+    #[inline]
     fn max_value() -> float { Bounded::max_value::<f64>() as float }
 }
 
 impl Primitive for float {
-    #[inline(always)]
+    #[inline]
     fn bits() -> uint { Primitive::bits::<f64>() }
 
-    #[inline(always)]
+    #[inline]
     fn bytes() -> uint { Primitive::bytes::<f64>() }
 }
 
 impl Float for float {
-    #[inline(always)]
+    #[inline]
     fn NaN() -> float { 0.0 / 0.0 }
 
-    #[inline(always)]
+    #[inline]
     fn infinity() -> float { 1.0 / 0.0 }
 
-    #[inline(always)]
+    #[inline]
     fn neg_infinity() -> float { -1.0 / 0.0 }
 
-    #[inline(always)]
+    #[inline]
     fn neg_zero() -> float { -0.0 }
 
-    #[inline(always)]
+    #[inline]
     fn is_NaN(&self) -> bool { *self != *self }
 
-    #[inline(always)]
+    #[inline]
     fn mantissa_digits() -> uint { Float::mantissa_digits::<f64>() }
 
-    #[inline(always)]
+    #[inline]
     fn digits() -> uint { Float::digits::<f64>() }
 
-    #[inline(always)]
+    #[inline]
     fn epsilon() -> float { Float::epsilon::<f64>() as float }
 
-    #[inline(always)]
+    #[inline]
     fn min_exp() -> int { Float::min_exp::<f64>() }
 
-    #[inline(always)]
+    #[inline]
     fn max_exp() -> int { Float::max_exp::<f64>() }
 
-    #[inline(always)]
+    #[inline]
     fn min_10_exp() -> int { Float::min_10_exp::<f64>() }
 
-    #[inline(always)]
+    #[inline]
     fn max_10_exp() -> int { Float::max_10_exp::<f64>() }
 
     /// Returns `true` if the number is infinite
-    #[inline(always)]
+    #[inline]
     fn is_infinite(&self) -> bool {
         *self == Float::infinity() || *self == Float::neg_infinity()
     }
 
     /// Returns `true` if the number is finite
-    #[inline(always)]
+    #[inline]
     fn is_finite(&self) -> bool {
         !(self.is_NaN() || self.is_infinite())
     }
@@ -804,13 +804,13 @@ impl Float for float {
     /// produces a more accurate result with better performance than a separate multiplication
     /// operation followed by an add.
     ///
-    #[inline(always)]
+    #[inline]
     fn mul_add(&self, a: float, b: float) -> float {
         mul_add(*self as f64, a as f64, b as f64) as float
     }
 
     /// Returns the next representable floating-point value in the direction of `other`
-    #[inline(always)]
+    #[inline]
     fn next_after(&self, other: float) -> float {
         next_after(*self as f64, other as f64) as float
     }

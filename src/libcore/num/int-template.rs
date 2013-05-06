@@ -22,13 +22,13 @@ pub static bytes : uint = (inst::bits / 8);
 pub static min_value: T = (-1 as T) << (bits - 1);
 pub static max_value: T = min_value - 1 as T;
 
-#[inline(always)]
+#[inline]
 pub fn add(x: T, y: T) -> T { x + y }
-#[inline(always)]
+#[inline]
 pub fn sub(x: T, y: T) -> T { x - y }
-#[inline(always)]
+#[inline]
 pub fn mul(x: T, y: T) -> T { x * y }
-#[inline(always)]
+#[inline]
 pub fn div(x: T, y: T) -> T { x / y }
 
 ///
@@ -51,20 +51,20 @@ pub fn div(x: T, y: T) -> T { x / y }
 /// ~~~
 ///
 ///
-#[inline(always)]
+#[inline]
 pub fn rem(x: T, y: T) -> T { x % y }
 
-#[inline(always)]
+#[inline]
 pub fn lt(x: T, y: T) -> bool { x < y }
-#[inline(always)]
+#[inline]
 pub fn le(x: T, y: T) -> bool { x <= y }
-#[inline(always)]
+#[inline]
 pub fn eq(x: T, y: T) -> bool { x == y }
-#[inline(always)]
+#[inline]
 pub fn ne(x: T, y: T) -> bool { x != y }
-#[inline(always)]
+#[inline]
 pub fn ge(x: T, y: T) -> bool { x >= y }
-#[inline(always)]
+#[inline]
 pub fn gt(x: T, y: T) -> bool { x > y }
 
 ///
@@ -84,7 +84,7 @@ pub fn gt(x: T, y: T) -> bool { x > y }
 /// assert!(sum == 10);
 /// ~~~
 ///
-#[inline(always)]
+#[inline]
 /// Iterate over the range [`start`,`start`+`step`..`stop`)
 pub fn range_step(start: T, stop: T, step: T, it: &fn(T) -> bool) {
     let mut i = start;
@@ -107,62 +107,62 @@ pub fn range_step(start: T, stop: T, step: T, it: &fn(T) -> bool) {
     }
 }
 
-#[inline(always)]
+#[inline]
 /// Iterate over the range [`lo`..`hi`)
 pub fn range(lo: T, hi: T, it: &fn(T) -> bool) {
     range_step(lo, hi, 1 as T, it);
 }
 
-#[inline(always)]
+#[inline]
 /// Iterate over the range [`hi`..`lo`)
 pub fn range_rev(hi: T, lo: T, it: &fn(T) -> bool) {
     range_step(hi, lo, -1 as T, it);
 }
 
 /// Computes the bitwise complement
-#[inline(always)]
+#[inline]
 pub fn compl(i: T) -> T {
     -1 as T ^ i
 }
 
 /// Computes the absolute value
-#[inline(always)]
+#[inline]
 pub fn abs(i: T) -> T { i.abs() }
 
 impl Num for T {}
 
 #[cfg(notest)]
 impl Ord for T {
-    #[inline(always)]
+    #[inline]
     fn lt(&self, other: &T) -> bool { return (*self) < (*other); }
-    #[inline(always)]
+    #[inline]
     fn le(&self, other: &T) -> bool { return (*self) <= (*other); }
-    #[inline(always)]
+    #[inline]
     fn ge(&self, other: &T) -> bool { return (*self) >= (*other); }
-    #[inline(always)]
+    #[inline]
     fn gt(&self, other: &T) -> bool { return (*self) > (*other); }
 }
 
 #[cfg(notest)]
 impl Eq for T {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &T) -> bool { return (*self) == (*other); }
-    #[inline(always)]
+    #[inline]
     fn ne(&self, other: &T) -> bool { return (*self) != (*other); }
 }
 
 impl Orderable for T {
-    #[inline(always)]
+    #[inline]
     fn min(&self, other: &T) -> T {
         if *self < *other { *self } else { *other }
     }
 
-    #[inline(always)]
+    #[inline]
     fn max(&self, other: &T) -> T {
         if *self > *other { *self } else { *other }
     }
 
-    #[inline(always)]
+    #[inline]
     fn clamp(&self, mn: &T, mx: &T) -> T {
         if *self > *mx { *mx } else
         if *self < *mn { *mn } else { *self }
@@ -170,33 +170,33 @@ impl Orderable for T {
 }
 
 impl Zero for T {
-    #[inline(always)]
+    #[inline]
     fn zero() -> T { 0 }
 
-    #[inline(always)]
+    #[inline]
     fn is_zero(&self) -> bool { *self == 0 }
 }
 
 impl One for T {
-    #[inline(always)]
+    #[inline]
     fn one() -> T { 1 }
 }
 
 #[cfg(notest)]
 impl Add<T,T> for T {
-    #[inline(always)]
+    #[inline]
     fn add(&self, other: &T) -> T { *self + *other }
 }
 
 #[cfg(notest)]
 impl Sub<T,T> for T {
-    #[inline(always)]
+    #[inline]
     fn sub(&self, other: &T) -> T { *self - *other }
 }
 
 #[cfg(notest)]
 impl Mul<T,T> for T {
-    #[inline(always)]
+    #[inline]
     fn mul(&self, other: &T) -> T { *self * *other }
 }
 
@@ -220,7 +220,7 @@ impl Div<T,T> for T {
     /// assert!(-1 / -2 ==  0);
     /// ~~~
     ///
-    #[inline(always)]
+    #[inline]
     fn div(&self, other: &T) -> T { *self / *other }
 }
 
@@ -247,19 +247,19 @@ impl Rem<T,T> for T {
     /// assert!(-1 % -2 == -1);
     /// ~~~
     ///
-    #[inline(always)]
+    #[inline]
     fn rem(&self, other: &T) -> T { *self % *other }
 }
 
 #[cfg(notest)]
 impl Neg<T> for T {
-    #[inline(always)]
+    #[inline]
     fn neg(&self) -> T { -*self }
 }
 
 impl Signed for T {
     /// Computes the absolute value
-    #[inline(always)]
+    #[inline]
     fn abs(&self) -> T {
         if self.is_negative() { -*self } else { *self }
     }
@@ -271,7 +271,7 @@ impl Signed for T {
     /// - `1` if the number is positive
     /// - `-1` if the number is negative
     ///
-    #[inline(always)]
+    #[inline]
     fn signum(&self) -> T {
         match *self {
             n if n > 0 =>  1,
@@ -281,11 +281,11 @@ impl Signed for T {
     }
 
     /// Returns true if the number is positive
-    #[inline(always)]
+    #[inline]
     fn is_positive(&self) -> bool { *self > 0 }
 
     /// Returns true if the number is negative
-    #[inline(always)]
+    #[inline]
     fn is_negative(&self) -> bool { *self < 0 }
 }
 
@@ -307,7 +307,7 @@ impl Integer for T {
     /// assert!((-1).div_floor(-2) ==  0);
     /// ~~~
     ///
-    #[inline(always)]
+    #[inline]
     fn div_floor(&self, other: &T) -> T {
         // Algorithm from [Daan Leijen. _Division and Modulus for Computer Scientists_,
         // December 2001](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf)
@@ -339,7 +339,7 @@ impl Integer for T {
     /// assert!((-1).mod_floor(-2) == -1);
     /// ~~~
     ///
-    #[inline(always)]
+    #[inline]
     fn mod_floor(&self, other: &T) -> T {
         // Algorithm from [Daan Leijen. _Division and Modulus for Computer Scientists_,
         // December 2001](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf)
@@ -351,7 +351,7 @@ impl Integer for T {
     }
 
     /// Calculates `div_floor` and `mod_floor` simultaneously
-    #[inline(always)]
+    #[inline]
     fn div_mod_floor(&self, other: &T) -> (T,T) {
         // Algorithm from [Daan Leijen. _Division and Modulus for Computer Scientists_,
         // December 2001](http://research.microsoft.com/pubs/151917/divmodnote-letter.pdf)
@@ -363,7 +363,7 @@ impl Integer for T {
     }
 
     /// Calculates `div` (`\`) and `rem` (`%`) simultaneously
-    #[inline(always)]
+    #[inline]
     fn div_rem(&self, other: &T) -> (T,T) {
         (*self / *other, *self % *other)
     }
@@ -373,7 +373,7 @@ impl Integer for T {
     ///
     /// The result is always positive
     ///
-    #[inline(always)]
+    #[inline]
     fn gcd(&self, other: &T) -> T {
         // Use Euclid's algorithm
         let mut m = *self, n = *other;
@@ -388,21 +388,21 @@ impl Integer for T {
     ///
     /// Calculates the Lowest Common Multiple (LCM) of the number and `other`
     ///
-    #[inline(always)]
+    #[inline]
     fn lcm(&self, other: &T) -> T {
         ((*self * *other) / self.gcd(other)).abs() // should not have to recaluculate abs
     }
 
     /// Returns `true` if the number can be divided by `other` without leaving a remainder
-    #[inline(always)]
+    #[inline]
     fn is_multiple_of(&self, other: &T) -> bool { *self % *other == 0 }
 
     /// Returns `true` if the number is divisible by `2`
-    #[inline(always)]
+    #[inline]
     fn is_even(&self) -> bool { self.is_multiple_of(&2) }
 
     /// Returns `true` if the number is not divisible by `2`
-    #[inline(always)]
+    #[inline]
     fn is_odd(&self) -> bool { !self.is_even() }
 }
 
@@ -410,45 +410,45 @@ impl Bitwise for T {}
 
 #[cfg(notest)]
 impl BitOr<T,T> for T {
-    #[inline(always)]
+    #[inline]
     fn bitor(&self, other: &T) -> T { *self | *other }
 }
 
 #[cfg(notest)]
 impl BitAnd<T,T> for T {
-    #[inline(always)]
+    #[inline]
     fn bitand(&self, other: &T) -> T { *self & *other }
 }
 
 #[cfg(notest)]
 impl BitXor<T,T> for T {
-    #[inline(always)]
+    #[inline]
     fn bitxor(&self, other: &T) -> T { *self ^ *other }
 }
 
 #[cfg(notest)]
 impl Shl<T,T> for T {
-    #[inline(always)]
+    #[inline]
     fn shl(&self, other: &T) -> T { *self << *other }
 }
 
 #[cfg(notest)]
 impl Shr<T,T> for T {
-    #[inline(always)]
+    #[inline]
     fn shr(&self, other: &T) -> T { *self >> *other }
 }
 
 #[cfg(notest)]
 impl Not<T> for T {
-    #[inline(always)]
+    #[inline]
     fn not(&self) -> T { !*self }
 }
 
 impl Bounded for T {
-    #[inline(always)]
+    #[inline]
     fn min_value() -> T { min_value }
 
-    #[inline(always)]
+    #[inline]
     fn max_value() -> T { max_value }
 }
 
@@ -457,35 +457,35 @@ impl Int for T {}
 // String conversion functions and impl str -> num
 
 /// Parse a string as a number in base 10.
-#[inline(always)]
+#[inline]
 pub fn from_str(s: &str) -> Option<T> {
     strconv::from_str_common(s, 10u, true, false, false,
                          strconv::ExpNone, false, false)
 }
 
 /// Parse a string as a number in the given base.
-#[inline(always)]
+#[inline]
 pub fn from_str_radix(s: &str, radix: uint) -> Option<T> {
     strconv::from_str_common(s, radix, true, false, false,
                          strconv::ExpNone, false, false)
 }
 
 /// Parse a byte slice as a number in the given base.
-#[inline(always)]
+#[inline]
 pub fn parse_bytes(buf: &[u8], radix: uint) -> Option<T> {
     strconv::from_str_bytes_common(buf, radix, true, false, false,
                                strconv::ExpNone, false, false)
 }
 
 impl FromStr for T {
-    #[inline(always)]
+    #[inline]
     fn from_str(s: &str) -> Option<T> {
         from_str(s)
     }
 }
 
 impl FromStrRadix for T {
-    #[inline(always)]
+    #[inline]
     fn from_str_radix(s: &str, radix: uint) -> Option<T> {
         from_str_radix(s, radix)
     }
@@ -494,7 +494,7 @@ impl FromStrRadix for T {
 // String conversion functions and impl num -> str
 
 /// Convert to a string as a byte slice in a given base.
-#[inline(always)]
+#[inline]
 pub fn to_str_bytes<U>(n: T, radix: uint, f: &fn(v: &[u8]) -> U) -> U {
     let (buf, _) = strconv::to_str_bytes_common(&n, radix, false,
                             strconv::SignNeg, strconv::DigAll);
@@ -502,7 +502,7 @@ pub fn to_str_bytes<U>(n: T, radix: uint, f: &fn(v: &[u8]) -> U) -> U {
 }
 
 /// Convert to a string in base 10.
-#[inline(always)]
+#[inline]
 pub fn to_str(num: T) -> ~str {
     let (buf, _) = strconv::to_str_common(&num, 10u, false,
                                       strconv::SignNeg, strconv::DigAll);
@@ -510,7 +510,7 @@ pub fn to_str(num: T) -> ~str {
 }
 
 /// Convert to a string in a given base.
-#[inline(always)]
+#[inline]
 pub fn to_str_radix(num: T, radix: uint) -> ~str {
     let (buf, _) = strconv::to_str_common(&num, radix, false,
                                       strconv::SignNeg, strconv::DigAll);
@@ -518,14 +518,14 @@ pub fn to_str_radix(num: T, radix: uint) -> ~str {
 }
 
 impl ToStr for T {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str {
         to_str(*self)
     }
 }
 
 impl ToStrRadix for T {
-    #[inline(always)]
+    #[inline]
     fn to_str_radix(&self, radix: uint) -> ~str {
         to_str_radix(*self, radix)
     }

@@ -74,7 +74,7 @@ pub fn fail_borrowed() {
 
 // FIXME #4942: Make these signatures agree with exchange_alloc's signatures
 #[lang="exchange_malloc"]
-#[inline(always)]
+#[inline]
 pub unsafe fn exchange_malloc(td: *c_char, size: uintptr_t) -> *c_char {
     transmute(exchange_alloc::malloc(transmute(td), transmute(size)))
 }
@@ -83,7 +83,7 @@ pub unsafe fn exchange_malloc(td: *c_char, size: uintptr_t) -> *c_char {
 // inside a landing pad may corrupt the state of the exception handler. If a
 // problem occurs, call exit instead.
 #[lang="exchange_free"]
-#[inline(always)]
+#[inline]
 pub unsafe fn exchange_free(ptr: *c_char) {
     exchange_alloc::free(transmute(ptr))
 }
@@ -122,14 +122,14 @@ pub unsafe fn local_free(ptr: *c_char) {
 }
 
 #[lang="borrow_as_imm"]
-#[inline(always)]
+#[inline]
 pub unsafe fn borrow_as_imm(a: *u8) {
     let a: *mut BoxRepr = transmute(a);
     (*a).header.ref_count |= FROZEN_BIT;
 }
 
 #[lang="return_to_mut"]
-#[inline(always)]
+#[inline]
 pub unsafe fn return_to_mut(a: *u8) {
     // Sometimes the box is null, if it is conditionally frozen.
     // See e.g. #4904.
@@ -140,7 +140,7 @@ pub unsafe fn return_to_mut(a: *u8) {
 }
 
 #[lang="check_not_borrowed"]
-#[inline(always)]
+#[inline]
 pub unsafe fn check_not_borrowed(a: *u8) {
     let a: *mut BoxRepr = transmute(a);
     if ((*a).header.ref_count & FROZEN_BIT) != 0 {
@@ -149,7 +149,7 @@ pub unsafe fn check_not_borrowed(a: *u8) {
 }
 
 #[lang="strdup_uniq"]
-#[inline(always)]
+#[inline]
 pub unsafe fn strdup_uniq(ptr: *c_uchar, len: uint) -> ~str {
     str::raw::from_buf_len(ptr, len)
 }

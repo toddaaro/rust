@@ -29,25 +29,25 @@ pub trait Clone {
 
 impl Clone for () {
     /// Return a copy of the value.
-    #[inline(always)]
+    #[inline]
     fn clone(&self) -> () { () }
 }
 
 impl<T:Clone> Clone for ~T {
     /// Return a deep copy of the owned box.
-    #[inline(always)]
+    #[inline]
     fn clone(&self) -> ~T { ~(**self).clone() }
 }
 
 impl<T> Clone for @T {
     /// Return a shallow copy of the managed box.
-    #[inline(always)]
+    #[inline]
     fn clone(&self) -> @T { *self }
 }
 
 impl<T> Clone for @mut T {
     /// Return a shallow copy of the managed box.
-    #[inline(always)]
+    #[inline]
     fn clone(&self) -> @mut T { *self }
 }
 
@@ -55,7 +55,7 @@ macro_rules! clone_impl(
     ($t:ty) => {
         impl Clone for $t {
             /// Return a copy of the value.
-            #[inline(always)]
+            #[inline]
             fn clone(&self) -> $t { *self }
         }
     }

@@ -17,16 +17,16 @@ Miscellaneous helpers for common patterns.
 use prelude::*;
 
 /// The identity function.
-#[inline(always)]
+#[inline]
 pub fn id<T>(x: T) -> T { x }
 
 /// Ignores a value.
-#[inline(always)]
+#[inline]
 pub fn ignore<T>(_x: T) { }
 
 /// Sets `*ptr` to `new_value`, invokes `op()`, and then restores the
 /// original value of `*ptr`.
-#[inline(always)]
+#[inline]
 pub fn with<T:Copy,R>(
     ptr: &mut T,
     new_value: T,
@@ -46,7 +46,7 @@ pub fn with<T:Copy,R>(
  * Swap the values at two mutable locations of the same type, without
  * deinitialising or copying either one.
  */
-#[inline(always)]
+#[inline]
 pub fn swap<T>(x: &mut T, y: &mut T) {
     *x <-> *y;
 }
@@ -55,7 +55,7 @@ pub fn swap<T>(x: &mut T, y: &mut T) {
  * Replace the value at a mutable location with a new one, returning the old
  * value, without deinitialising or copying either one.
  */
-#[inline(always)]
+#[inline]
 pub fn replace<T>(dest: &mut T, src: T) -> T {
     let mut tmp = src;
     swap(dest, &mut tmp);

@@ -77,21 +77,21 @@ pub fn from_bytes_slice<'a>(vector: &'a [u8]) -> &'a str {
 }
 
 /// Copy a slice into a new unique str
-#[inline(always)]
+#[inline]
 pub fn from_slice(s: &str) -> ~str {
     unsafe { raw::slice_bytes_owned(s, 0, len(s)) }
 }
 
 impl ToStr for ~str {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str { from_slice(*self) }
 }
 impl<'self> ToStr for &'self str {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str { from_slice(*self) }
 }
 impl ToStr for @str {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str { from_slice(*self) }
 }
 
@@ -196,7 +196,7 @@ pub fn from_chars(chs: &[char]) -> ~str {
 }
 
 /// Appends a string slice to the back of a string, without overallocating
-#[inline(always)]
+#[inline]
 pub fn push_str_no_overallocate(lhs: &mut ~str, rhs: &str) {
     unsafe {
         let llen = lhs.len();
@@ -214,7 +214,7 @@ pub fn push_str_no_overallocate(lhs: &mut ~str, rhs: &str) {
 }
 
 /// Appends a string slice to the back of a string
-#[inline(always)]
+#[inline]
 pub fn push_str(lhs: &mut ~str, rhs: &str) {
     unsafe {
         let llen = lhs.len();
@@ -232,7 +232,7 @@ pub fn push_str(lhs: &mut ~str, rhs: &str) {
 }
 
 /// Concatenate two strings together
-#[inline(always)]
+#[inline]
 pub fn append(lhs: ~str, rhs: &str) -> ~str {
     let mut v = lhs;
     push_str_no_overallocate(&mut v, rhs);
@@ -518,7 +518,7 @@ pub fn to_bytes(s: &str) -> ~[u8] {
 }
 
 /// Work with the string as a byte slice, not including trailing null.
-#[inline(always)]
+#[inline]
 pub fn byte_slice<T>(s: &str, f: &fn(v: &[u8]) -> T) -> T {
     do as_buf(s) |p,n| {
         unsafe { vec::raw::buf_as_slice(p, n-1u, f) }
@@ -527,7 +527,7 @@ pub fn byte_slice<T>(s: &str, f: &fn(v: &[u8]) -> T) -> T {
 
 /// Work with the string as a byte slice, not including trailing null, without
 /// a callback.
-#[inline(always)]
+#[inline]
 pub fn byte_slice_no_callback<'a>(s: &'a str) -> &'a [u8] {
     unsafe {
         cast::transmute(s)
@@ -1032,37 +1032,37 @@ fn gt(a: &str, b: &str) -> bool {
 
 #[cfg(notest)]
 impl<'self> Eq for &'self str {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: & &'self str) -> bool {
         eq_slice((*self), (*other))
     }
-    #[inline(always)]
+    #[inline]
     fn ne(&self, other: & &'self str) -> bool { !(*self).eq(other) }
 }
 
 #[cfg(notest)]
 impl Eq for ~str {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &~str) -> bool {
         eq_slice((*self), (*other))
     }
-    #[inline(always)]
+    #[inline]
     fn ne(&self, other: &~str) -> bool { !(*self).eq(other) }
 }
 
 #[cfg(notest)]
 impl Eq for @str {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &@str) -> bool {
         eq_slice((*self), (*other))
     }
-    #[inline(always)]
+    #[inline]
     fn ne(&self, other: &@str) -> bool { !(*self).eq(other) }
 }
 
 #[cfg(notest)]
 impl<'self> TotalEq for &'self str {
-    #[inline(always)]
+    #[inline]
     fn equals(&self, other: & &'self str) -> bool {
         eq_slice((*self), (*other))
     }
@@ -1070,7 +1070,7 @@ impl<'self> TotalEq for &'self str {
 
 #[cfg(notest)]
 impl TotalEq for ~str {
-    #[inline(always)]
+    #[inline]
     fn equals(&self, other: &~str) -> bool {
         eq_slice((*self), (*other))
     }
@@ -1078,7 +1078,7 @@ impl TotalEq for ~str {
 
 #[cfg(notest)]
 impl TotalEq for @str {
-    #[inline(always)]
+    #[inline]
     fn equals(&self, other: &@str) -> bool {
         eq_slice((*self), (*other))
     }
@@ -1086,43 +1086,43 @@ impl TotalEq for @str {
 
 #[cfg(notest)]
 impl Ord for ~str {
-    #[inline(always)]
+    #[inline]
     fn lt(&self, other: &~str) -> bool { lt((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn le(&self, other: &~str) -> bool { le((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn ge(&self, other: &~str) -> bool { ge((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn gt(&self, other: &~str) -> bool { gt((*self), (*other)) }
 }
 
 #[cfg(notest)]
 impl<'self> Ord for &'self str {
-    #[inline(always)]
+    #[inline]
     fn lt(&self, other: & &'self str) -> bool { lt((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn le(&self, other: & &'self str) -> bool { le((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn ge(&self, other: & &'self str) -> bool { ge((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn gt(&self, other: & &'self str) -> bool { gt((*self), (*other)) }
 }
 
 #[cfg(notest)]
 impl Ord for @str {
-    #[inline(always)]
+    #[inline]
     fn lt(&self, other: &@str) -> bool { lt((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn le(&self, other: &@str) -> bool { le((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn ge(&self, other: &@str) -> bool { ge((*self), (*other)) }
-    #[inline(always)]
+    #[inline]
     fn gt(&self, other: &@str) -> bool { gt((*self), (*other)) }
 }
 
 #[cfg(notest)]
 impl<'self> Equiv<~str> for &'self str {
-    #[inline(always)]
+    #[inline]
     fn equiv(&self, other: &~str) -> bool { eq_slice(*self, *other) }
 }
 
@@ -1157,13 +1157,13 @@ pub fn map(ss: &str, ff: &fn(char) -> char) -> ~str {
 }
 
 /// Iterate over the bytes in a string
-#[inline(always)]
+#[inline]
 pub fn each(s: &str, it: &fn(u8) -> bool) {
     eachi(s, |_i, b| it(b))
 }
 
 /// Iterate over the bytes in a string, with indices
-#[inline(always)]
+#[inline]
 pub fn eachi(s: &str, it: &fn(uint, u8) -> bool) {
     let mut pos = 0;
     let len = s.len();
@@ -1175,13 +1175,13 @@ pub fn eachi(s: &str, it: &fn(uint, u8) -> bool) {
 }
 
 /// Iterate over the bytes in a string in reverse
-#[inline(always)]
+#[inline]
 pub fn each_reverse(s: &str, it: &fn(u8) -> bool) {
     eachi_reverse(s, |_i, b| it(b) )
 }
 
 /// Iterate over the bytes in a string in reverse, with indices
-#[inline(always)]
+#[inline]
 pub fn eachi_reverse(s: &str, it: &fn(uint, u8) -> bool) {
     let mut pos = s.len();
     while pos > 0 {
@@ -1191,7 +1191,7 @@ pub fn eachi_reverse(s: &str, it: &fn(uint, u8) -> bool) {
 }
 
 /// Iterate over each char of a string, without allocating
-#[inline(always)]
+#[inline]
 pub fn each_char(s: &str, it: &fn(char) -> bool) {
     let mut i = 0;
     let len = len(s);
@@ -1203,7 +1203,7 @@ pub fn each_char(s: &str, it: &fn(char) -> bool) {
 }
 
 /// Iterates over the chars in a string, with indices
-#[inline(always)]
+#[inline]
 pub fn each_chari(s: &str, it: &fn(uint, char) -> bool) {
     let mut pos = 0;
     let mut ch_pos = 0u;
@@ -1217,13 +1217,13 @@ pub fn each_chari(s: &str, it: &fn(uint, char) -> bool) {
 }
 
 /// Iterates over the chars in a string in reverse
-#[inline(always)]
+#[inline]
 pub fn each_char_reverse(s: &str, it: &fn(char) -> bool) {
     each_chari_reverse(s, |_, c| it(c))
 }
 
 // Iterates over the chars in a string in reverse, with indices
-#[inline(always)]
+#[inline]
 pub fn each_chari_reverse(s: &str, it: &fn(uint, char) -> bool) {
     let mut pos = s.len();
     let mut ch_pos = s.char_len();
@@ -1702,7 +1702,7 @@ Section: String properties
 */
 
 /// Returns true if the string has length 0
-#[inline(always)]
+#[inline]
 pub fn is_empty(s: &str) -> bool { len(s) == 0u }
 
 /**
@@ -1724,13 +1724,13 @@ fn is_alphanumeric(s: &str) -> bool {
 }
 
 /// Returns the string length/size in bytes not counting the null terminator
-#[inline(always)]
+#[inline]
 pub fn len(s: &str) -> uint {
     do as_buf(s) |_p, n| { n - 1u }
 }
 
 /// Returns the number of characters that a string holds
-#[inline(always)]
+#[inline]
 pub fn char_len(s: &str) -> uint { count_chars(s, 0u, len(s)) }
 
 /*
@@ -2156,7 +2156,7 @@ pub fn as_c_str<T>(s: &str, f: &fn(*libc::c_char) -> T) -> T {
  * indexable area for a null byte, as is the case in slices pointing
  * to full strings, or suffixes of them.
  */
-#[inline(always)]
+#[inline]
 pub fn as_buf<T>(s: &str, f: &fn(*u8, uint) -> T) -> T {
     unsafe {
         let v : *(*u8,uint) = transmute(&s);
@@ -2180,7 +2180,7 @@ pub fn as_buf<T>(s: &str, f: &fn(*u8, uint) -> T) -> T {
  * assert!(subslice_offset(string, lines[2]) == 4); // &"c"
  * ~~~
  */
-#[inline(always)]
+#[inline]
 pub fn subslice_offset(outer: &str, inner: &str) -> uint {
     do as_buf(outer) |a, a_len| {
         do as_buf(inner) |b, b_len| {
@@ -2212,7 +2212,7 @@ pub fn subslice_offset(outer: &str, inner: &str) -> uint {
  * * s - A string
  * * n - The number of bytes to reserve space for
  */
-#[inline(always)]
+#[inline]
 pub fn reserve(s: &mut ~str, n: uint) {
     unsafe {
         let v: *mut ~[u8] = cast::transmute(s);
@@ -2240,7 +2240,7 @@ pub fn reserve(s: &mut ~str, n: uint) {
  * * s - A string
  * * n - The number of bytes to reserve space for
  */
-#[inline(always)]
+#[inline]
 pub fn reserve_at_least(s: &mut ~str, n: uint) {
     reserve(s, uint::next_power_of_two(n + 1u) - 1u)
 }
@@ -2457,7 +2457,7 @@ pub mod traits {
     use str::append;
 
     impl<'self> Add<&'self str,~str> for ~str {
-        #[inline(always)]
+        #[inline]
         fn add(&self, rhs: & &'self str) -> ~str {
             append(copy *self, (*rhs))
         }
@@ -2605,7 +2605,7 @@ impl<'self> StrSlice<'self> for &'self str {
     #[inline]
     fn is_alphanumeric(&self) -> bool { is_alphanumeric(*self) }
     /// Returns the size in bytes not counting the null terminator
-    #[inline(always)]
+    #[inline]
     fn len(&self) -> uint { len(*self) }
     /// Returns the number of characters that a string holds
     #[inline]
@@ -2726,7 +2726,7 @@ impl OwnedStr for ~str {
 }
 
 impl Clone for ~str {
-    #[inline(always)]
+    #[inline]
     fn clone(&self) -> ~str {
         from_slice(*self)
     }

@@ -23,7 +23,7 @@ pub enum Either<T, U> {
     Right(U)
 }
 
-#[inline(always)]
+#[inline]
 pub fn either<T, U, V>(f_left: &fn(&T) -> V,
                        f_right: &fn(&U) -> V, value: &Either<T, U>) -> V {
     /*!
@@ -86,7 +86,7 @@ pub fn partition<T, U>(eithers: ~[Either<T, U>])
     return (lefts, rights);
 }
 
-#[inline(always)]
+#[inline]
 pub fn flip<T, U>(eith: Either<T, U>) -> Either<U, T> {
     //! Flips between left and right of a given either
 
@@ -96,7 +96,7 @@ pub fn flip<T, U>(eith: Either<T, U>) -> Either<U, T> {
     }
 }
 
-#[inline(always)]
+#[inline]
 pub fn to_result<T, U>(eith: Either<T, U>)
     -> Result<U, T> {
     /*!
@@ -112,21 +112,21 @@ pub fn to_result<T, U>(eith: Either<T, U>)
     }
 }
 
-#[inline(always)]
+#[inline]
 pub fn is_left<T, U>(eith: &Either<T, U>) -> bool {
     //! Checks whether the given value is a left
 
     match *eith { Left(_) => true, _ => false }
 }
 
-#[inline(always)]
+#[inline]
 pub fn is_right<T, U>(eith: &Either<T, U>) -> bool {
     //! Checks whether the given value is a right
 
     match *eith { Right(_) => true, _ => false }
 }
 
-#[inline(always)]
+#[inline]
 pub fn unwrap_left<T,U>(eith: Either<T,U>) -> T {
     //! Retrieves the value in the left branch. Fails if the either is Right.
 
@@ -136,7 +136,7 @@ pub fn unwrap_left<T,U>(eith: Either<T,U>) -> T {
     }
 }
 
-#[inline(always)]
+#[inline]
 pub fn unwrap_right<T,U>(eith: Either<T,U>) -> U {
     //! Retrieves the value in the right branch. Fails if the either is Left.
 
@@ -147,27 +147,27 @@ pub fn unwrap_right<T,U>(eith: Either<T,U>) -> U {
 }
 
 pub impl<T, U> Either<T, U> {
-    #[inline(always)]
+    #[inline]
     fn either<V>(&self, f_left: &fn(&T) -> V, f_right: &fn(&U) -> V) -> V {
         either(f_left, f_right, self)
     }
 
-    #[inline(always)]
+    #[inline]
     fn flip(self) -> Either<U, T> { flip(self) }
 
-    #[inline(always)]
+    #[inline]
     fn to_result(self) -> Result<U, T> { to_result(self) }
 
-    #[inline(always)]
+    #[inline]
     fn is_left(&self) -> bool { is_left(self) }
 
-    #[inline(always)]
+    #[inline]
     fn is_right(&self) -> bool { is_right(self) }
 
-    #[inline(always)]
+    #[inline]
     fn unwrap_left(self) -> T { unwrap_left(self) }
 
-    #[inline(always)]
+    #[inline]
     fn unwrap_right(self) -> U { unwrap_right(self) }
 }
 

@@ -59,7 +59,7 @@ pub trait Times {
  * assert_eq!(xs, ys);
  * ~~~
  */
-#[inline(always)]
+#[inline]
 pub fn iter_to_vec<T>(iter: &fn(f: &fn(T) -> bool)) -> ~[T] {
     let mut v = ~[];
     for iter |x| { v.push(x) }
@@ -77,7 +77,7 @@ pub fn iter_to_vec<T>(iter: &fn(f: &fn(T) -> bool)) -> ~[T] {
  * assert!(!any(|&x: &uint| x > 5, |f| xs.each(f)));
  * ~~~~
  */
-#[inline(always)]
+#[inline]
 pub fn any<T>(predicate: &fn(T) -> bool, iter: &fn(f: &fn(T) -> bool)) -> bool {
     for iter |x| {
         if predicate(x) {
@@ -97,7 +97,7 @@ pub fn any<T>(predicate: &fn(T) -> bool, iter: &fn(f: &fn(T) -> bool)) -> bool {
  * assert!(!all(|&x: &uint| x < 5, |f| uint::range(1, 6, f)));
  * ~~~~
  */
-#[inline(always)]
+#[inline]
 pub fn all<T>(predicate: &fn(T) -> bool, iter: &fn(f: &fn(T) -> bool)) -> bool {
     for iter |x| {
         if !predicate(x) {
@@ -117,7 +117,7 @@ pub fn all<T>(predicate: &fn(T) -> bool, iter: &fn(f: &fn(T) -> bool)) -> bool {
  * assert_eq!(*find(|& &x: & &uint| x > 3, |f| xs.each(f)).unwrap(), 4);
  * ~~~~
  */
-#[inline(always)]
+#[inline]
 pub fn find<T>(predicate: &fn(&T) -> bool, iter: &fn(f: &fn(T) -> bool)) -> Option<T> {
     for iter |x| {
         if predicate(&x) {

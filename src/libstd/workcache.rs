@@ -100,7 +100,7 @@ struct WorkKey {
 }
 
 impl to_bytes::IterBytes for WorkKey {
-    #[inline(always)]
+    #[inline]
     fn iter_bytes(&self, lsb0: bool, f: to_bytes::Cb) {
         let mut flag = true;
         self.kind.iter_bytes(lsb0, |bytes| {flag = f(bytes); flag});

@@ -15,7 +15,7 @@ use prelude::*;
 
 pub use cmath::c_float_targ_consts::*;
 
-// An inner module is required to get the #[inline(always)] attribute on the
+// An inner module is required to get the #[inline] attribute on the
 // functions.
 pub use self::delegated::*;
 
@@ -35,7 +35,7 @@ macro_rules! delegate(
             use unstable::intrinsics;
 
             $(
-                #[inline(always)]
+                #[inline]
                 pub fn $name($( $arg : $arg_ty ),*) -> $rv {
                     unsafe {
                         $bound_name($( $arg ),*)
@@ -112,37 +112,37 @@ pub static infinity: f32 = 1.0_f32/0.0_f32;
 
 pub static neg_infinity: f32 = -1.0_f32/0.0_f32;
 
-#[inline(always)]
+#[inline]
 pub fn add(x: f32, y: f32) -> f32 { return x + y; }
 
-#[inline(always)]
+#[inline]
 pub fn sub(x: f32, y: f32) -> f32 { return x - y; }
 
-#[inline(always)]
+#[inline]
 pub fn mul(x: f32, y: f32) -> f32 { return x * y; }
 
-#[inline(always)]
+#[inline]
 pub fn div(x: f32, y: f32) -> f32 { return x / y; }
 
-#[inline(always)]
+#[inline]
 pub fn rem(x: f32, y: f32) -> f32 { return x % y; }
 
-#[inline(always)]
+#[inline]
 pub fn lt(x: f32, y: f32) -> bool { return x < y; }
 
-#[inline(always)]
+#[inline]
 pub fn le(x: f32, y: f32) -> bool { return x <= y; }
 
-#[inline(always)]
+#[inline]
 pub fn eq(x: f32, y: f32) -> bool { return x == y; }
 
-#[inline(always)]
+#[inline]
 pub fn ne(x: f32, y: f32) -> bool { return x != y; }
 
-#[inline(always)]
+#[inline]
 pub fn ge(x: f32, y: f32) -> bool { return x >= y; }
 
-#[inline(always)]
+#[inline]
 pub fn gt(x: f32, y: f32) -> bool { return x > y; }
 
 
@@ -195,7 +195,7 @@ pub mod consts {
     pub static ln_10: f32 = 2.30258509299404568401799145468436421_f32;
 }
 
-#[inline(always)]
+#[inline]
 pub fn logarithm(n: f32, b: f32) -> f32 {
     return log2(n) / log2(b);
 }
@@ -204,40 +204,40 @@ impl Num for f32 {}
 
 #[cfg(notest)]
 impl Eq for f32 {
-    #[inline(always)]
+    #[inline]
     fn eq(&self, other: &f32) -> bool { (*self) == (*other) }
-    #[inline(always)]
+    #[inline]
     fn ne(&self, other: &f32) -> bool { (*self) != (*other) }
 }
 
 #[cfg(notest)]
 impl Ord for f32 {
-    #[inline(always)]
+    #[inline]
     fn lt(&self, other: &f32) -> bool { (*self) < (*other) }
-    #[inline(always)]
+    #[inline]
     fn le(&self, other: &f32) -> bool { (*self) <= (*other) }
-    #[inline(always)]
+    #[inline]
     fn ge(&self, other: &f32) -> bool { (*self) >= (*other) }
-    #[inline(always)]
+    #[inline]
     fn gt(&self, other: &f32) -> bool { (*self) > (*other) }
 }
 
 impl Orderable for f32 {
     /// Returns `NaN` if either of the numbers are `NaN`.
-    #[inline(always)]
+    #[inline]
     fn min(&self, other: &f32) -> f32 {
         if self.is_NaN() || other.is_NaN() { Float::NaN() } else { fmin(*self, *other) }
     }
 
     /// Returns `NaN` if either of the numbers are `NaN`.
-    #[inline(always)]
+    #[inline]
     fn max(&self, other: &f32) -> f32 {
         if self.is_NaN() || other.is_NaN() { Float::NaN() } else { fmax(*self, *other) }
     }
 
     /// Returns the number constrained within the range `mn <= self <= mx`.
     /// If any of the numbers are `NaN` then `NaN` is returned.
-    #[inline(always)]
+    #[inline]
     fn clamp(&self, mn: &f32, mx: &f32) -> f32 {
         if self.is_NaN() { *self }
         else if !(*self <= *mx) { *mx }
@@ -247,58 +247,58 @@ impl Orderable for f32 {
 }
 
 impl Zero for f32 {
-    #[inline(always)]
+    #[inline]
     fn zero() -> f32 { 0.0 }
 
     /// Returns true if the number is equal to either `0.0` or `-0.0`
-    #[inline(always)]
+    #[inline]
     fn is_zero(&self) -> bool { *self == 0.0 || *self == -0.0 }
 }
 
 impl One for f32 {
-    #[inline(always)]
+    #[inline]
     fn one() -> f32 { 1.0 }
 }
 
 #[cfg(notest)]
 impl Add<f32,f32> for f32 {
-    #[inline(always)]
+    #[inline]
     fn add(&self, other: &f32) -> f32 { *self + *other }
 }
 
 #[cfg(notest)]
 impl Sub<f32,f32> for f32 {
-    #[inline(always)]
+    #[inline]
     fn sub(&self, other: &f32) -> f32 { *self - *other }
 }
 
 #[cfg(notest)]
 impl Mul<f32,f32> for f32 {
-    #[inline(always)]
+    #[inline]
     fn mul(&self, other: &f32) -> f32 { *self * *other }
 }
 
 #[cfg(notest)]
 impl Div<f32,f32> for f32 {
-    #[inline(always)]
+    #[inline]
     fn div(&self, other: &f32) -> f32 { *self / *other }
 }
 
 #[cfg(notest)]
 impl Rem<f32,f32> for f32 {
-    #[inline(always)]
+    #[inline]
     fn rem(&self, other: &f32) -> f32 { *self % *other }
 }
 
 #[cfg(notest)]
 impl Neg<f32> for f32 {
-    #[inline(always)]
+    #[inline]
     fn neg(&self) -> f32 { -*self }
 }
 
 impl Signed for f32 {
     /// Computes the absolute value. Returns `NaN` if the number is `NaN`.
-    #[inline(always)]
+    #[inline]
     fn abs(&self) -> f32 { abs(*self) }
 
     ///
@@ -308,35 +308,35 @@ impl Signed for f32 {
     /// - `-1.0` if the number is negative, `-0.0` or `neg_infinity`
     /// - `NaN` if the number is NaN
     ///
-    #[inline(always)]
+    #[inline]
     fn signum(&self) -> f32 {
         if self.is_NaN() { NaN } else { copysign(1.0, *self) }
     }
 
     /// Returns `true` if the number is positive, including `+0.0` and `infinity`
-    #[inline(always)]
+    #[inline]
     fn is_positive(&self) -> bool { *self > 0.0 || (1.0 / *self) == infinity }
 
     /// Returns `true` if the number is negative, including `-0.0` and `neg_infinity`
-    #[inline(always)]
+    #[inline]
     fn is_negative(&self) -> bool { *self < 0.0 || (1.0 / *self) == neg_infinity }
 }
 
 impl Round for f32 {
     /// Round half-way cases toward `neg_infinity`
-    #[inline(always)]
+    #[inline]
     fn floor(&self) -> f32 { floor(*self) }
 
     /// Round half-way cases toward `infinity`
-    #[inline(always)]
+    #[inline]
     fn ceil(&self) -> f32 { ceil(*self) }
 
     /// Round half-way cases away from `0.0`
-    #[inline(always)]
+    #[inline]
     fn round(&self) -> f32 { round(*self) }
 
     /// The integer part of the number (rounds towards `0.0`)
-    #[inline(always)]
+    #[inline]
     fn trunc(&self) -> f32 { trunc(*self) }
 
     ///
@@ -346,226 +346,226 @@ impl Round for f32 {
     /// assert!(x == trunc(x) + fract(x))
     /// ~~~
     ///
-    #[inline(always)]
+    #[inline]
     fn fract(&self) -> f32 { *self - self.trunc() }
 }
 
 impl Fractional for f32 {
     /// The reciprocal (multiplicative inverse) of the number
-    #[inline(always)]
+    #[inline]
     fn recip(&self) -> f32 { 1.0 / *self }
 }
 
 impl Algebraic for f32 {
-    #[inline(always)]
+    #[inline]
     fn pow(&self, n: f32) -> f32 { pow(*self, n) }
 
-    #[inline(always)]
+    #[inline]
     fn sqrt(&self) -> f32 { sqrt(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn rsqrt(&self) -> f32 { self.sqrt().recip() }
 
-    #[inline(always)]
+    #[inline]
     fn cbrt(&self) -> f32 { cbrt(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn hypot(&self, other: f32) -> f32 { hypot(*self, other) }
 }
 
 impl Trigonometric for f32 {
-    #[inline(always)]
+    #[inline]
     fn sin(&self) -> f32 { sin(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn cos(&self) -> f32 { cos(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn tan(&self) -> f32 { tan(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn asin(&self) -> f32 { asin(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn acos(&self) -> f32 { acos(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn atan(&self) -> f32 { atan(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn atan2(&self, other: f32) -> f32 { atan2(*self, other) }
 }
 
 impl Exponential for f32 {
-    #[inline(always)]
+    #[inline]
     fn exp(&self) -> f32 { exp(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn exp2(&self) -> f32 { exp2(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn expm1(&self) -> f32 { expm1(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn log(&self) -> f32 { ln(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn log2(&self) -> f32 { log2(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn log10(&self) -> f32 { log10(*self) }
 }
 
 impl Hyperbolic for f32 {
-    #[inline(always)]
+    #[inline]
     fn sinh(&self) -> f32 { sinh(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn cosh(&self) -> f32 { cosh(*self) }
 
-    #[inline(always)]
+    #[inline]
     fn tanh(&self) -> f32 { tanh(*self) }
 }
 
 impl Real for f32 {
     /// Archimedes' constant
-    #[inline(always)]
+    #[inline]
     fn pi() -> f32 { 3.14159265358979323846264338327950288 }
 
     /// 2.0 * pi
-    #[inline(always)]
+    #[inline]
     fn two_pi() -> f32 { 6.28318530717958647692528676655900576 }
 
     /// pi / 2.0
-    #[inline(always)]
+    #[inline]
     fn frac_pi_2() -> f32 { 1.57079632679489661923132169163975144 }
 
     /// pi / 3.0
-    #[inline(always)]
+    #[inline]
     fn frac_pi_3() -> f32 { 1.04719755119659774615421446109316763 }
 
     /// pi / 4.0
-    #[inline(always)]
+    #[inline]
     fn frac_pi_4() -> f32 { 0.785398163397448309615660845819875721 }
 
     /// pi / 6.0
-    #[inline(always)]
+    #[inline]
     fn frac_pi_6() -> f32 { 0.52359877559829887307710723054658381 }
 
     /// pi / 8.0
-    #[inline(always)]
+    #[inline]
     fn frac_pi_8() -> f32 { 0.39269908169872415480783042290993786 }
 
     /// 1 .0/ pi
-    #[inline(always)]
+    #[inline]
     fn frac_1_pi() -> f32 { 0.318309886183790671537767526745028724 }
 
     /// 2.0 / pi
-    #[inline(always)]
+    #[inline]
     fn frac_2_pi() -> f32 { 0.636619772367581343075535053490057448 }
 
     /// 2.0 / sqrt(pi)
-    #[inline(always)]
+    #[inline]
     fn frac_2_sqrtpi() -> f32 { 1.12837916709551257389615890312154517 }
 
     /// sqrt(2.0)
-    #[inline(always)]
+    #[inline]
     fn sqrt2() -> f32 { 1.41421356237309504880168872420969808 }
 
     /// 1.0 / sqrt(2.0)
-    #[inline(always)]
+    #[inline]
     fn frac_1_sqrt2() -> f32 { 0.707106781186547524400844362104849039 }
 
     /// Euler's number
-    #[inline(always)]
+    #[inline]
     fn e() -> f32 { 2.71828182845904523536028747135266250 }
 
     /// log2(e)
-    #[inline(always)]
+    #[inline]
     fn log2_e() -> f32 { 1.44269504088896340735992468100189214 }
 
     /// log10(e)
-    #[inline(always)]
+    #[inline]
     fn log10_e() -> f32 { 0.434294481903251827651128918916605082 }
 
     /// log(2.0)
-    #[inline(always)]
+    #[inline]
     fn log_2() -> f32 { 0.693147180559945309417232121458176568 }
 
     /// log(10.0)
-    #[inline(always)]
+    #[inline]
     fn log_10() -> f32 { 2.30258509299404568401799145468436421 }
 
     /// Converts to degrees, assuming the number is in radians
-    #[inline(always)]
+    #[inline]
     fn to_degrees(&self) -> f32 { *self * (180.0 / Real::pi::<f32>()) }
 
     /// Converts to radians, assuming the number is in degrees
-    #[inline(always)]
+    #[inline]
     fn to_radians(&self) -> f32 { *self * (Real::pi::<f32>() / 180.0) }
 }
 
 impl Bounded for f32 {
-    #[inline(always)]
+    #[inline]
     fn min_value() -> f32 { 1.17549435e-38 }
 
-    #[inline(always)]
+    #[inline]
     fn max_value() -> f32 { 3.40282347e+38 }
 }
 
 impl Primitive for f32 {
-    #[inline(always)]
+    #[inline]
     fn bits() -> uint { 32 }
 
-    #[inline(always)]
+    #[inline]
     fn bytes() -> uint { Primitive::bits::<f32>() / 8 }
 }
 
 impl Float for f32 {
-    #[inline(always)]
+    #[inline]
     fn NaN() -> f32 { 0.0 / 0.0 }
 
-    #[inline(always)]
+    #[inline]
     fn infinity() -> f32 { 1.0 / 0.0 }
 
-    #[inline(always)]
+    #[inline]
     fn neg_infinity() -> f32 { -1.0 / 0.0 }
 
-    #[inline(always)]
+    #[inline]
     fn neg_zero() -> f32 { -0.0 }
 
-    #[inline(always)]
+    #[inline]
     fn is_NaN(&self) -> bool { *self != *self }
 
-    #[inline(always)]
+    #[inline]
     fn mantissa_digits() -> uint { 24 }
 
-    #[inline(always)]
+    #[inline]
     fn digits() -> uint { 6 }
 
-    #[inline(always)]
+    #[inline]
     fn epsilon() -> f32 { 1.19209290e-07 }
 
-    #[inline(always)]
+    #[inline]
     fn min_exp() -> int { -125 }
 
-    #[inline(always)]
+    #[inline]
     fn max_exp() -> int { 128 }
 
-    #[inline(always)]
+    #[inline]
     fn min_10_exp() -> int { -37 }
 
-    #[inline(always)]
+    #[inline]
     fn max_10_exp() -> int { 38 }
 
     /// Returns `true` if the number is infinite
-    #[inline(always)]
+    #[inline]
     fn is_infinite(&self) -> bool {
         *self == Float::infinity() || *self == Float::neg_infinity()
     }
 
     /// Returns `true` if the number is finite
-    #[inline(always)]
+    #[inline]
     fn is_finite(&self) -> bool {
         !(self.is_NaN() || self.is_infinite())
     }
@@ -575,13 +575,13 @@ impl Float for f32 {
     /// produces a more accurate result with better performance than a separate multiplication
     /// operation followed by an add.
     ///
-    #[inline(always)]
+    #[inline]
     fn mul_add(&self, a: f32, b: f32) -> f32 {
         mul_add(*self, a, b)
     }
 
     /// Returns the next representable floating-point value in the direction of `other`
-    #[inline(always)]
+    #[inline]
     fn next_after(&self, other: f32) -> f32 {
         next_after(*self, other)
     }
@@ -598,7 +598,7 @@ impl Float for f32 {
 ///
 /// * num - The float value
 ///
-#[inline(always)]
+#[inline]
 pub fn to_str(num: f32) -> ~str {
     let (r, _) = strconv::to_str_common(
         &num, 10u, true, strconv::SignNeg, strconv::DigAll);
@@ -612,7 +612,7 @@ pub fn to_str(num: f32) -> ~str {
 ///
 /// * num - The float value
 ///
-#[inline(always)]
+#[inline]
 pub fn to_str_hex(num: f32) -> ~str {
     let (r, _) = strconv::to_str_common(
         &num, 16u, true, strconv::SignNeg, strconv::DigAll);
@@ -633,7 +633,7 @@ pub fn to_str_hex(num: f32) -> ~str {
 /// possible misinterpretation of the result at higher bases. If those values
 /// are expected, use `to_str_radix_special()` instead.
 ///
-#[inline(always)]
+#[inline]
 pub fn to_str_radix(num: f32, rdx: uint) -> ~str {
     let (r, special) = strconv::to_str_common(
         &num, rdx, true, strconv::SignNeg, strconv::DigAll);
@@ -651,7 +651,7 @@ pub fn to_str_radix(num: f32, rdx: uint) -> ~str {
 /// * num - The float value
 /// * radix - The base to use
 ///
-#[inline(always)]
+#[inline]
 pub fn to_str_radix_special(num: f32, rdx: uint) -> (~str, bool) {
     strconv::to_str_common(&num, rdx, true,
                            strconv::SignNeg, strconv::DigAll)
@@ -666,7 +666,7 @@ pub fn to_str_radix_special(num: f32, rdx: uint) -> (~str, bool) {
 /// * num - The float value
 /// * digits - The number of significant digits
 ///
-#[inline(always)]
+#[inline]
 pub fn to_str_exact(num: f32, dig: uint) -> ~str {
     let (r, _) = strconv::to_str_common(
         &num, 10u, true, strconv::SignNeg, strconv::DigExact(dig));
@@ -682,7 +682,7 @@ pub fn to_str_exact(num: f32, dig: uint) -> ~str {
 /// * num - The float value
 /// * digits - The number of significant digits
 ///
-#[inline(always)]
+#[inline]
 pub fn to_str_digits(num: f32, dig: uint) -> ~str {
     let (r, _) = strconv::to_str_common(
         &num, 10u, true, strconv::SignNeg, strconv::DigMax(dig));
@@ -690,12 +690,12 @@ pub fn to_str_digits(num: f32, dig: uint) -> ~str {
 }
 
 impl to_str::ToStr for f32 {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str { to_str_digits(*self, 8) }
 }
 
 impl num::ToStrRadix for f32 {
-    #[inline(always)]
+    #[inline]
     fn to_str_radix(&self, rdx: uint) -> ~str {
         to_str_radix(*self, rdx)
     }
@@ -728,7 +728,7 @@ impl num::ToStrRadix for f32 {
 /// `none` if the string did not represent a valid number.  Otherwise,
 /// `Some(n)` where `n` is the floating-point number represented by `num`.
 ///
-#[inline(always)]
+#[inline]
 pub fn from_str(num: &str) -> Option<f32> {
     strconv::from_str_common(num, 10u, true, true, true,
                              strconv::ExpDec, false, false)
@@ -761,7 +761,7 @@ pub fn from_str(num: &str) -> Option<f32> {
 /// `none` if the string did not represent a valid number.  Otherwise,
 /// `Some(n)` where `n` is the floating-point number represented by `[num]`.
 ///
-#[inline(always)]
+#[inline]
 pub fn from_str_hex(num: &str) -> Option<f32> {
     strconv::from_str_common(num, 16u, true, true, true,
                              strconv::ExpBin, false, false)
@@ -786,19 +786,19 @@ pub fn from_str_hex(num: &str) -> Option<f32> {
 /// `none` if the string did not represent a valid number. Otherwise,
 /// `Some(n)` where `n` is the floating-point number represented by `num`.
 ///
-#[inline(always)]
+#[inline]
 pub fn from_str_radix(num: &str, rdx: uint) -> Option<f32> {
     strconv::from_str_common(num, rdx, true, true, false,
                              strconv::ExpNone, false, false)
 }
 
 impl FromStr for f32 {
-    #[inline(always)]
+    #[inline]
     fn from_str(val: &str) -> Option<f32> { from_str(val) }
 }
 
 impl num::FromStrRadix for f32 {
-    #[inline(always)]
+    #[inline]
     fn from_str_radix(val: &str, rdx: uint) -> Option<f32> {
         from_str_radix(val, rdx)
     }

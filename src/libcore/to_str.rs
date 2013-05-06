@@ -27,16 +27,16 @@ pub trait ToStrConsume {
 }
 
 impl ToStr for bool {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str { ::bool::to_str(*self) }
 }
 impl ToStr for () {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str { ~"()" }
 }
 
 impl<A:ToStr> ToStr for (A,) {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str {
         match *self {
             (ref a,) => {
@@ -47,7 +47,7 @@ impl<A:ToStr> ToStr for (A,) {
 }
 
 impl<A:ToStr,B:ToStr> ToStr for (A, B) {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str {
         // FIXME(#4760): this causes an llvm assertion
         //let &(ref a, ref b) = self;
@@ -59,7 +59,7 @@ impl<A:ToStr,B:ToStr> ToStr for (A, B) {
     }
 }
 impl<A:ToStr,B:ToStr,C:ToStr> ToStr for (A, B, C) {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str {
         // FIXME(#4760): this causes an llvm assertion
         //let &(ref a, ref b, ref c) = self;
@@ -76,7 +76,7 @@ impl<A:ToStr,B:ToStr,C:ToStr> ToStr for (A, B, C) {
 }
 
 impl<'self,A:ToStr> ToStr for &'self [A] {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str {
         let mut acc = ~"[", first = true;
         for self.each |elt| {
@@ -90,7 +90,7 @@ impl<'self,A:ToStr> ToStr for &'self [A] {
 }
 
 impl<A:ToStr> ToStr for ~[A] {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str {
         let mut acc = ~"[", first = true;
         for self.each |elt| {
@@ -104,7 +104,7 @@ impl<A:ToStr> ToStr for ~[A] {
 }
 
 impl<A:ToStr> ToStr for @[A] {
-    #[inline(always)]
+    #[inline]
     fn to_str(&self) -> ~str {
         let mut acc = ~"[", first = true;
         for self.each |elt| {

@@ -18,24 +18,24 @@ mod inst {
     pub static bits: uint = ::u64::bits;
 
     impl Primitive for i64 {
-        #[inline(always)]
+        #[inline]
         fn bits() -> uint { 64 }
 
-        #[inline(always)]
+        #[inline]
         fn bytes() -> uint { Primitive::bits::<i64>() / 8 }
     }
 
     impl BitCount for i64 {
         /// Counts the number of bits set. Wraps LLVM's `ctpop` intrinsic.
-        #[inline(always)]
+        #[inline]
         fn population_count(&self) -> i64 { unsafe { intrinsics::ctpop64(*self) } }
 
         /// Counts the number of leading zeros. Wraps LLVM's `ctlz` intrinsic.
-        #[inline(always)]
+        #[inline]
         fn leading_zeros(&self) -> i64 { unsafe { intrinsics::ctlz64(*self) } }
 
         /// Counts the number of trailing zeros. Wraps LLVM's `cttz` intrinsic.
-        #[inline(always)]
+        #[inline]
         fn trailing_zeros(&self) -> i64 { unsafe { intrinsics::cttz64(*self) } }
     }
 }

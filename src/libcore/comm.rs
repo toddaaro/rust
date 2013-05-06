@@ -139,7 +139,7 @@ pub fn stream<T:Owned>() -> (Port<T>, Chan<T>) {
 }
 
 impl<T: Owned> GenericChan<T> for Chan<T> {
-    #[inline(always)]
+    #[inline]
     fn send(&self, x: T) {
         let mut endp = None;
         endp <-> self.endp;
@@ -149,7 +149,7 @@ impl<T: Owned> GenericChan<T> for Chan<T> {
 }
 
 impl<T: Owned> GenericSmartChan<T> for Chan<T> {
-    #[inline(always)]
+    #[inline]
     fn try_send(&self, x: T) -> bool {
         let mut endp = None;
         endp <-> self.endp;
@@ -164,7 +164,7 @@ impl<T: Owned> GenericSmartChan<T> for Chan<T> {
 }
 
 impl<T: Owned> GenericPort<T> for Port<T> {
-    #[inline(always)]
+    #[inline]
     fn recv(&self) -> T {
         let mut endp = None;
         endp <-> self.endp;
@@ -173,7 +173,7 @@ impl<T: Owned> GenericPort<T> for Port<T> {
         x
     }
 
-    #[inline(always)]
+    #[inline]
     fn try_recv(&self) -> Option<T> {
         let mut endp = None;
         endp <-> self.endp;
@@ -188,7 +188,7 @@ impl<T: Owned> GenericPort<T> for Port<T> {
 }
 
 impl<T: Owned> Peekable<T> for Port<T> {
-    #[inline(always)]
+    #[inline]
     fn peek(&self) -> bool {
         let mut endp = None;
         endp <-> self.endp;

@@ -156,7 +156,7 @@ pub unsafe fn shared_mutable_state<T:Owned>(data: T) ->
     ArcDestruct(ptr)
 }
 
-#[inline(always)]
+#[inline]
 pub unsafe fn get_shared_mutable_state<T:Owned>(
     rc: *SharedMutableState<T>) -> *mut T
 {
@@ -166,7 +166,7 @@ pub unsafe fn get_shared_mutable_state<T:Owned>(
     cast::forget(ptr);
     return r;
 }
-#[inline(always)]
+#[inline]
 pub unsafe fn get_shared_immutable_state<'a,T:Owned>(
         rc: &'a SharedMutableState<T>) -> &'a T {
     let ptr: ~ArcData<T> = cast::transmute((*rc).data);
@@ -220,7 +220,7 @@ fn LittleLock() -> LittleLock {
 }
 
 pub impl LittleLock {
-    #[inline(always)]
+    #[inline]
     unsafe fn lock<T>(&self, f: &fn() -> T) -> T {
         do atomically {
             rustrt::rust_lock_little_lock(self.l);
@@ -260,7 +260,7 @@ pub impl<T:Owned> Exclusive<T> {
     // Currently, scheduling operations (i.e., yielding, receiving on a pipe,
     // accessing the provided condition variable) are prohibited while inside
     // the exclusive. Supporting that is a work in progress.
-    #[inline(always)]
+    #[inline]
     unsafe fn with<U>(&self, f: &fn(x: &mut T) -> U) -> U {
         let rec = get_shared_mutable_state(&self.x);
         do (*rec).lock.lock {
@@ -275,7 +275,7 @@ pub impl<T:Owned> Exclusive<T> {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     unsafe fn with_imm<U>(&self, f: &fn(x: &T) -> U) -> U {
         do self.with |x| {
             f(cast::transmute_immut(x))

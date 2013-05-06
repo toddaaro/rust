@@ -59,7 +59,7 @@ pub trait HashUtil {
 }
 
 impl<A:Hash> HashUtil for A {
-    #[inline(always)]
+    #[inline]
     fn hash(&self) -> u64 { self.hash_keyed(0,0) }
 }
 
@@ -74,7 +74,7 @@ pub trait Streaming {
 }
 
 impl<A:IterBytes> Hash for A {
-    #[inline(always)]
+    #[inline]
     fn hash_keyed(&self, k0: u64, k1: u64) -> u64 {
         let s = &State(k0, k1);
         for self.iter_bytes(true) |bytes| {
@@ -134,12 +134,12 @@ fn hash_keyed_5<A: IterBytes,
 
 pub type State = SipState;
 
-#[inline(always)]
+#[inline]
 pub fn State(k0: u64, k1: u64) -> State {
     SipState(k0, k1)
 }
 
-#[inline(always)]
+#[inline]
 pub fn default_state() -> State {
     State(0,0)
 }
@@ -156,7 +156,7 @@ struct SipState {
     mut ntail: uint,  // how many bytes in tail are valid
 }
 
-#[inline(always)]
+#[inline]
 fn SipState(key0: u64, key1: u64) -> SipState {
     let state = SipState {
         k0 : key0,
@@ -210,7 +210,7 @@ macro_rules! compress (
 impl io::Writer for SipState {
 
     // Methods for io::writer
-    #[inline(always)]
+    #[inline]
     fn write(&self, msg: &const [u8]) {
 
         let length = msg.len();
@@ -288,12 +288,12 @@ impl io::Writer for SipState {
 
 impl Streaming for SipState {
 
-    #[inline(always)]
+    #[inline]
     fn input(&self, buf: &const [u8]) {
         self.write(buf);
     }
 
-    #[inline(always)]
+    #[inline]
     fn result_u64(&self) -> u64 {
         let mut v0 = self.v0;
         let mut v1 = self.v1;
@@ -346,7 +346,7 @@ impl Streaming for SipState {
         s
     }
 
-    #[inline(always)]
+    #[inline]
     fn reset(&self) {
         self.length = 0;
         self.v0 = self.k0 ^ 0x736f6d6570736575;

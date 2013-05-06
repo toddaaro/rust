@@ -36,7 +36,7 @@ pub mod rustrt {
 }
 
 /// Returns the number of elements the vector can hold without reallocating
-#[inline(always)]
+#[inline]
 pub fn capacity<T>(v: @[T]) -> uint {
     unsafe {
         let repr: **raw::VecRepr = transmute(&v);
@@ -56,7 +56,7 @@ pub fn capacity<T>(v: @[T]) -> uint {
  *             as an argument a function that will push an element
  *             onto the vector being constructed.
  */
-#[inline(always)]
+#[inline]
 pub fn build_sized<A>(size: uint, builder: &fn(push: &fn(v: A))) -> @[A] {
     let mut vec: @[A] = @[];
     unsafe { raw::reserve(&mut vec, size); }
@@ -74,7 +74,7 @@ pub fn build_sized<A>(size: uint, builder: &fn(push: &fn(v: A))) -> @[A] {
  *             as an argument a function that will push an element
  *             onto the vector being constructed.
  */
-#[inline(always)]
+#[inline]
 pub fn build<A>(builder: &fn(push: &fn(v: A))) -> @[A] {
     build_sized(4, builder)
 }
@@ -91,7 +91,7 @@ pub fn build<A>(builder: &fn(push: &fn(v: A))) -> @[A] {
  *             as an argument a function that will push an element
  *             onto the vector being constructed.
  */
-#[inline(always)]
+#[inline]
 pub fn build_sized_opt<A>(size: Option<uint>,
                           builder: &fn(push: &fn(v: A)))
                        -> @[A] {
@@ -99,7 +99,7 @@ pub fn build_sized_opt<A>(size: Option<uint>,
 }
 
 // Appending
-#[inline(always)]
+#[inline]
 pub fn append<T:Copy>(lhs: @[T], rhs: &const [T]) -> @[T] {
     do build_sized(lhs.len() + rhs.len()) |push| {
         for vec::each(lhs) |x| { push(*x); }
@@ -173,7 +173,7 @@ pub mod traits {
     use ops::Add;
 
     impl<'self,T:Copy> Add<&'self const [T],@[T]> for @[T] {
-        #[inline(always)]
+        #[inline]
         fn add(&self, rhs: & &'self const [T]) -> @[T] {
             append(*self, (*rhs))
         }
@@ -203,13 +203,13 @@ pub mod raw {
      * modifing its buffers, so it is up to the caller to ensure that
      * the vector is actually the specified size.
      */
-    #[inline(always)]
+    #[inline]
     pub unsafe fn set_len<T>(v: @[T], new_len: uint) {
         let repr: **mut VecRepr = transmute(&v);
         (**repr).unboxed.fill = new_len * sys::size_of::<T>();
     }
 
-    #[inline(always)]
+    #[inline]
     pub unsafe fn push<T>(v: &mut @[T], initval: T) {
         let repr: **VecRepr = transmute_copy(&v);
         let fill = (**repr).unboxed.fill;
@@ -220,7 +220,7 @@ pub mod raw {
         }
     }
 
-    #[inline(always)] // really pretty please
+    #[inline] // really pretty please
     pub unsafe fn push_fast<T>(v: &mut @[T], initval: T) {
         let repr: **mut VecRepr = ::cast::transmute(v);
         let fill = (**repr).unboxed.fill;

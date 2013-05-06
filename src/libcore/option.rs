@@ -87,7 +87,7 @@ impl<T:Ord> Ord for Option<T> {
 }
 
 impl<T: Copy + Add<T,T>> Add<Option<T>, Option<T>> for Option<T> {
-    #[inline(always)]
+    #[inline]
     fn add(&self, other: &Option<T>) -> Option<T> {
         match (*self, *other) {
             (None, None) => None,
@@ -100,19 +100,19 @@ impl<T: Copy + Add<T,T>> Add<Option<T>, Option<T>> for Option<T> {
 
 impl<T> BaseIter<T> for Option<T> {
     /// Performs an operation on the contained value by reference
-    #[inline(always)]
+    #[inline]
     fn each<'a>(&'a self, f: &fn(x: &'a T) -> bool) {
         match *self { None => (), Some(ref t) => { f(t); } }
     }
 
-    #[inline(always)]
+    #[inline]
     fn size_hint(&self) -> Option<uint> {
         if self.is_some() { Some(1) } else { Some(0) }
     }
 }
 
 impl<T> MutableIter<T> for Option<T> {
-    #[inline(always)]
+    #[inline]
     fn each_mut<'a>(&'a mut self, f: &fn(&'a mut T) -> bool) {
         match *self { None => (), Some(ref mut t) => { f(t); } }
     }
@@ -150,10 +150,10 @@ pub impl<T> Option<T> {
     }
 
     /// Returns true if the option contains some value
-    #[inline(always)]
+    #[inline]
     fn is_some(&const self) -> bool { !self.is_none() }
 
-    #[inline(always)]
+    #[inline]
     fn chain<U>(self, f: &fn(t: T) -> Option<U>) -> Option<U> {
         /*!
          * Update an optional value by optionally running its content through a
@@ -166,7 +166,7 @@ pub impl<T> Option<T> {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn or(self, optb: Option<T>) -> Option<T> {
         /*!
          * Returns the leftmost Some() value, or None if both are None.
@@ -181,33 +181,33 @@ pub impl<T> Option<T> {
      * Update an optional value by optionally running its content by reference
      * through a function that returns an option.
      */
-    #[inline(always)]
+    #[inline]
     fn chain_ref<'a, U>(&'a self, f: &fn(x: &'a T) -> Option<U>) -> Option<U> {
         match *self { Some(ref x) => f(x), None => None }
     }
 
     /// Maps a `some` value from one type to another by reference
-    #[inline(always)]
+    #[inline]
     fn map<'a, U>(&self, f: &fn(&'a T) -> U) -> Option<U> {
         match *self { Some(ref x) => Some(f(x)), None => None }
     }
 
     /// As `map`, but consumes the option and gives `f` ownership to avoid
     /// copying.
-    #[inline(always)]
+    #[inline]
     fn map_consume<U>(self, f: &fn(v: T) -> U) -> Option<U> {
         match self { None => None, Some(v) => Some(f(v)) }
     }
 
     /// Applies a function to the contained value or returns a default
-    #[inline(always)]
+    #[inline]
     fn map_default<'a, U>(&'a self, def: U, f: &fn(&'a T) -> U) -> U {
         match *self { None => def, Some(ref t) => f(t) }
     }
 
     /// As `map_default`, but consumes the option and gives `f`
     /// ownership to avoid copying.
-    #[inline(always)]
+    #[inline]
     fn map_consume_default<U>(self, def: U, f: &fn(v: T) -> U) -> U {
         match self { None => def, Some(v) => f(v) }
     }
@@ -242,7 +242,7 @@ pub impl<T> Option<T> {
     Instead, prefer to use pattern matching and handle the `None`
     case explicitly.
      */
-    #[inline(always)]
+    #[inline]
     fn get_ref<'a>(&'a self) -> &'a T {
         match *self {
           Some(ref x) => x,
@@ -264,7 +264,7 @@ pub impl<T> Option<T> {
     Instead, prefer to use pattern matching and handle the `None`
     case explicitly.
      */
-    #[inline(always)]
+    #[inline]
     fn get_mut_ref<'a>(&'a mut self) -> &'a mut T {
         match *self {
           Some(ref mut x) => x,
@@ -272,7 +272,7 @@ pub impl<T> Option<T> {
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn unwrap(self) -> T {
         /*!
         Moves a value out of an option type and returns it.
@@ -304,7 +304,7 @@ pub impl<T> Option<T> {
      *
      * Fails if the value equals `None`.
      */
-    #[inline(always)]
+    #[inline]
     fn swap_unwrap(&mut self) -> T {
         if self.is_none() { fail!(~"option::swap_unwrap none") }
         util::replace(self, None).unwrap()
@@ -318,7 +318,7 @@ pub impl<T> Option<T> {
      *
      * Fails if the value equals `none`
      */
-    #[inline(always)]
+    #[inline]
     fn expect(self, reason: &str) -> T {
         match self {
           Some(val) => val,
@@ -342,7 +342,7 @@ pub impl<T:Copy> Option<T> {
     Instead, prefer to use pattern matching and handle the `None`
     case explicitly.
     */
-    #[inline(always)]
+    #[inline]
     fn get(self) -> T {
         match self {
           Some(copy x) => return x,
@@ -351,13 +351,13 @@ pub impl<T:Copy> Option<T> {
     }
 
     /// Returns the contained value or a default
-    #[inline(always)]
+    #[inline]
     fn get_or_default(self, def: T) -> T {
         match self { Some(copy x) => x, None => def }
     }
 
     /// Applies a function zero or more times until the result is none.
-    #[inline(always)]
+    #[inline]
     fn while_some(self, blk: &fn(v: T) -> Option<T>) {
         let mut opt = self;
         while opt.is_some() {
@@ -368,7 +368,7 @@ pub impl<T:Copy> Option<T> {
 
 pub impl<T:Copy + Zero> Option<T> {
     /// Returns the contained value or zero (for this type)
-    #[inline(always)]
+    #[inline]
     fn get_or_zero(self) -> T {
         match self { Some(copy x) => x, None => Zero::zero() }
     }

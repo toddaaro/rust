@@ -33,7 +33,7 @@ pub trait MovePtr {
 }
 
 /// Helper function for alignment calculation.
-#[inline(always)]
+#[inline]
 pub fn align(size: uint, align: uint) -> uint {
     ((size + align) - 1u) & !(align - 1u)
 }
@@ -47,26 +47,26 @@ pub fn MovePtrAdaptor<V:TyVisitor + MovePtr>(v: V) -> MovePtrAdaptor<V> {
 }
 
 pub impl<V:TyVisitor + MovePtr> MovePtrAdaptor<V> {
-    #[inline(always)]
+    #[inline]
     fn bump(&self, sz: uint) {
       do self.inner.move_ptr() |p| {
             ((p as uint) + sz) as *c_void
       };
     }
 
-    #[inline(always)]
+    #[inline]
     fn align(&self, a: uint) {
       do self.inner.move_ptr() |p| {
             align(p as uint, a) as *c_void
       };
     }
 
-    #[inline(always)]
+    #[inline]
     fn align_to<T>(&self) {
         self.align(sys::min_align_of::<T>());
     }
 
-    #[inline(always)]
+    #[inline]
     fn bump_past<T>(&self) {
         self.bump(sys::size_of::<T>());
     }

@@ -20,24 +20,24 @@ mod inst {
     pub static bits: uint = 32;
 
     impl Primitive for u32 {
-        #[inline(always)]
+        #[inline]
         fn bits() -> uint { 32 }
 
-        #[inline(always)]
+        #[inline]
         fn bytes() -> uint { Primitive::bits::<u32>() / 8 }
     }
 
     impl BitCount for u32 {
         /// Counts the number of bits set. Wraps LLVM's `ctpop` intrinsic.
-        #[inline(always)]
+        #[inline]
         fn population_count(&self) -> u32 { unsafe { intrinsics::ctpop32(*self as i32) as u32 } }
 
         /// Counts the number of leading zeros. Wraps LLVM's `ctlp` intrinsic.
-        #[inline(always)]
+        #[inline]
         fn leading_zeros(&self) -> u32 { unsafe { intrinsics::ctlz32(*self as i32) as u32 } }
 
         /// Counts the number of trailing zeros. Wraps LLVM's `cttp` intrinsic.
-        #[inline(always)]
+        #[inline]
         fn trailing_zeros(&self) -> u32 { unsafe { intrinsics::cttz32(*self as i32) as u32 } }
     }
 }
