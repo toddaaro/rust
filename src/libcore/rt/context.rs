@@ -111,11 +111,9 @@ fn initialize_call_frame(regs: &mut Registers, fptr: *c_void, arg: *c_void, sp: 
     let sp = align_down(sp);
     let sp = mut_offset(sp, -4);
 
-    unsafe {
-        *sp = arg as uint;
-        let sp = mut_offset(sp, -1);
-        *sp = 0; // The final return address
-    }
+    unsafe { *sp = arg as uint };
+    let sp = mut_offset(sp, -1);
+    unsafe { *sp = 0 }; // The final return address
 
     regs.esp = sp as u32;
     regs.eip = fptr as u32;
