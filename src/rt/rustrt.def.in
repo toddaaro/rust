@@ -236,3 +236,4 @@ rust_take_task_borrow_list
 rust_set_task_borrow_list
 rust_take_env_lock
 rust_drop_env_lock
+rust_update_log_settings
