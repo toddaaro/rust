@@ -13,7 +13,7 @@ use result::{Ok, Err};
 use rt::sched::local_sched::unsafe_borrow_io;
 use rt::io::net::ip::IpAddr;
 use rt::io::{Reader, Writer, Listener};
-use rt::io::io_error;
+use rt::io::{io_error, EndOfFile};
 use rt::rtio::{IoFactory,
                RtioTcpListener, RtioTcpListenerObject,
                RtioTcpStream, RtioTcpStreamObject};
@@ -55,8 +55,12 @@ impl Reader for TcpStream {
         let bytes_read = self.rtstream.read(buf);
         match bytes_read {
             Ok(read) => Some(read),
-            Err(_) => {
-                abort!("XXX");
+            Err(ioerr) => {
+                // EOF is indicated by returning None
+                if ioerr.kind != EndOfFile {
+                    io_error::cond.raise(ioerr);
+                }
+                return None;
             }
         }
     }
@@ -170,6 +174,48 @@ mod test {
             do spawntask_immediately {
                 let mut stream = TcpStream::connect(addr);
                 stream.write([99]);
+            }
+        }
+    }
+
+    #[test]
+    fn read_eof() {
+        do run_in_newsched_task {
+            let addr = next_test_ip4();
+
+            do spawntask_immediately {
+                let mut listener = TcpListener::bind(addr);
+                let mut stream = listener.accept();
+                let mut buf = [0];
+                let nread = stream.read(buf);
+                assert!(nread.is_none());
+            }
+
+            do spawntask_immediately {
+                let stream = TcpStream::connect(addr);
+                // Close
+            }
+        }
+    }
+
+    #[test]
+    fn read_eof_twice() {
+        do run_in_newsched_task {
+            let addr = next_test_ip4();
+
+            do spawntask_immediately {
+                let mut listener = TcpListener::bind(addr);
+                let mut stream = listener.accept();
+                let mut buf = [0];
+                let nread = stream.read(buf);
+                assert!(nread.is_none());
+                let nread = stream.read(buf);
+                assert!(nread.is_none());
+            }
+
+            do spawntask_immediately {
+                let stream = TcpStream::connect(addr);
+                // Close
             }
         }
     }

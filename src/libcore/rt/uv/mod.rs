@@ -205,6 +205,10 @@ pub impl UvError {
             from_c_str(desc_str)
         }
     }
+
+    fn is_eof(&self) -> bool {
+        self.code == uvll::EOF
+    }
 }
 
 impl ToStr for UvError {

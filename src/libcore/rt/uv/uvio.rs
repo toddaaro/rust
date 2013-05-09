@@ -275,7 +275,7 @@ impl RtioTcpStream for UvTcpStream {
                     assert!(nread >= 0);
                     Ok(nread as uint)
                 } else {
-                    Err(standard_error(OtherIoError))
+                    Err(uv_error_to_io_error(status.unwrap()))
                 };
 
                 unsafe { (*result_cell_ptr).put_back(result); }
