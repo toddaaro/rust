@@ -154,6 +154,18 @@ impl Unwinder {
     }
 }
 
+/// Install the thread-local language services.
+///
+/// This makes various language and runtime features, including the local heap,
+/// the garbage collector, logging, local data, etc. available to a standalone
+/// thread, outside of a task.
+pub fn install_thread_local_services<T: Owned>(f: ~fn()) -> T {
+    use rt;
+
+    match rt::context
+}
+
+
 /// Borrow a pointer to the installed local services.
 /// Fails (likely aborting the process) if local services are not available.
 pub fn borrow_local_services(f: &fn(&mut LocalServices)) {
@@ -244,4 +256,67 @@ mod test {
             info!("here i am. logging in a newsched task");
         }
     }
+
+    #[test]
+    fn install_thread_local_in_task() {
+        do run_in_newsched_task {
+            let res = do spawntask_try {
+                // Trying to install thread local services in a task will fail
+                install_thread_local_services(||());
+            };
+
+            assert!(!res);
+        }
+    }
+
+    #[test]
+    fn thread_local_heap() {
+        do run_in_bare_thread {
+            do install_thread_local_services {
+                let a = @5;
+                let b = a;
+                assert!(*a == 5);
+                assert!(*b == 5);
+            }
+        }
+    }
+
+    #[test]
+    fn thread_local_tls() {
+        use task::local_data::*;
+        do run_in_bare_thread {
+            do install_thread_local_services {
+                unsafe {
+                    fn key(_x: @~str) { }
+                    local_data_set(key, @~"data");
+                    assert!(*local_data_get(key).get() == ~"data");
+                    fn key2(_x: @~str) { }
+                    local_data_set(key2, @~"data");
+                    assert!(*local_data_get(key2).get() == ~"data");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn thread_local_unwind() {
+        do run_in_bare_thread {
+            do install_thread_local_services {
+                let result = spawntask_try(||());
+                assert!(result.is_ok());
+                let result = spawntask_try(|| fail!());
+                assert!(result.is_err());
+            }
+        }
+    }
+
+    #[test]
+    fn thread_local_logging() {
+        do run_in_bare_thread {
+            do install_thread_local_services {
+                info!("here i am. logging in a bare thread");
+            }
+        }
+    }
+
 }
