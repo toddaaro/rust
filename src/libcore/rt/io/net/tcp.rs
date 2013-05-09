@@ -73,8 +73,8 @@ impl Writer for TcpStream {
         let res = self.rtstream.write(buf);
         match res {
             Ok(_) => (),
-            Err(_) => {
-                abort!("XXX");
+            Err(ioerr) => {
+                io_error::cond.raise(ioerr);
             }
         }
     }
@@ -211,6 +211,34 @@ mod test {
                 assert!(nread.is_none());
                 let nread = stream.read(buf);
                 assert!(nread.is_none());
+            }
+
+            do spawntask_immediately {
+                let stream = TcpStream::connect(addr);
+                // Close
+            }
+        }
+    }
+
+    #[test]
+    fn write_close() {
+        do run_in_newsched_task {
+            let addr = next_test_ip4();
+
+            do spawntask_immediately {
+                let mut listener = TcpListener::bind(addr);
+                let mut stream = listener.accept();
+                let buf = [0];
+                loop {
+                    let mut stop = false;
+                    do io_error::cond.trap(|e| {
+                        rtdebug!("%?", e);
+                        stop = true;
+                    }).in {
+                        stream.write(buf);
+                    }
+                    if stop { break }
+                }
             }
 
             do spawntask_immediately {
