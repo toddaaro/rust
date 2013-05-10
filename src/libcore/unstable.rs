@@ -334,4 +334,24 @@ mod tests {
             assert!(*one == 1);
         }
     }
+
+    #[test]
+    fn newsched_shared_mutable_state() {
+        use task::spawn;
+        use rt::test::*;
+        use super::*;
+
+        do run_in_newsched_task {
+            unsafe {
+                let v = shared_mutable_state(10);
+                let vclone = clone_shared_mutable_state(&v);
+                do spawn {
+                    unsafe {
+                        let v = get_shared_immutable_state(&vclone);
+                        assert!(*v == 10);
+                    }
+                }
+            }
+        }
+    }
 }
