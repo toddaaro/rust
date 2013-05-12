@@ -16,12 +16,12 @@
 use option::*;
 use clone::Clone;
 use super::rc::RC;
-use rt::sched::Task;
+use rt::sched::Coroutine;
 use rt::{context, TaskContext, SchedulerContext};
 use rt::local_sched;
 
 struct TubeState<T> {
-    blocked_task: Option<~Task>,
+    blocked_task: Option<~Coroutine>,
     buf: ~[T]
 }
 
