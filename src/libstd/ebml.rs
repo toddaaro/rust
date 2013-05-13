@@ -414,6 +414,7 @@ pub mod reader {
             let v = doc_as_u64(self.next_doc(EsInt)) as i64;
             if v > (int::max_value as i64) || v < (int::min_value as i64) {
                 debug!("FIXME #6122: Removing this makes this function miscompile");
+                debug!("FIXME #6122: Removing this makes this function miscompile");
                 fail!(fmt!("int %? out of range for this architecture", v));
             }
             v as int

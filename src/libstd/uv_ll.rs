@@ -147,7 +147,8 @@ pub struct uv_tcp_t {
     a12: *u8, a13: *u8, a14: *u8, a15: *u8,
     a16: *u8, a17: *u8, a18: *u8, a19: *u8,
     a20: *u8, a21: *u8, a22: *u8, a23: *u8,
-    a24: *u8, a25: *u8,
+    a24: *u8, a25: *u8, a26: *u8, a27: *u8,
+    a28: *u8, a29: *u8, a30: *u8
 }
 
 // unix size: 64
@@ -161,7 +162,8 @@ pub struct uv_connect_t {
 pub struct uv_connect_t {
     a00: *u8, a01: *u8, a02: *u8, a03: *u8,
     a04: *u8, a05: *u8, a06: *u8, a07: *u8,
-    a08: *u8, a09: *u8, a10: *u8,
+    a08: *u8, a09: *u8, a10: *u8, a11: *u8,
+    a12: *u8
 }
 
 // unix size: 16
@@ -200,7 +202,7 @@ pub struct uv_write_t {
     a00: *u8, a01: *u8, a02: *u8, a03: *u8,
     a04: *u8, a05: *u8, a06: *u8, a07: *u8,
     a08: *u8, a09: *u8, a10: *u8, a11: *u8,
-    a12: *u8,
+    a12: *u8, a13: *u8, a14: *u8
 }
 // 64bit unix size: 96
 // 32bit unix size: 152 (76)
@@ -228,7 +230,8 @@ pub struct uv_async_t {
     a00: *u8, a01: *u8, a02: *u8, a03: *u8,
     a04: *u8, a05: *u8, a06: *u8, a07: *u8,
     a08: *u8, a09: *u8, a10: *u8, a11: *u8,
-    a12: *u8,
+    a12: *u8, a13: *u8, a14: *u8, a15: *u8,
+    a16: *u8
 }
 
 // 64bit unix size: 120
@@ -243,13 +246,13 @@ pub struct uv_timer_t {
 }
 #[cfg(target_arch="x86_64")]
 pub struct uv_timer_t_32bit_unix_riders {
-    a10: *u8,
+    a10: *u8, a11: *u8
 }
 #[cfg(target_arch="x86")]
 #[cfg(target_arch="arm")]
 #[cfg(target_arch="mips")]
 pub struct uv_timer_t_32bit_unix_riders {
-    a10: *u8, a11: *u8, a12: *u8
+    a10: *u8, a11: *u8, a12: *u8, a13: *u8, a14: *u8
 }
 // win32 size: 64
 #[cfg(windows)]
@@ -258,6 +261,7 @@ pub struct uv_timer_t {
     a00: *u8, a01: *u8, a02: *u8, a03: *u8,
     a04: *u8, a05: *u8, a06: *u8, a07: *u8,
     a08: *u8, a09: *u8, a10: *u8, a11: *u8,
+    a12: *u8, a13: *u8, a14: *u8, a15: *u8
 }
 
 // unix size: 16
@@ -321,7 +325,7 @@ pub mod addrinfo_impl {
     #[cfg(target_arch="x86_64")]
     pub struct addrinfo {
         a00: *u8, a01: *u8, a02: *u8, a03: *u8,
-        a04: *u8, a05: *u8,
+        a04: *u8, a05: *u8, a06: *u8
     }
     #[cfg(target_arch="x86")]
     #[cfg(target_arch="arm")]
@@ -329,6 +333,7 @@ pub mod addrinfo_impl {
     pub struct addrinfo {
         a00: *u8, a01: *u8, a02: *u8, a03: *u8,
         a04: *u8, a05: *u8, a06: *u8, a07: *u8,
+        a08: *u8, a09: *u8
     }
 }
 #[cfg(target_os="macos")]
@@ -459,7 +464,9 @@ pub mod uv_ll_struct_stubgen {
                 a19: 0 as *u8,
                 a20: 0 as *u8, a21: 0 as *u8, a22: 0 as *u8,
                 a23: 0 as *u8,
-                a24: 0 as *u8, a25: 0 as *u8,
+                a24: 0 as *u8, a25: 0 as *u8, a26: 0 as *u8,
+                a27: 0 as *u8, a28: 0 as *u8, a29: 0 as *u8,
+                a30: 0 as *u8
             }
         }
         #[cfg(target_os = "macos")]
@@ -538,6 +545,7 @@ pub mod uv_ll_struct_stubgen {
             a04: 0 as *u8, a05: 0 as *u8, a06: 0 as *u8,
             a07: 0 as *u8,
             a08: 0 as *u8, a09: 0 as *u8, a10: 0 as *u8,
+            a11: 0 as *u8, a12: 0 as *u8
         }
     }
     #[cfg(unix)]
@@ -590,7 +598,8 @@ pub mod uv_ll_struct_stubgen {
             a07: 0 as *u8,
             a08: 0 as *u8, a09: 0 as *u8, a10: 0 as *u8,
             a11: 0 as *u8,
-            a12: 0 as *u8,
+            a12: 0 as *u8, a13: 0 as *u8, a14: 0 as *u8,
+            a15: 0 as *u8, a16: 0 as *u8
         }
     }
     #[cfg(unix)]
@@ -610,7 +619,7 @@ pub mod uv_ll_struct_stubgen {
                 a07: 0 as *u8,
                 a08: 0 as *u8, a09: 0 as *u8,
                 a11: uv_timer_t_32bit_unix_riders {
-                    a10: 0 as *u8
+                    a10: 0 as *u8, a11: 0 as *u8
                 },
             }
         }
@@ -631,7 +640,7 @@ pub mod uv_ll_struct_stubgen {
                 a08: 0 as *u8, a09: 0 as *u8,
                 a11: uv_timer_t_32bit_unix_riders {
                     a10: 0 as *u8, a11: 0 as *u8,
-                    a12: 0 as *u8,
+                    a12: 0 as *u8, a13: 0 as *u8, a14: 0 as *u8
                 },
             }
         }
@@ -649,7 +658,8 @@ pub mod uv_ll_struct_stubgen {
             a04: 0 as *u8, a05: 0 as *u8, a06: 0 as *u8,
             a07: 0 as *u8,
             a08: 0 as *u8, a09: 0 as *u8, a10: 0 as *u8,
-            a11: 0 as *u8,
+            a11: 0 as *u8, a12: 0 as *u8, a13: 0 as *u8,
+            a14: 0 as *u8, a15: 0 as *u8
         }
     }
     #[cfg(unix)]
@@ -715,7 +725,7 @@ pub mod uv_ll_struct_stubgen {
             a07: 0 as *u8,
             a08: 0 as *u8, a09: 0 as *u8, a10: 0 as *u8,
             a11: 0 as *u8,
-            a12: 0 as *u8
+            a12: 0 as *u8, a13: 0 as *u8, a14: 0 as *u8,
         }
     }
     pub fn gen_stub_uv_getaddrinfo_t() -> uv_getaddrinfo_t {
