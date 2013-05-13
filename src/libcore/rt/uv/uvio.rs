@@ -75,7 +75,6 @@ impl EventLoop for UvEventLoop {
         let mut timer =  TimerWatcher::new(self.uvio.uv_loop());
         do timer.start(ms, 0) |timer, status| {
             assert!(status.is_none());
-            let mut timer = timer;
             timer.close(||());
             f();
         }
@@ -233,7 +232,7 @@ impl RtioTcpListener for UvTcpListener {
             let maybe_stream = if status.is_none() {
                 let mut server_stream_watcher = server_stream_watcher;
                 let mut loop_ = server_stream_watcher.event_loop();
-                let mut client_tcp_watcher = TcpWatcher::new(&mut loop_);
+                let client_tcp_watcher = TcpWatcher::new(&mut loop_);
                 let client_tcp_watcher = client_tcp_watcher.as_stream();
                 // XXX: Need's to be surfaced in interface
                 server_stream_watcher.accept(client_tcp_watcher);
@@ -461,7 +460,7 @@ fn test_read_read_read() {
                 let io = local_sched::unsafe_borrow_io();
                 let mut listener = (*io).tcp_bind(addr).unwrap();
                 let mut stream = listener.accept().unwrap();
-                let mut buf = [1, .. 2048];
+                let buf = [1, .. 2048];
                 let mut total_bytes_written = 0;
                 while total_bytes_written < MAX {
                     stream.write(buf);
