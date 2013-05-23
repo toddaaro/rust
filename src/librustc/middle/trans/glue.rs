@@ -547,7 +547,7 @@ pub fn make_drop_glue(bcx: block, v0: ValueRef, t: ty::t) {
         let lluniquevalue = GEPi(bcx, v0, [0, abi::trt_field_box]);
         let lltydesc = Load(bcx, GEPi(bcx, v0, [0, abi::trt_field_tydesc]));
         call_tydesc_glue_full(bcx, lluniquevalue, lltydesc,
-                              abi::tydesc_field_free_glue, None);
+                              abi::tydesc_field_drop_glue, None);
         bcx
       }
       ty::ty_opaque_closure_ptr(ck) => {
@@ -670,11 +670,7 @@ pub fn declare_tydesc(ccx: @CrateContext, t: ty::t) -> @mut tydesc_info {
     let llalign = llalign_of(ccx, llty);
     let addrspace = declare_tydesc_addrspace(ccx, t);
     // FIXME #6574: this triggers duplicate LLVM symbols
-    let name = @(if false /*ccx.sess.opts.debuginfo*/ {
-        mangle_internal_name_by_type_only(ccx, t, "tydesc")
-    } else {
-        mangle_internal_name_by_seq(ccx, "tydesc")
-    });
+    let name = @mangle_internal_name_by_type_and_seq(ccx, t, "tydesc");
     note_unique_llvm_symbol(ccx, name);
     debug!("+++ declare_tydesc %s %s", ppaux::ty_to_str(ccx.tcx, t), *name);
     let gvar = str::as_c_str(*name, |buf| {
@@ -704,11 +700,7 @@ pub fn declare_generic_glue(ccx: @CrateContext, t: ty::t, llfnty: TypeRef,
     let _icx = ccx.insn_ctxt("declare_generic_glue");
     let name = name;
     // FIXME #6574 this triggers duplicate LLVM symbols
-    let fn_nm = @(if false /*ccx.sess.opts.debuginfo*/ {
-        mangle_internal_name_by_type_only(ccx, t, (~"glue_" + name))
-    } else {
-        mangle_internal_name_by_seq(ccx, (~"glue_" + name))
-    });
+    let fn_nm = @mangle_internal_name_by_type_and_seq(ccx, t, (~"glue_" + name));
     debug!("%s is for type %s", *fn_nm, ppaux::ty_to_str(ccx.tcx, t));
     note_unique_llvm_symbol(ccx, fn_nm);
     let llfn = decl_cdecl_fn(ccx.llmod, *fn_nm, llfnty);
