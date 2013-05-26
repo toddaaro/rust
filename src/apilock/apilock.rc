@@ -1,0 +1,314 @@
+// Copyright 2013 The Rust Project Developers. See the COPYRIGHT
+// file at the top-level directory of this distribution and at
+// http://rust-lang.org/COPYRIGHT.
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
+// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
+// option. This file may not be copied, modified, or distributed
+// except according to those terms.
+
+extern mod syntax;
+extern mod rustc;
+
+use syntax::ast;
+use rustc::driver::session::Session;
+use std::io;
+
+// API stability levels
+// Copied from node http://nodejs.org/api/documentation.html
+enum Stability {
+    Deprecated,
+    Experimental,
+    Unstable,
+    Stable,
+    Frozen,
+    Locked,
+}
+
+static DEFAULT_STABILITY: Stability = Unstable;
+
+struct ApiThing {
+    item_type: ItemType,
+    stability: Stability,
+    name: ~str,
+    subthings: ~[ApiThing],
+}
+
+enum ItemType {
+    Crate,
+    Module,
+    Function,
+    Struct,
+    Field,
+    Enum,
+    Variant,
+    Typedef,
+    Trait,
+    TypeImpl,
+    TraitImpl,
+    Method,
+    Static,
+    Reexport,
+}
+
+enum Mode {
+    Report
+}
+
+struct Config {
+    mode: Mode,
+    crate: Path
+}
+
+fn main() {
+    let config = parse_args();
+    let apitree = build(&config.crate);
+
+    match config.mode {
+        Report => {
+            report(&apitree);
+        }
+    }
+}
+
+fn parse_args() -> Config {
+    let args = os::args();
+    let crate_path = Path(args[1]);
+
+    Config {
+        mode: Report,
+        crate: crate_path,
+    }
+}
+
+fn build(crate_path: &Path) -> ApiThing {
+    use syntax::diagnostic;
+    use syntax::parse;
+    use rustc::driver::driver;
+    use rustc::driver::session;
+    use rustc::driver::session::options;
+
+    let sopts: @options = session::basic_options();
+    let emitter = diagnostic::emit;
+    let session = driver::build_session(sopts, emitter);
+    let input = driver::file_input(copy *crate_path);
+    let cfg = driver::build_configuration(session, @~"apilock", &input);
+    let crate = parse::parse_crate_from_file(crate_path, cfg, session.parse_sess);
+
+    return crate_to_apithing(session, crate);
+}
+
+enum Vis {
+    Public,
+    Private
+}
+
+struct AstCtxt {
+    vis: Vis,
+    stability: Stability
+}
+
+fn crate_to_apithing(session: Session, crate: @ast::crate) -> ApiThing {
+
+    let ctxt = AstCtxt {
+        vis: Public,
+        stability: DEFAULT_STABILITY
+    };
+
+    let items = do crate.node.module.items.filter_mapped |item| {
+        item_to_apithing(session, ctxt, *item)
+    };
+
+    ApiThing {
+        item_type: Crate,
+        stability: Unstable,
+        name: ~"crate",
+        subthings: items
+    }
+}
+
+fn item_to_apithing(session: Session, ctxt: AstCtxt, item: &ast::item) -> Option<ApiThing> {
+    match item.node {
+        ast::item_mod(ref m) => {
+
+            let subthings = do m.items.filter_mapped |item| {
+                item_to_apithing(session, ctxt, *item)
+            };
+
+            if item.vis == ast::public {
+                Some(ApiThing {
+                    item_type: Module,
+                    stability: Unstable,
+                    name: copy *session.str_of(item.ident),
+                    subthings: subthings
+                })
+            } else {
+                None
+            }
+        }
+        ast::item_fn(*) => {
+            if item.vis == ast::public {
+                Some(ApiThing {
+                    item_type: Function,
+                    stability: Unstable,
+                    name: copy *session.str_of(item.ident),
+                    subthings: ~[]
+                })
+            } else {
+                None
+            }
+        }
+        ast::item_const(*) => {
+            if item.vis == ast::public {
+                Some(ApiThing {
+                    item_type: Static,
+                    stability: Unstable,
+                    name: copy *session.str_of(item.ident),
+                    subthings: ~[]
+                })
+            } else {
+                None
+            }
+        }
+        ast::item_ty(*) => {
+            if item.vis == ast::public {
+                Some(ApiThing {
+                    item_type: Typedef,
+                    stability: Unstable,
+                    name: copy *session.str_of(item.ident),
+                    subthings: ~[]
+                })
+            } else {
+                None
+            }
+        }
+        ast::item_enum(*) => {
+            if item.vis == ast::public {
+                Some(ApiThing {
+                    item_type: Enum,
+                    stability: Unstable,
+                    name: copy *session.str_of(item.ident),
+                    subthings: ~[]
+                })
+            } else {
+                None
+            }
+        }
+        ast::item_struct(*) => {
+            if item.vis == ast::public {
+                Some(ApiThing {
+                    item_type: Struct,
+                    stability: Unstable,
+                    name: copy *session.str_of(item.ident),
+                    subthings: ~[]
+                })
+            } else {
+                None
+            }
+        }
+        ast::item_trait(_, _, ref methods) => {
+
+            let subthings = do methods.filter_mapped |m| {
+                trait_method_to_apithing(session, ctxt, m)
+            };
+            
+            if item.vis == ast::public {
+                Some(ApiThing {
+                    item_type: Trait,
+                    stability: Unstable,
+                    name: copy *session.str_of(item.ident),
+                    subthings: subthings
+                })
+            } else {
+                None
+            }
+        }
+        _ => None
+    }
+}
+
+fn trait_method_to_apithing(session: Session, ctxt: AstCtxt,
+                            method: &ast::trait_method) -> Option<ApiThing> {
+    match *method {
+        ast::required(ref m) => {
+            Some(ApiThing {
+                item_type: Method,
+                stability: Unstable,
+                name: copy *session.str_of(m.ident),
+                subthings: ~[]
+            })
+        }
+        ast::provided(ref m) => {
+            Some(ApiThing {
+                item_type: Method,
+                stability: Unstable,
+                name: copy *session.str_of(m.ident),
+                subthings: ~[]
+            })
+        }
+    }
+}
+
+fn report(api: &ApiThing) {
+    writeln("<!DOCTYPE html>");
+
+    writeln("<link href='apilock.css' rel='stylesheet'>");
+
+    write_thing(api);
+}
+
+fn write_thing(api: &ApiThing) {
+    writeln(fmt!("<api %s %s>",
+                 item_type_str(api),
+                 stability_str(api)));
+
+    write_name(api);
+    write_subthings(api);
+
+    writeln("</api>");
+}
+
+fn item_type_str(api: &ApiThing) -> &'static str {
+    match api.item_type {
+        Crate => "crate",
+        Module => "module",
+        Function => "function",
+        Struct => "struct",
+        Field => "field",
+        Enum => "enum",
+        Variant => "variant",
+        Typedef => "typedef",
+        Trait => "trait",
+        TypeImpl => "type_impl",
+        TraitImpl => "trait_impl",
+        Method => "method",
+        Static => "static",
+        Reexport => "reexport"
+    }
+}
+
+fn stability_str(api: &ApiThing) -> &'static str {
+    match api.stability {
+        Deprecated => "deprecated",
+        Experimental => "experimental",
+        Unstable => "unstable",
+        Stable => "stable",
+        Frozen => "frozen",
+        Locked => "locked"
+    }
+}
+
+fn write_name(api: &ApiThing) {
+    writeln(fmt!("<name>%s</name>", api.name));
+}
+
+fn write_subthings(api: &ApiThing) {
+    for api.subthings.each |thing| {
+        write_thing(thing);
+    }
+}
+
+fn writeln(s: &str) {
+    io::println(s);
+}

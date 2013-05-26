@@ -18,6 +18,10 @@ FUZZER_INPUTS := $(wildcard $(addprefix $(S)src/libfuzzer/, *.rs))
 COMPILETEST_CRATE := $(S)src/compiletest/compiletest.rc
 COMPILETEST_INPUTS := $(wildcard $(S)src/compiletest/*rs)
 
+# API stability testing
+APILOCK_CRATE := $(S)src/apilock/apilock.rc
+APILOCK_INPUTS := $(wildcard $(S)src/apilock/*rs)
+
 # Rustpkg, the package manager and build system
 RUSTPKG_LIB := $(S)src/librustpkg/rustpkg.rc
 RUSTPKG_INPUTS := $(wildcard $(S)src/librustpkg/*rs)
@@ -58,6 +62,15 @@ $$(TBIN$(1)_T_$(4)_H_$(3))/compiletest$$(X_$(4)):			\
 		$$(TSREQ$(1)_T_$(4)_H_$(3))						\
 		$$(TLIB$(1)_T_$(4)_H_$(3))/$(CFG_STDLIB_$(4))      \
 		$$(TLIB$(1)_T_$(4)_H_$(3))/$(CFG_EXTRALIB_$(4))
+	@$$(call E, compile_and_link: $$@)
+	$$(STAGE$(1)_T_$(4)_H_$(3)) -o $$@ $$<
+
+$$(TBIN$(1)_T_$(4)_H_$(3))/apilock$$(X_$(4)):			\
+		$$(APILOCK_CRATE) $$(APILOCK_INPUTS)	\
+		$$(TSREQ$(1)_T_$(4)_H_$(3))						\
+		$$(TLIB$(1)_T_$(4)_H_$(3))/$(CFG_STDLIB_$(4))      \
+		$$(TLIB$(1)_T_$(4)_H_$(3))/$(CFG_EXTRALIB_$(4)) \
+		$$(TLIB$(1)_T_$(4)_H_$(3))/$(CFG_LIBRUSTC_$(4))
 	@$$(call E, compile_and_link: $$@)
 	$$(STAGE$(1)_T_$(4)_H_$(3)) -o $$@ $$<
 
@@ -155,6 +168,11 @@ $$(HBIN$(2)_H_$(4))/compiletest$$(X_$(4)):				\
 	@$$(call E, cp: $$@)
 	$$(Q)cp $$< $$@
 
+$$(HBIN$(2)_H_$(4))/apilock$$(X_$(4)):				\
+		$$(TBIN$(1)_T_$(4)_H_$(3))/apilock$$(X_$(4))	\
+		$$(HSREQ$(2)_H_$(4))
+	@$$(call E, cp: $$@)
+	$$(Q)cp $$< $$@
 
 $$(HLIB$(2)_H_$(4))/$(CFG_LIBRUSTPKG_$(4)):				\
 		$$(TLIB$(1)_T_$(4)_H_$(3))/$(CFG_LIBRUSTPKG_$(4))	\
