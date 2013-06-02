@@ -22,6 +22,9 @@ use ops::Drop;
 use kinds::Owned;
 use rt::sched::{Scheduler, Coroutine};
 use rt::local::Local;
+#[cfg(stage0)]
+use unstable::atomics::{AtomicOption};
+#[cfg(not(stage0))]
 use unstable::atomics::{AtomicOption, SeqCst};
 use unstable::intrinsics::{atomic_xchg, atomic_load};
 use unstable::sync::UnsafeAtomicRcBox;
@@ -400,6 +403,12 @@ impl<T: Owned> GenericChan<T> for SharedChan<T> {
 }
 
 impl<T: Owned> GenericSmartChan<T> for SharedChan<T> {
+    #[cfg(stage0)] // odd type checking errors
+    fn try_send(&self, _val: T) -> bool {
+        fail!()
+    }
+
+    #[cfg(not(stage0))]
     fn try_send(&self, val: T) -> bool {
         unsafe {
             let (next_pone, next_cone) = oneshot();
@@ -443,6 +452,12 @@ impl<T: Owned> GenericPort<T> for SharedPort<T> {
         }
     }
 
+    #[cfg(stage0)] // odd type checking errors
+    fn try_recv(&self) -> Option<T> {
+        fail!()
+    }
+
+    #[cfg(not(stage0))]
     fn try_recv(&self) -> Option<T> {
         unsafe {
             let (next_link_port, next_link_chan) = oneshot();
