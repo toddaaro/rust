@@ -212,6 +212,31 @@ mod test {
     }
 
     #[test]
+    fn mt_multi_level_success() {
+        do run_in_mt_newsched_task {
+            let mut latch = JoinLatch::new_root();
+
+            fn child(latch: &mut JoinLatch, i: int) {
+                let child_latch = latch.new_child();
+                let child_latch = Cell(child_latch);
+                do spawntask_random {
+                    let mut child_latch = child_latch.take();
+                    if i != 0 {
+                        child(&mut child_latch, i - 1);
+                        child_latch.release(true);
+                    } else {
+                        child_latch.release(true);
+                    }
+                }
+            }
+
+            child(&mut latch, 10);
+
+            assert!(latch.release(true));
+        }
+    }
+
+    #[test]
     fn mt_multi_level_failure() {
         do run_in_mt_newsched_task {
             let mut latch = JoinLatch::new_root();
