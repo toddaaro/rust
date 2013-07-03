@@ -680,7 +680,7 @@ mod test {
     fn simple_sched_id_test() {
         do run_in_bare_thread {
             let sched = ~new_test_uv_sched();
-            assert!(to_uint(sched) == sched.sched_id());
+            rtassert!(to_uint(sched) == sched.sched_id());
         }
     }
 
@@ -691,7 +691,7 @@ mod test {
         do run_in_bare_thread {
             let sched_one = ~new_test_uv_sched();
             let sched_two = ~new_test_uv_sched();
-            assert!(sched_one.sched_id() != sched_two.sched_id());
+            rtassert!(sched_one.sched_id() != sched_two.sched_id());
         }
     }
 
@@ -711,12 +711,12 @@ mod test {
                                                  Sched(sched_handle)) {
                 unsafe { *task_ran_ptr = true };
                 let sched = Local::take::<Scheduler>();
-                assert!(sched.sched_id() == sched_id);
+                rtassert!(sched.sched_id() == sched_id);
                 Local::put::<Scheduler>(sched);
             };
             sched.enqueue_task(task);
             sched.run();
-            assert!(task_ran);
+            rtassert!(task_ran);
         }
     }
 
@@ -759,14 +759,14 @@ mod test {
                                                Sched(t1_handle)) || {
                 let is_home = Task::is_home_using_id(special_id);
                 rtdebug!("t1 should be home: %b", is_home);
-                assert!(is_home);
+                rtassert!(is_home);
             };
             let t1f = Cell::new(t1f);
 
             let t2f = ~do Task::new_root(&mut normal_sched.stack_pool) {
                 let on_special = Task::on_special();
                 rtdebug!("t2 should not be on special: %b", on_special);
-                assert!(!on_special);
+                rtassert!(!on_special);
             };
             let t2f = Cell::new(t2f);
 
@@ -774,7 +774,7 @@ mod test {
                 // not on special
                 let on_special = Task::on_special();
                 rtdebug!("t3 should not be on special: %b", on_special);
-                assert!(!on_special);
+                rtassert!(!on_special);
             };
             let t3f = Cell::new(t3f);
 
@@ -783,7 +783,7 @@ mod test {
                 // is home
                 let home = Task::is_home_using_id(special_id);
                 rtdebug!("t4 should be home: %b", home);
-                assert!(home);
+                rtassert!(home);
             };
             let t4f = Cell::new(t4f);
 
@@ -861,6 +861,87 @@ mod test {
     // Do it a lot
     #[test]
     fn test_stress_schedule_task_states() {
+        let n = stress_factor() * 120;
+        for int::range(0,n as int) |_| {
+            test_schedule_home_states();
+        }
+    }
+
+    // Re-enabling what should be a duplicate test case by now, but
+    // was triggering an infinite loop somehow. Hopefully the loop was
+    // disappeared by the last set of changes, but if not, this should
+    // catch it.
+    #[test]
+    fn test_transfer_task_home() {
+
+        use rt::uv::uvio::UvEventLoop;
+        use rt::sched::Shutdown;
+        use rt::sleeper_list::SleeperList;
+        use rt::work_queue::WorkQueue;
+        use uint;
+        use container::Container;
+        use vec::OwnedVector;
+
+        do run_in_bare_thread {
+            
+            static N: uint = 8;
+
+            let sleepers = SleeperList::new();
+            let work_queue = WorkQueue::new();
+
+            let mut handles = ~[];
+            let mut scheds = ~[];
+
+            for uint::range(0,N) |_| {
+                let loop_ = ~UvEventLoop::new();
+                let mut sched = ~Scheduler::new(loop_,
+                                                work_queue.clone(),
+                                                sleepers.clone());
+                let handle = sched.make_handle();
+                handles.push(handle);
+                scheds.push(sched);
+            };
+
+            let handles = Cell::new(handles);
+            
+            let home_handle = scheds[6].make_handle();
+            let home_id = home_handle.sched_id;
+            let home = Sched(home_handle);
+            
+            let main_task = ~do Task::new_root_homed(&mut scheds[1].stack_pool,
+                                                          home) {
+                let sched = Local::take::<Scheduler>();
+                rtdebug!("run location scheduler id: %u, home: %u",
+                         sched.sched_id(),
+                         home_id);
+                rtassert!(sched.sched_id() == home_id);
+                Local::put(sched);
+
+                let mut handles = handles.take();
+                for handles.mut_iter().advance |handle| {
+                    handle.send(Shutdown);
+                }
+            };
+
+            scheds[0].enqueue_task(main_task);
+            let mut threads = ~[];
+            
+            while !scheds.is_empty() {
+                let sched = scheds.pop();
+                let sched_cell = Cell::new(sched);
+                let thread = do Thread::start {
+                    let sched = sched_cell.take();
+                    sched.run();
+                };
+                threads.push(thread);
+            }
+            let _threads = threads;
+        }
+    }
+
+    // Do it a lot.
+    #[test]
+    fn test_stress_homed_tasks() {
         let n = stress_factor() * 120;
         for int::range(0,n as int) |_| {
             test_schedule_home_states();
