@@ -649,7 +649,7 @@ mod test {
         do run_in_newsched_task {
             let (port, chan) = oneshot::<~int>();
             let port_cell = Cell::new(port);
-            do spawntask_immediately {
+            do spawntask {
                 assert!(port_cell.take().recv() == ~10);
             }
 
@@ -918,5 +918,4 @@ mod test {
             }
         }
     }
-
 }
