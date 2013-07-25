@@ -42,7 +42,7 @@ use cmp::Eq;
 use comm::{stream, Chan, GenericChan, GenericPort, Port};
 use result::Result;
 use result;
-use rt::{context, OldTaskContext, TaskContext};
+use rt::{context, OldTaskContext, TaskContext, SchedulerContext};
 use rt::local::Local;
 use task::rt::{task_id, sched_id};
 use unstable::finally::Finally;
@@ -548,7 +548,6 @@ pub fn yield() {
     //! Yield control to the task scheduler
 
     use rt::{context, OldTaskContext};
-    use rt::local::Local;
     use rt::sched::Scheduler;
 
     unsafe {
@@ -563,10 +562,7 @@ pub fn yield() {
             _ => {
                 // XXX: What does yield really mean in newsched?
                 // FIXME(#7544): Optimize this, since we know we won't block.
-                let sched = Local::take::<Scheduler>();
-                do sched.deschedule_running_task_and_then |sched, task| {
-                    sched.enqueue_blocked_task(task);
-                }
+                Scheduler::yield();
             }
         }
     }
@@ -631,8 +627,9 @@ pub unsafe fn unkillable<U>(f: &fn() -> U) -> U {
                 rt::rust_task_allow_kill(t);
             }
         }
-        TaskContext => {
+        TaskContext | SchedulerContext => {
             // The inhibits/allows might fail and need to borrow the task.
+            rtdebug!("unkillable doing some stuff");
             let t = Local::unsafe_borrow::<Task>();
             do (|| {
                 (*t).death.inhibit_kill((*t).unwinder.unwinding);
@@ -643,7 +640,7 @@ pub unsafe fn unkillable<U>(f: &fn() -> U) -> U {
         }
         // FIXME(#3095): This should be an rtabort as soon as the scheduler
         // no longer uses a workqueue implemented with an Exclusive.
-        _ => f()
+        _ => { f() }
     }
 }
 
@@ -1297,6 +1294,7 @@ fn test_indestructible() {
                     do (|| {
                         p1.recv(); // would deadlock if not killed
                     }).finally {
+                        rtdebug!("finally sending to c2");
                         c2.send(());
                     };
                 }
@@ -1308,9 +1306,11 @@ fn test_indestructible() {
                     fail!();
                 }
                 c3.send(());
+                rtdebug!("sending to p2");
                 p2.recv();
             }
         };
         assert!(result.is_ok());
     }
 }
+

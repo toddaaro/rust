@@ -389,6 +389,9 @@ impl Death {
 
     /// Collect failure exit codes from children and propagate them to a parent.
     pub fn collect_failure(&mut self, mut success: bool) {
+
+        rtdebug!("inside collect_failure");
+
         // This may run after the task has already failed, so even though the
         // task appears to need to be killed, the scheduler should not fail us
         // when we block to unwrap.
@@ -764,29 +767,25 @@ mod test {
     #[test]
     fn block_on_pipe() {
         // Tests the "killable" path of casting to/from uint.
-        do run_in_newsched_task {
-            do with_test_task |mut task| {
-                let result = BlockedTask::try_block(task).unwrap_right();
-                let result = unsafe { result.cast_to_uint() };
-                let result = unsafe { BlockedTask::cast_from_uint(result) };
-                result.wake().unwrap()
-            }
+        do with_test_task |mut task| {
+            let result = BlockedTask::try_block(task).unwrap_right();
+            let result = unsafe { result.cast_to_uint() };
+            let result = unsafe { BlockedTask::cast_from_uint(result) };
+            result.wake().unwrap()
         }
     }
 
     #[test]
     fn block_unkillably_on_pipe() {
         // Tests the "indestructible" path of casting to/from uint.
-        do run_in_newsched_task {
-            do with_test_task |mut task| {
-                task.death.inhibit_kill(false);
-                let result = BlockedTask::try_block(task).unwrap_right();
-                let result = unsafe { result.cast_to_uint() };
-                let result = unsafe { BlockedTask::cast_from_uint(result) };
-                let mut task = result.wake().unwrap();
-                task.death.allow_kill(false);
-                task
-            }
+        do with_test_task |mut task| {
+            task.death.inhibit_kill(false);
+            let result = BlockedTask::try_block(task).unwrap_right();
+            let result = unsafe { result.cast_to_uint() };
+            let result = unsafe { BlockedTask::cast_from_uint(result) };
+            let mut task = result.wake().unwrap();
+            task.death.allow_kill(false);
+            task
         }
     }
 }

@@ -17,6 +17,7 @@ use option::*;
 use either::{Either, Left, Right};
 use task;
 use task::atomically;
+use rt::{context, SchedulerContext, TaskContext};
 use unstable::atomics::{AtomicOption,AtomicUint,Acquire,Release,SeqCst};
 use unstable::finally::Finally;
 use ops::Drop;
@@ -89,6 +90,14 @@ impl<T: Send> UnsafeAtomicRcBox<T> {
     /// If called when the task is already unkillable, unwrap will unkillably
     /// block; otherwise, an unwrapping task can be killed by linked failure.
     pub unsafe fn unwrap(self) -> T {
+
+        let context = match context() {
+            SchedulerContext => "scheduler",
+            TaskContext => "task",
+            _ => "other"
+        };
+        rtdebug!("called unwrap from context %s", context);
+
         let this = Cell::new(self); // argh
         do task::unkillable {
             let mut this = this.take();
@@ -193,6 +202,21 @@ impl<T: Send> Clone for UnsafeAtomicRcBox<T> {
 #[unsafe_destructor]
 impl<T> Drop for UnsafeAtomicRcBox<T>{
     fn drop(&self) {
+
+        // Look up the context. If we are in scheduler task context we
+        // want to skip most of this stuff.
+        let context = context();
+        if context == SchedulerContext {
+            rtdebug!("scheduler context unsafeAtomicRcBox drop");
+            unsafe {
+                let mut data: ~AtomicRcBoxData<T> = cast::transmute(self.data);
+                let old_count = data.count.fetch_sub(1, SeqCst);
+                assert!(old_count >= 1);
+//                cast::forget(data);
+            }
+            return;
+        }                
+
         unsafe {
             if self.data.is_null() {
                 return; // Happens when destructing an unwrapper's handle.

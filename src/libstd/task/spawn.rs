@@ -92,7 +92,8 @@ use to_bytes::IterBytes;
 use uint;
 use util;
 use unstable::sync::{Exclusive, exclusive};
-use rt::{OldTaskContext, TaskContext, SchedulerContext, GlobalContext, context};
+//use rt::{OldTaskContext, TaskContext, SchedulerContext, GlobalContext, context};
+use rt::{OldTaskContext, context};
 use rt::local::Local;
 use rt::task::Task;
 use rt::kill::KillHandle;
@@ -522,7 +523,7 @@ impl RuntimeGlue {
                 let me = rt::rust_get_task();
                 blk(OldTask(me), rt::rust_task_is_unwinding(me))
             },
-            TaskContext => unsafe {
+            _ => unsafe {
                 // Can't use safe borrow, because the taskgroup destructor needs to
                 // access the scheduler again to send kill signals to other tasks.
                 let me = Local::unsafe_borrow::<Task>();
@@ -530,8 +531,7 @@ impl RuntimeGlue {
                 // Will probably have to wait until the old rt is gone.
                 blk(NewTask((*me).death.kill_handle.get_ref().clone()),
                     (*me).unwinder.unwinding)
-            },
-            SchedulerContext | GlobalContext => rtabort!("task dying in bad context"),
+            }
         }
     }
 
@@ -559,7 +559,7 @@ impl RuntimeGlue {
                     }
                 }
             },
-            TaskContext => unsafe {
+            _ => unsafe {
                 // Can't use safe borrow, because creating new hashmaps for the
                 // tasksets requires an rng, which needs to borrow the sched.
                 let me = Local::unsafe_borrow::<Task>();
@@ -579,8 +579,7 @@ impl RuntimeGlue {
                     }
                     Some(ref group) => group,
                 })
-            },
-            SchedulerContext | GlobalContext => rtabort!("spawning in bad context"),
+            }
         }
     }
 }
@@ -648,23 +647,24 @@ fn enlist_many(child: TaskHandle, child_arc: &TaskGroupArc,
 }
 
 pub fn spawn_raw(opts: TaskOpts, f: ~fn()) {
-    match context() {
-        OldTaskContext => {
-            spawn_raw_oldsched(opts, f)
-        }
-        TaskContext => {
-            spawn_raw_newsched(opts, f)
-        }
-        SchedulerContext => {
-            fail!("can't spawn from scheduler context")
-        }
-        GlobalContext => {
-            fail!("can't spawn from global context")
-        }
+    use rt::*;
+
+    // A hack to go with the context function. Just do the boolean
+    // check and let an interesting runtime error occur if it was one
+    // of the two bad cases.
+
+    if context() == OldTaskContext {
+        spawn_raw_oldsched(opts, f)
+    } else {
+        spawn_raw_newsched(opts, f)
     }
+
 }
 
 fn spawn_raw_newsched(mut opts: TaskOpts, f: ~fn()) {
+
+    use rt::sched::*;
+
     let child_data = Cell::new(gen_child_taskgroup(opts.linked, opts.supervised));
     let indestructible = opts.indestructible;
 
@@ -696,25 +696,18 @@ fn spawn_raw_newsched(mut opts: TaskOpts, f: ~fn()) {
         }
     };
 
-    let mut task = unsafe {
-        let sched = Local::unsafe_borrow::<Scheduler>();
-        rtdebug!("unsafe borrowed sched");
-
-        if opts.watched {
-            let child_wrapper = Cell::new(child_wrapper);
-            do Local::borrow::<Task, ~Task>() |running_task| {
-                ~running_task.new_child(&mut (*sched).stack_pool, child_wrapper.take())
-            }
-        } else {
-            // An unwatched task is a new root in the exit-code propagation tree
-            ~Task::new_root(&mut (*sched).stack_pool, child_wrapper)
-        }
+    let mut task = if opts.linked {
+        Task::build_child(child_wrapper)
+    } else {
+        // An unlinked task is a new root in the task tree
+        Task::build_root(child_wrapper)
     };
 
     if opts.notify_chan.is_some() {
         let notify_chan = opts.notify_chan.take_unwrap();
         let notify_chan = Cell::new(notify_chan);
         let on_exit: ~fn(bool) = |success| {
+            rtdebug!("success so far? %?", success);
             notify_chan.take().send(
                 if success { Success } else { Failure }
             )
@@ -722,11 +715,9 @@ fn spawn_raw_newsched(mut opts: TaskOpts, f: ~fn()) {
         task.death.on_exit = Some(on_exit);
     }
 
-    rtdebug!("spawn about to take scheduler");
+    rtdebug!("spawn calling run_task");
+    Scheduler::run_task(task);
 
-    let sched = Local::take::<Scheduler>();
-    rtdebug!("took sched in spawn");
-    sched.schedule_task(task);
 }
 
 fn spawn_raw_oldsched(mut opts: TaskOpts, f: ~fn()) {
