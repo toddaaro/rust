@@ -115,7 +115,7 @@ impl EventLoop for UvEventLoop {
             f();
         }
     }
-
+          
     fn callback_ms(&mut self, ms: u64, f: ~fn()) {
         let mut timer =  TimerWatcher::new(self.uvio.uv_loop());
         do timer.start(ms, 0) |timer, status| {
@@ -133,6 +133,36 @@ impl EventLoop for UvEventLoop {
         Some(&mut self.uvio)
     }
 }
+
+trait Idleable {
+    fn new_idle(&mut self) -> IdleWatcher;
+    fn start_idle(&mut self, idle_watcher: &mut IdleWatcher, f:~fn()); 
+    fn stop_idle(&mut self, idle_watcher: &mut IdleWatcher);
+    fn clean_idle(&mut self, idle_watcher: &mut IdleWatcher);
+}
+
+impl Idleable for UvEventLoop {
+
+    fn new_idle(&mut self) -> IdleWatcher {
+        IdleWatcher::new(self.uvio.uv_loop())
+    }
+
+    fn start_idle(&mut self, idle_watcher: &mut IdleWatcher, f: ~fn()) {
+        do idle_watcher.start |_idle_watcher, _status| {
+            f();
+        }
+    }
+
+    fn stop_idle(&mut self, idle_watcher: &mut IdleWatcher) {
+        idle_watcher.stop();
+    }
+
+    fn clean_idle(&mut self, idle_watcher: &mut IdleWatcher) {
+        idle_watcher.close(||());
+    }
+
+}
+
 
 #[test]
 fn test_callback_run_once() {
