@@ -217,7 +217,7 @@ impl Scheduler {
         // Always run through the scheduler loop at least once so that
         // we enter the sleep state and can then be woken up by other
         // schedulers.
-        self_sched.event_loop.callback(Scheduler::run_sched_once);
+//        self_sched.event_loop.callback(Scheduler::run_sched_once);
 
         // This is unsafe because we need to place the scheduler, with
         // the event_loop inside, inside our task. But we still need a

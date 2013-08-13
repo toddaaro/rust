@@ -994,7 +994,10 @@ fn get_sched_id() -> int {
     }
 }
 
+// TEMP_DISABLE
+
 #[test]
+#[ignore] 
 fn test_spawn_sched() {
     let (po, ch) = stream::<()>();
     let ch = SharedChan::new(ch);
