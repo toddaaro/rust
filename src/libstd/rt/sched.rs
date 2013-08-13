@@ -30,6 +30,8 @@ use cell::Cell;
 use rand::{XorShiftRng, RngUtil};
 use iterator::{range};
 use vec::{OwnedVector};
+use super::uv::uvio::Idleable;
+use super::uv::idle::IdleWatcher;
 
 /// The Scheduler is responsible for coordinating execution of Coroutines
 /// on a single thread. When the scheduler is running it is owned by
@@ -76,8 +78,12 @@ pub struct Scheduler {
     /// them to.
     friend_handle: Option<SchedHandle>,
     /// A fast XorShift rng for scheduler use
-    rng: XorShiftRng
-
+    rng: XorShiftRng,
+    /// An idle callback for making the scheduler "go"
+    idle_watcher: IdleWatcher,
+    /// A flag to indicate whether or not the primary idle callback is
+    /// active.
+    idle_flag: bool
 }
 
 pub struct SchedHandle {
@@ -124,12 +130,15 @@ impl Scheduler {
                        friend: Option<SchedHandle>)
         -> Scheduler {
 
+        let mut _loop = event_loop;
+        let idle = _loop.new_idle();
+
         Scheduler {
             sleeper_list: sleeper_list,
             message_queue: MessageQueue::new(),
             sleepy: false,
             no_sleep: false,
-            event_loop: event_loop,
+            event_loop: _loop,
             work_queue: work_queue,
             work_queues: work_queues,
             stack_pool: StackPool::new(),
@@ -138,7 +147,9 @@ impl Scheduler {
             metrics: SchedMetrics::new(),
             run_anything: run_anything,
             friend_handle: friend,
-            rng: XorShiftRng::new()
+            rng: XorShiftRng::new(),
+            idle_watcher: idle,
+            idle_flag: true
         }
     }
 
@@ -164,7 +175,12 @@ impl Scheduler {
         // Now, as far as all the scheduler state is concerned, we are
         // inside the "scheduler" context. So we can act like the
         // scheduler and resume the provided task.
-        self.resume_task_immediately(task);
+        do self.change_task_context(task) |sched, sched_task| {
+            sched.sched_task = Some(sched_task);
+            // Start the idle callback we have in the struct.
+            sched.event_loop.start_idle(&mut sched.idle_watcher, 
+                                        Scheduler::run_sched_once);
+        }
 
         // Now we are back in the scheduler context, having
         // successfully run the input task. Start by running the
@@ -282,7 +298,10 @@ impl Scheduler {
             sched.sleepy = true;
             let handle = sched.make_handle();
             sched.sleeper_list.push(handle);
+            // Since we are sleeping stop the idle callback from going.
+            sched.stop_idle();
         } else {
+            sched.stop_idle();
             rtdebug!("not sleeping, already doing so or no_sleep set");
         }
 
@@ -290,6 +309,29 @@ impl Scheduler {
         // in TLS.
         Local::put(sched);
     }
+
+    fn start_idle(&mut self) {
+        if self.idle_flag {
+            rtdebug!("hit start idle but idle already active");
+            // idle already running
+            return;
+        } else {
+            // not already active, start it
+            rtdebug!("hit start idle and starting it");
+            self.event_loop.restart_idle(&mut self.idle_watcher);
+            self.idle_flag = true;
+        }
+    }
+
+    fn stop_idle(&mut self) {
+        rtdebug!("hit stop idle");
+        if self.idle_flag {
+            rtdebug!("flag was true so stopping idle");           
+            self.idle_watcher.stop();
+            
+            self.idle_flag = false;
+        }
+    }                                      
 
     pub fn make_handle(&mut self) -> SchedHandle {
         let remote = self.event_loop.remote_callback(Scheduler::run_sched_once);
@@ -312,7 +354,8 @@ impl Scheduler {
 
         // We push the task onto our local queue clone.
         this.work_queue.push(task);
-        this.event_loop.callback(Scheduler::run_sched_once);
+//        this.event_loop.callback(Scheduler::run_sched_once);
+        this.start_idle();
 
         // We've made work available. Notify a
         // sleeping scheduler.
@@ -352,19 +395,22 @@ impl Scheduler {
         let mut this = self;
         match this.message_queue.pop() {
             Some(PinnedTask(task)) => {
-                this.event_loop.callback(Scheduler::run_sched_once);
+//                this.event_loop.callback(Scheduler::run_sched_once);
+                this.start_idle();
                 let mut task = task;
                 task.give_home(Sched(this.make_handle()));
                 this.resume_task_immediately(task);
                 return None;
             }
             Some(TaskFromFriend(task)) => {
-                this.event_loop.callback(Scheduler::run_sched_once);
+//                this.event_loop.callback(Scheduler::run_sched_once);
+                this.start_idle();
                 rtdebug!("got a task from a friend. lovely!");
                 return this.sched_schedule_task(task);
             }
             Some(Wake) => {
-                this.event_loop.callback(Scheduler::run_sched_once);
+//                this.event_loop.callback(Scheduler::run_sched_once);
+                this.start_idle();
                 this.sleepy = false;
                 return Some(this);
             }

@@ -134,30 +134,35 @@ impl EventLoop for UvEventLoop {
     }
 }
 
-trait Idleable {
+pub trait Idleable {
     fn new_idle(&mut self) -> IdleWatcher;
     fn start_idle(&mut self, idle_watcher: &mut IdleWatcher, f:~fn()); 
+    fn restart_idle(&mut self, idle_watcher: &mut IdleWatcher);
     fn stop_idle(&mut self, idle_watcher: &mut IdleWatcher);
     fn clean_idle(&mut self, idle_watcher: &mut IdleWatcher);
 }
 
 impl Idleable for UvEventLoop {
 
-    fn new_idle(&mut self) -> IdleWatcher {
+    pub fn new_idle(&mut self) -> IdleWatcher {
         IdleWatcher::new(self.uvio.uv_loop())
     }
 
-    fn start_idle(&mut self, idle_watcher: &mut IdleWatcher, f: ~fn()) {
+    pub fn start_idle(&mut self, idle_watcher: &mut IdleWatcher, f: ~fn()) {
         do idle_watcher.start |_idle_watcher, _status| {
             f();
         }
     }
 
-    fn stop_idle(&mut self, idle_watcher: &mut IdleWatcher) {
+    pub fn restart_idle(&mut self, idle_watcher: &mut IdleWatcher) {
+        idle_watcher.restart()
+    }
+
+    pub fn stop_idle(&mut self, idle_watcher: &mut IdleWatcher) {
         idle_watcher.stop();
     }
 
-    fn clean_idle(&mut self, idle_watcher: &mut IdleWatcher) {
+    pub fn clean_idle(&mut self, idle_watcher: &mut IdleWatcher) {
         idle_watcher.close(||());
     }
 
