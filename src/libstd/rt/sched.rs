@@ -359,6 +359,7 @@ impl Scheduler {
 
         // We push the task onto our local queue clone.
         this.work_queue.push(task);
+        this.activate_idle();
 //        this.event_loop.callback(Scheduler::run_sched_once);
 
         // We've made work available. Notify a
