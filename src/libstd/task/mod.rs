@@ -995,7 +995,7 @@ fn get_sched_id() -> int {
 }
 
 #[test]
-fn test_spawn_sched() {
+fn test_spawn_sched_tower() {
     let (po, ch) = stream::<()>();
     let ch = SharedChan::new(ch);
 

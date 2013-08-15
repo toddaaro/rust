@@ -631,9 +631,10 @@ fn spawn_raw_newsched(mut opts: TaskOpts, f: ~fn()) {
 
             // Create a new scheduler to hold the new task
             let new_loop = ~UvEventLoop::new();
+            let work_queues = ~[work_queue.clone()];
             let mut new_sched = ~Scheduler::new_special(new_loop,
                                                         work_queue,
-                                                        (*sched).work_queues.clone(),
+                                                        work_queues,
                                                         (*sched).sleeper_list.clone(),
                                                         false,
                                                         Some(sched_handle));
@@ -641,6 +642,9 @@ fn spawn_raw_newsched(mut opts: TaskOpts, f: ~fn()) {
 
             // Allow the scheduler to exit when the pinned task exits
             new_sched_handle.send(Shutdown);
+
+            // Ensure arrival on the old scheduler
+            let shutdown_handle = Cell::new((*sched).make_handle());
 
             // Pin the new task to the new scheduler
             let new_task = if opts.watched {
@@ -655,6 +659,7 @@ fn spawn_raw_newsched(mut opts: TaskOpts, f: ~fn()) {
             let thread_port_cell = Cell::new(thread_port);
             let join_task = do Task::build_child(None) {
                 rtdebug!("running join task");
+                util::ignore(shutdown_handle.take());
                 let thread_port = thread_port_cell.take();
                 let thread: Thread = thread_port.recv();
                 thread.join();
