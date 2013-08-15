@@ -38,18 +38,18 @@ impl Logger for StdErrLogger {
         };
 
         // Truncate the string
-        let buf_bytes = 256;
+        let buf_bytes = 512;
         if s.len() > buf_bytes {
-            let s = s.slice(0, buf_bytes) + "[...]";
+            let s = s.slice(0, buf_bytes) + "[...]" + "\n";
             print(s);
         } else {
+            let s = s + "\n";
             print(s)
         };
 
         fn print(s: &str) {
             let dbg = ::libc::STDERR_FILENO as ::io::fd_t;
             dbg.write_str(s);
-            dbg.write_str("\n");
             dbg.flush();
         }
     }

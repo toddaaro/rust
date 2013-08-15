@@ -51,7 +51,8 @@ pub struct Task {
     name: Option<~str>,
     coroutine: Option<Coroutine>,
     sched: Option<~Scheduler>,
-    task_type: TaskType
+    task_type: TaskType,
+    task_id: uint
 }
 
 pub enum TaskType {
@@ -91,11 +92,12 @@ impl Task {
         let home = Cell::new(home);
         do Local::borrow::<Task, ~Task> |running_task| {
             let mut sched = running_task.sched.take_unwrap();
-            let new_task = ~running_task.new_child_homed(&mut sched.stack_pool,
+            let mut new_task = ~running_task.new_child_homed(&mut sched.stack_pool,
                                                          stack_size,
                                                          home.take(),
                                                          f.take());
             running_task.sched = Some(sched);
+            new_task.task_id = borrow::to_uint(new_task);
             new_task
         }
     }
@@ -109,11 +111,12 @@ impl Task {
         let home = Cell::new(home);
         do Local::borrow::<Task, ~Task> |running_task| {
             let mut sched = running_task.sched.take_unwrap();
-            let new_task = ~Task::new_root_homed(&mut sched.stack_pool,
+            let mut new_task = ~Task::new_root_homed(&mut sched.stack_pool,
                                                  stack_size,
                                                  home.take(),
                                                  f.take());
             running_task.sched = Some(sched);
+            new_task.task_id = borrow::to_uint(new_task);
             new_task
         }
     }
@@ -135,7 +138,8 @@ impl Task {
             coroutine: Some(Coroutine::empty()),
             name: None,
             sched: None,
-            task_type: SchedTask
+            task_type: SchedTask,
+            task_id: 0
         }
     }
 
@@ -168,7 +172,8 @@ impl Task {
             name: None,
             coroutine: Some(Coroutine::new(stack_pool, stack_size, start)),
             sched: None,
-            task_type: GreenTask(Some(~home))
+            task_type: GreenTask(Some(~home)),
+            task_id: 0                
         }
     }
 
@@ -190,7 +195,8 @@ impl Task {
             name: None,
             coroutine: Some(Coroutine::new(stack_pool, stack_size, start)),
             sched: None,
-            task_type: GreenTask(Some(~home))
+            task_type: GreenTask(Some(~home)),
+            task_id: 0
         }
     }
 

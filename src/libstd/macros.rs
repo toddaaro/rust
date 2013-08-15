@@ -20,7 +20,26 @@ macro_rules! rterrln (
 macro_rules! rtdebug (
     ($( $arg:expr),+) => ( {
         if cfg!(rtdebug) {
-            rterrln!( $($arg),+ )
+            use rt::task::{Task, SchedTask, GreenTask};
+            use rt::local::Local;
+            if Local::exists::<Task>() {
+                do Local::borrow::<Task,()> |task| {
+                    let task_id = task.task_id;
+                    let is_sched = match task.task_type {
+                        SchedTask => true,
+                        _ => false
+                    };
+                    let out = if is_sched {
+                        fmt!("[%u][S] ", task_id)
+                    } else {
+                        fmt!("[%u] ", task_id)
+                    };
+                    let raw_out = out + fmt!( $($arg),+ );
+                    ::rt::util::dumb_println(raw_out);                    
+                }
+            } else {
+                ::rt::util::dumb_println("[?] " + fmt!( $($arg),+ ));
+            }
         }
     })
 )
