@@ -441,8 +441,6 @@ impl Unwinder {
     }
 
     pub fn begin_unwind(&mut self) -> ! {
-        #[fixed_stack_segment]; #[inline(never)];
-
         self.unwinding = true;
         unsafe {
             rust_begin_unwind(UNWIND_TOKEN);

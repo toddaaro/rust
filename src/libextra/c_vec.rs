@@ -155,20 +155,12 @@ mod tests {
     use std::libc;
 
     fn malloc(n: size_t) -> CVec<u8> {
-        #[fixed_stack_segment];
-        #[inline(never)];
-
         unsafe {
             let mem = libc::malloc(n);
 
             assert!(mem as int != 0);
 
-            return c_vec_with_dtor(mem as *mut u8, n as uint, || f(mem));
-        }
-
-        fn f(mem: *c_void) {
-            #[fixed_stack_segment]; #[inline(never)];
-            unsafe { libc::free(mem) }
+            c_vec_with_dtor(mem as *mut u8, n as uint, || free(mem))
         }
     }
 

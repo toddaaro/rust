@@ -16,7 +16,6 @@ extern {
     fn rust_get_test_int() -> libc::intptr_t;
 }
 
-#[fixed_stack_segment]
 pub fn main() {
     unsafe {
         let _ = rust_get_test_int();

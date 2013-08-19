@@ -645,13 +645,9 @@ pub fn build_session_options(binary: @str,
         }
         debugging_opts |= this_bit;
     }
-
     if debugging_opts & session::debug_llvm != 0 {
-        set_llvm_debug();
-
-        fn set_llvm_debug() {
-            #[fixed_stack_segment]; #[inline(never)];
-            unsafe { llvm::LLVMSetDebug(1); }
+        unsafe {
+            llvm::LLVMSetDebug(1);
         }
     }
 

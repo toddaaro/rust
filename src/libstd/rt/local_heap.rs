@@ -37,7 +37,6 @@ pub struct LocalHeap {
 }
 
 impl LocalHeap {
-    #[fixed_stack_segment] #[inline(never)]
     pub fn new() -> LocalHeap {
         unsafe {
             // Don't need synchronization for the single-threaded local heap
@@ -56,21 +55,18 @@ impl LocalHeap {
         }
     }
 
-    #[fixed_stack_segment] #[inline(never)]
     pub fn alloc(&mut self, td: *TypeDesc, size: uint) -> *OpaqueBox {
         unsafe {
             return rust_boxed_region_malloc(self.boxed_region, td, size as size_t);
         }
     }
 
-    #[fixed_stack_segment] #[inline(never)]
     pub fn realloc(&mut self, ptr: *OpaqueBox, size: uint) -> *OpaqueBox {
         unsafe {
             return rust_boxed_region_realloc(self.boxed_region, ptr, size as size_t);
         }
     }
 
-    #[fixed_stack_segment] #[inline(never)]
     pub fn free(&mut self, box: *OpaqueBox) {
         unsafe {
             return rust_boxed_region_free(self.boxed_region, box);
@@ -79,7 +75,6 @@ impl LocalHeap {
 }
 
 impl Drop for LocalHeap {
-    #[fixed_stack_segment] #[inline(never)]
     fn drop(&self) {
         unsafe {
             rust_delete_boxed_region(self.boxed_region);

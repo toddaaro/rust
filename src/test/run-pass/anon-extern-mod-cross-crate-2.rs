@@ -14,7 +14,6 @@ extern mod anonexternmod;
 
 use anonexternmod::*;
 
-#[fixed_stack_segment]
 pub fn main() {
     unsafe {
         rust_get_test_int();

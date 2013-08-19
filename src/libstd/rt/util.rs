@@ -17,8 +17,6 @@ use str::StrSlice;
 
 /// Get the number of cores available
 pub fn num_cpus() -> uint {
-    #[fixed_stack_segment]; #[inline(never)];
-
     unsafe {
         return rust_get_num_cpus();
     }
@@ -95,16 +93,11 @@ memory and partly incapable of presentation to others.",
     rterrln!("%s", "");
     rterrln!("fatal runtime error: %s", msg);
 
-    abort();
-
-    fn abort() -> ! {
-        #[fixed_stack_segment]; #[inline(never)];
-        unsafe { libc::abort() }
-    }
+    unsafe { libc::abort(); }
 }
 
 pub fn set_exit_status(code: int) {
-    #[fixed_stack_segment]; #[inline(never)];
+
     unsafe {
         return rust_set_exit_status_newrt(code as libc::uintptr_t);
     }
@@ -115,7 +108,7 @@ pub fn set_exit_status(code: int) {
 }
 
 pub fn get_exit_status() -> int {
-    #[fixed_stack_segment]; #[inline(never)];
+
     unsafe {
         return rust_get_exit_status_newrt() as int;
     }

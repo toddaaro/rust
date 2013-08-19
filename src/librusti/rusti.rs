@@ -498,8 +498,6 @@ pub fn run_line(repl: &mut Repl, input: @io::Reader, out: @io::Writer, line: ~st
 }
 
 pub fn main() {
-    #[fixed_stack_segment]; #[inline(never)];
-
     let args = os::args();
     let input = io::stdin();
     let out = io::stdout();

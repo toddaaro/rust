@@ -45,7 +45,6 @@ enum SocketNameKind {
 
 fn socket_name<T, U: Watcher + NativeHandle<*T>>(sk: SocketNameKind,
                                                  handle: U) -> Result<SocketAddr, IoError> {
-    #[fixed_stack_segment]; #[inline(never)];
 
     let getsockname = match sk {
         TcpPeer => uvll::rust_uv_tcp_getpeername,
@@ -482,8 +481,6 @@ impl RtioTcpListener for UvTcpListener {
     }
 
     fn accept_simultaneously(&mut self) -> Result<(), IoError> {
-        #[fixed_stack_segment]; #[inline(never)];
-
         let r = unsafe {
             uvll::rust_uv_tcp_simultaneous_accepts(self.watcher.native_handle(), 1 as c_int)
         };
@@ -495,8 +492,6 @@ impl RtioTcpListener for UvTcpListener {
     }
 
     fn dont_accept_simultaneously(&mut self) -> Result<(), IoError> {
-        #[fixed_stack_segment]; #[inline(never)];
-
         let r = unsafe {
             uvll::rust_uv_tcp_simultaneous_accepts(self.watcher.native_handle(), 0 as c_int)
         };
@@ -604,8 +599,6 @@ impl RtioTcpStream for UvTcpStream {
     }
 
     fn control_congestion(&mut self) -> Result<(), IoError> {
-        #[fixed_stack_segment]; #[inline(never)];
-
         let r = unsafe {
             uvll::rust_uv_tcp_nodelay(self.native_handle(), 0 as c_int)
         };
@@ -617,8 +610,6 @@ impl RtioTcpStream for UvTcpStream {
     }
 
     fn nodelay(&mut self) -> Result<(), IoError> {
-        #[fixed_stack_segment]; #[inline(never)];
-
         let r = unsafe {
             uvll::rust_uv_tcp_nodelay(self.native_handle(), 1 as c_int)
         };
@@ -630,8 +621,6 @@ impl RtioTcpStream for UvTcpStream {
     }
 
     fn keepalive(&mut self, delay_in_seconds: uint) -> Result<(), IoError> {
-        #[fixed_stack_segment]; #[inline(never)];
-
         let r = unsafe {
             uvll::rust_uv_tcp_keepalive(self.native_handle(), 1 as c_int,
                                         delay_in_seconds as c_uint)
@@ -644,8 +633,6 @@ impl RtioTcpStream for UvTcpStream {
     }
 
     fn letdie(&mut self) -> Result<(), IoError> {
-        #[fixed_stack_segment]; #[inline(never)];
-
         let r = unsafe {
             uvll::rust_uv_tcp_keepalive(self.native_handle(), 0 as c_int, 0 as c_uint)
         };
