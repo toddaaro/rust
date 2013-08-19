@@ -266,8 +266,8 @@ impl Task {
     pub fn is_home_no_tls(&self, sched: &~Scheduler) -> bool {
         match self.task_type {
             GreenTask(Some(~AnySched)) => { false }
-            GreenTask(Some(~Sched(SchedHandle { sched_id: ref id, _}))) => {
-                *id == sched.sched_id()
+            GreenTask(Some(~Sched(ref handle))) => {
+                sched.sched_id() == handle.sched_id()
             }
             GreenTask(None) => {
                 rtabort!("task without home");
@@ -282,7 +282,7 @@ impl Task {
     pub fn homed(&self) -> bool {
         match self.task_type {
             GreenTask(Some(~AnySched)) => { false }
-            GreenTask(Some(~Sched(SchedHandle { _ }))) => { true }
+            GreenTask(Some(~Sched(_))) => { true }
             GreenTask(None) => {
                 rtabort!("task without home");
             }
@@ -303,9 +303,9 @@ impl Task {
                     rtdebug!("anysched task in sched check ****");
                     sched_run_anything
                 }
-                GreenTask(Some(~Sched(SchedHandle { sched_id: ref id, _ }))) => {
+                GreenTask(Some(~Sched(ref handle))) => {
                     rtdebug!("homed task in sched check ****");
-                    *id == sched_id
+                    handle.sched_id() == sched_id
                 }
                 GreenTask(None) => {
                     rtabort!("task without home");

@@ -10,7 +10,7 @@
 
 use either::{Left, Right};
 use option::{Option, Some, None};
-use cast::{transmute, transmute_mut_region, transmute_mut_unsafe};
+use cast::{transmute, transmute_mut_region, transmute_mut_unsafe, unsafe_copy};
 use clone::Clone;
 use unstable::raw;
 use super::sleeper_list::SleeperList;
@@ -30,6 +30,9 @@ use cell::Cell;
 use rand::{XorShiftRng, RngUtil};
 use iterator::{range};
 use vec::{OwnedVector};
+use unstable::atomics::{AtomicOption,SeqCst};
+use util::ignore;
+use unstable::sync::UnsafeAtomicRcBox;
 
 /// A scheduler is responsible for coordinating the execution of Tasks
 /// on a single thread. The scheduler runs inside a slightly modified
@@ -80,7 +83,19 @@ pub struct Scheduler {
     /// A fast XorShift rng for scheduler use
     rng: XorShiftRng,
     /// A toggleable idle callback
-    idle_callback: ~PausibleIdleCallback
+    idle_callback: ~PausibleIdleCallback,
+    /// To avoid doing work to allocate extra async callback handles,
+    /// and also to avoid doing extra work making unnecessary
+    /// callbacks, create a singleton callback and control access to
+    /// it through an atomic option inside an unsafe atomic rcbox.
+    async_handle: Option<SchedHandle>,
+    /// To shutdown we need to decrement the refcount on the
+    /// SchedHandle to zero, so the trick to this is to create a clone
+    /// using unsafe_copy and then keep it around without forgetting
+    /// it. Then we can destruct the copy dropping the refcount to
+    /// zero while the singleton above exists. Perform this decrement
+    /// when a Shutdown message arrives.
+    shutdown_handle: Option<SchedHandle>
 }
 
 impl Scheduler {
@@ -125,7 +140,9 @@ impl Scheduler {
             run_anything: run_anything,
             friend_handle: friend,
             rng: XorShiftRng::new(),
-            idle_callback: idle_callback
+            idle_callback: idle_callback,
+            async_handle: None,
+            shutdown_handle: None
         }
     }
 
@@ -154,6 +171,15 @@ impl Scheduler {
         // is active. As we do not start in the sleep state this is
         // important.
         this.idle_callback.start(Scheduler::run_sched_once);
+
+        // Initialize the async callback handle.
+        this.async_handle = Some(SchedHandle::new(this));
+
+        // Initialize the shutdown_handle. THIS IS UNSAFE.
+        unsafe {
+            this.shutdown_handle = 
+                Some(unsafe_copy(this.async_handle.get_mut_ref()));
+        }
 
         // Now, as far as all the scheduler state is concerned, we are
         // inside the "scheduler" context. So we can act like the
@@ -315,6 +341,9 @@ impl Scheduler {
                 // event loop references we will shut down.
                 this.no_sleep = true;
                 this.sleepy = false;
+                // Haxxorize the refcount on the async_handle by
+                // destructing the unsafe copy.
+                ignore(this.shutdown_handle.take_unwrap());
                 Local::put(this);
                 return None;
             }
@@ -398,7 +427,7 @@ impl Scheduler {
         let home = task.take_unwrap_home();
         match home {
             Sched(home_handle) => {
-                if home_handle.sched_id != this.sched_id() {
+                if home_handle.sched_id() != this.sched_id() {
                     rtdebug!("sending task home");
                     task.give_home(Sched(home_handle));
                     Scheduler::send_task_home(task);
@@ -687,13 +716,7 @@ impl Scheduler {
     }
 
     pub fn make_handle(&mut self) -> SchedHandle {
-        let remote = self.event_loop.remote_callback(Scheduler::run_sched_once);
-
-        return SchedHandle {
-            remote: remote,
-            queue: self.message_queue.clone(),
-            sched_id: self.sched_id()
-        };
+        self.async_handle.get_mut_ref().clone()
     }
 }
 
@@ -709,15 +732,60 @@ pub enum SchedMessage {
 }
 
 pub struct SchedHandle {
-    priv remote: ~RemoteCallbackObject,
+    data: UnsafeAtomicRcBox<SchedHandleInner>
+}
+
+pub struct SchedHandleInner {
+    priv remote: AtomicOption<RemoteCallbackObject>,
     priv queue: MessageQueue<SchedMessage>,
     sched_id: uint
 }
 
 impl SchedHandle {
+    
+    pub fn new(sched: &mut Scheduler) -> SchedHandle {
+        let remote = sched.event_loop.remote_callback(Scheduler::run_sched_once);
+        let data = SchedHandleInner {
+            remote: AtomicOption::new(remote),
+            queue: sched.message_queue.clone(),
+            sched_id: sched.sched_id()
+        };
+        return SchedHandle {
+            data: UnsafeAtomicRcBox::new(data)
+        };
+    }
+
+    #[inline]
+    pub fn sched_id(&self) -> uint {
+        unsafe { (*self.data.get()).sched_id }
+    }
+
     pub fn send(&mut self, msg: SchedMessage) {
-        self.queue.push(msg);
-        self.remote.fire();
+        unsafe {
+            // Step 1) Queue the message. Easy.
+            (*self.data.get()).queue.push(msg);
+            // Step 2) Try for the callback object. If found, fire
+            // callback. If it isn't found, it means someone else is
+            // firing a callback already. This will not lose messages, as
+            // the final step before returning is to check the message
+            // queue.
+            match (*self.data.get()).remote.take(SeqCst) {
+                Some(remote) => {
+                    let mut remote = remote;
+                    remote.fire();
+                    (*self.data.get()).remote.swap(remote, SeqCst);
+                }
+                None => { () }
+            };                    
+        }
+    }
+}
+
+impl Clone for SchedHandle {
+    fn clone(&self) -> SchedHandle {
+        SchedHandle {
+            data: self.data.clone()
+        }
     }
 }
 
