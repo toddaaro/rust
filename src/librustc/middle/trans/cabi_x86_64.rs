@@ -15,7 +15,6 @@ use lib::llvm::{llvm, Integer, Pointer, Float, Double};
 use lib::llvm::{Struct, Array, Attribute};
 use lib::llvm::{StructRetAttribute, ByValAttribute};
 use middle::trans::cabi::*;
-use middle::trans::context::CrateContext;
 
 use middle::trans::type_::Type;
 
@@ -332,10 +331,10 @@ fn llreg_ty(cls: &[RegClass]) -> Type {
     return Type::struct_(tys, false);
 }
 
-pub fn compute_abi_info(_ccx: &mut CrateContext,
-                        atys: &[Type],
-                        rty: Type,
-                        ret_def: bool) -> FnType {
+fn x86_64_tys(atys: &[Type],
+              rty: Type,
+              ret_def: bool) -> FnType {
+
     fn x86_64_ty(ty: Type,
                  is_mem_cls: &fn(cls: &[RegClass]) -> bool,
                  attr: Attribute) -> (LLVMType, Option<Attribute>) {
@@ -384,4 +383,19 @@ pub fn compute_abi_info(_ccx: &mut CrateContext,
         attrs: attrs,
         sret: sret
     };
+}
+
+enum X86_64_ABIInfo { X86_64_ABIInfo }
+
+impl ABIInfo for X86_64_ABIInfo {
+    fn compute_info(&self,
+                    atys: &[Type],
+                    rty: Type,
+                    ret_def: bool) -> FnType {
+        return x86_64_tys(atys, rty, ret_def);
+    }
+}
+
+pub fn abi_info() -> @ABIInfo {
+    return @X86_64_ABIInfo as @ABIInfo;
 }

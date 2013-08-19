@@ -68,7 +68,6 @@ pub mod middle {
     pub mod reachable;
     pub mod graph;
     pub mod cfg;
-    pub mod stack_check;
 }
 
 pub mod front {

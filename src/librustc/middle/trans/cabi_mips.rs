@@ -14,7 +14,6 @@ use std::num;
 use std::vec;
 use lib::llvm::{llvm, Integer, Pointer, Float, Double, Struct, Array};
 use lib::llvm::{Attribute, StructRetAttribute};
-use middle::trans::context::CrateContext;
 use middle::trans::context::task_llcx;
 use middle::trans::cabi::*;
 
@@ -171,39 +170,47 @@ fn struct_ty(ty: Type,
     return Type::struct_(fields, false);
 }
 
-pub fn compute_abi_info(_ccx: &mut CrateContext,
-                        atys: &[Type],
-                        rty: Type,
-                        ret_def: bool) -> FnType {
-    let (ret_ty, ret_attr) = if ret_def {
-        classify_ret_ty(rty)
-    } else {
-        (LLVMType { cast: false, ty: Type::void() }, None)
-    };
+enum MIPS_ABIInfo { MIPS_ABIInfo }
 
-    let mut ret_ty = ret_ty;
+impl ABIInfo for MIPS_ABIInfo {
+    fn compute_info(&self,
+                    atys: &[Type],
+                    rty: Type,
+                    ret_def: bool) -> FnType {
+        let (ret_ty, ret_attr) = if ret_def {
+            classify_ret_ty(rty)
+        } else {
+            (LLVMType { cast: false, ty: Type::void() }, None)
+        };
 
-    let sret = ret_attr.is_some();
-    let mut arg_tys = ~[];
-    let mut attrs = ~[];
-    let mut offset = if sret { 4 } else { 0 };
+        let mut ret_ty = ret_ty;
 
-    for aty in atys.iter() {
-        let (ty, attr) = classify_arg_ty(*aty, &mut offset);
-        arg_tys.push(ty);
-        attrs.push(attr);
-    };
+        let sret = ret_attr.is_some();
+        let mut arg_tys = ~[];
+        let mut attrs = ~[];
+        let mut offset = if sret { 4 } else { 0 };
 
-    if sret {
-        arg_tys = vec::append(~[ret_ty], arg_tys);
-        attrs = vec::append(~[ret_attr], attrs);
-        ret_ty = LLVMType { cast: false, ty: Type::void() };
+        for aty in atys.iter() {
+            let (ty, attr) = classify_arg_ty(*aty, &mut offset);
+            arg_tys.push(ty);
+            attrs.push(attr);
+        };
+
+        if sret {
+            arg_tys = vec::append(~[ret_ty], arg_tys);
+            attrs = vec::append(~[ret_attr], attrs);
+            ret_ty = LLVMType { cast: false, ty: Type::void() };
+        }
+
+        return FnType {
+            arg_tys: arg_tys,
+            ret_ty: ret_ty,
+            attrs: attrs,
+            sret: sret
+        };
     }
+}
 
-    return FnType {
-        arg_tys: arg_tys,
-        ret_ty: ret_ty,
-        attrs: attrs,
-        sret: sret
-    };
+pub fn abi_info() -> @ABIInfo {
+    return @MIPS_ABIInfo as @ABIInfo;
 }

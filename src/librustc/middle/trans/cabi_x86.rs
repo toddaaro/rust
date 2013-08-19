@@ -14,87 +14,70 @@ use lib::llvm::*;
 use super::cabi::*;
 use super::common::*;
 use super::machine::*;
+
 use middle::trans::type_::Type;
 
-pub fn compute_abi_info(ccx: &mut CrateContext,
-                        atys: &[Type],
-                        rty: Type,
-                        ret_def: bool) -> FnType {
-    let mut arg_tys = ~[];
-    let mut attrs = ~[];
+struct X86_ABIInfo {
+    ccx: @mut CrateContext
+}
 
-    let ret_ty;
-    let sret;
-    if !ret_def {
-        ret_ty = LLVMType {
-            cast: false,
-            ty: Type::void(),
+impl ABIInfo for X86_ABIInfo {
+    fn compute_info(&self,
+                    atys: &[Type],
+                    rty: Type,
+                    ret_def: bool) -> FnType {
+        let mut arg_tys = do atys.map |a| {
+            LLVMType { cast: false, ty: *a }
         };
-        sret = false;
-    } else if rty.kind() == Struct {
-        // Returning a structure. Most often, this will use
-        // a hidden first argument. On some platforms, though,
-        // small structs are returned as integers.
-        //
-        // Some links:
-        // http://www.angelcode.com/dev/callconv/callconv.html
-        // Clang's ABI handling is in lib/CodeGen/TargetInfo.cpp
-
-        enum Strategy { RetValue(Type), RetPointer }
-        let strategy = match ccx.sess.targ_cfg.os {
-            os_win32 | os_macos => {
-                match llsize_of_alloc(ccx, rty) {
-                    1 => RetValue(Type::i8()),
-                    2 => RetValue(Type::i16()),
-                    4 => RetValue(Type::i32()),
-                    8 => RetValue(Type::i64()),
-                    _ => RetPointer
-                }
-            }
-            _ => {
-                RetPointer
-            }
-        };
-
-        match strategy {
-            RetValue(t) => {
-                ret_ty = LLVMType {
-                    cast: true,
-                    ty: t
-                };
-                sret = false;
-            }
-            RetPointer => {
-                arg_tys.push(LLVMType {
-                    cast: false,
-                    ty: rty.ptr_to()
-                });
-                attrs.push(Some(StructRetAttribute));
-
-                ret_ty = LLVMType {
-                    cast: false,
-                    ty: Type::void(),
-                };
-                sret = true;
-            }
-        }
-    } else {
-        ret_ty = LLVMType {
+        let mut ret_ty = LLVMType {
             cast: false,
             ty: rty
         };
-        sret = false;
-    }
+        let mut attrs = do atys.map |_| {
+            None
+        };
 
-    for &a in atys.iter() {
-        arg_tys.push(LLVMType { cast: false, ty: a });
-        attrs.push(None);
-    }
+        // Rules for returning structs taken from
+        // http://www.angelcode.com/dev/callconv/callconv.html
+        // Clang's ABI handling is in lib/CodeGen/TargetInfo.cpp
+        let sret = {
+            let returning_a_struct = rty.kind() == Struct && ret_def;
+            let big_struct = match self.ccx.sess.targ_cfg.os {
+                os_win32 | os_macos => llsize_of_alloc(self.ccx, rty) > 8,
+                _ => true
+            };
+            returning_a_struct && big_struct
+        };
 
-    return FnType {
-        arg_tys: arg_tys,
-        ret_ty: ret_ty,
-        attrs: attrs,
-        sret: sret
-    };
+        if sret {
+            let ret_ptr_ty = LLVMType {
+                cast: false,
+                ty: ret_ty.ty.ptr_to()
+            };
+            arg_tys = ~[ret_ptr_ty] + arg_tys;
+            attrs = ~[Some(StructRetAttribute)] + attrs;
+            ret_ty = LLVMType {
+                cast: false,
+                ty: Type::void(),
+            };
+        } else if !ret_def {
+            ret_ty = LLVMType {
+                cast: false,
+                ty: Type::void()
+            };
+        }
+
+        return FnType {
+            arg_tys: arg_tys,
+            ret_ty: ret_ty,
+            attrs: attrs,
+            sret: sret
+        };
+    }
+}
+
+pub fn abi_info(ccx: @mut CrateContext) -> @ABIInfo {
+    return @X86_ABIInfo {
+        ccx: ccx
+    } as @ABIInfo;
 }
