@@ -628,12 +628,13 @@ fn spawn_raw_newsched(mut opts: TaskOpts, f: ~fn()) {
             // the stealee set. The run_anything flag is set false
             // which will disable stealing.
             let work_queue = WorkQueue::new();
+            let qs = ~[work_queue.clone()];
 
             // Create a new scheduler to hold the new task
             let new_loop = ~UvEventLoop::new();
             let mut new_sched = ~Scheduler::new_special(new_loop,
                                                         work_queue,
-                                                        (*sched).work_queues.clone(),
+                                                        qs,
                                                         (*sched).sleeper_list.clone(),
                                                         false,
                                                         Some(sched_handle));

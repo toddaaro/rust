@@ -30,7 +30,7 @@ pub struct UnsafeAtomicRcBox<T> {
     data: *mut libc::c_void,
 }
 
-struct AtomicRcBoxData<T> {
+pub struct AtomicRcBoxData<T> {
     count: AtomicUint,
     // An unwrapper uses this protocol to communicate with the "other" task that
     // drops the last refcount on an arc. Unfortunately this can't be a proper
@@ -234,6 +234,7 @@ impl<T> Drop for UnsafeAtomicRcBox<T>{
             // doesn't get reordered to after the unwrapper pointer load.
             let old_count = data.count.fetch_sub(1, SeqCst);
             assert!(old_count >= 1);
+            rtdebug!("in rcbox drop, count: %u", old_count);
             if old_count == 1 {
                 // Were we really last, or should we hand off to an
                 // unwrapper? It's safe to not xchg because the unwrapper
@@ -257,6 +258,8 @@ impl<T> Drop for UnsafeAtomicRcBox<T>{
                         }
                     }
                     None => {
+                        rtdebug!("destructing rcbox with data: %u",
+                                 cast::transmute(data));
                         // drop glue takes over.
                     }
                 }

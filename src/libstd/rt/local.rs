@@ -30,6 +30,7 @@ impl Local for Task {
     fn take() -> ~Task { unsafe { local_ptr::take() } }
     fn exists() -> bool { local_ptr::exists() }
     fn borrow<T>(f: &fn(&mut Task) -> T) -> T {
+        rtdebug!("local borrow for task");
         let mut res: Option<T> = None;
         let res_ptr: *mut Option<T> = &mut res;
         unsafe {
@@ -58,6 +59,7 @@ impl Local for Scheduler {
         };
     }
     fn take() -> ~Scheduler {
+        rtdebug!("local take on scheduler");
         do Local::borrow::<Task,~Scheduler> |task| {
             let sched = task.sched.take_unwrap();
             let task = task;
@@ -129,6 +131,7 @@ mod test {
     use rt::task::Task;
     use rt::local_ptr;
 
+    #[ignore(reason="singleton async callback")]
     #[test]
     fn thread_local_task_smoke_test() {
         do run_in_bare_thread {
@@ -141,6 +144,7 @@ mod test {
         }
     }
 
+    #[ignore(reason="singleton async callback")]
     #[test]
     fn thread_local_task_two_instances() {
         do run_in_bare_thread {
@@ -158,6 +162,7 @@ mod test {
 
     }
 
+    #[ignore(reason="singleton async callback")]
     #[test]
     fn borrow_smoke_test() {
         do run_in_bare_thread {
@@ -174,6 +179,7 @@ mod test {
         }
     }
 
+    #[ignore(reason="singleton async callback")]
     #[test]
     fn borrow_with_return() {
         do run_in_bare_thread {

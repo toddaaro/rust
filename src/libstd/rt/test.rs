@@ -150,6 +150,7 @@ pub fn run_in_mt_newsched_task(f: ~fn()) {
     use from_str::FromStr;
     use rt::sched::Shutdown;
     use rt::util;
+    use util::ignore;
 
     // Bump the fd limit on OS X. See darwin_fd_limit for an explanation.
     unsafe { darwin_fd_limit::raise_fd_limit() }
@@ -195,8 +196,12 @@ pub fn run_in_mt_newsched_task(f: ~fn()) {
             let mut handles = handles.take();
             // Tell schedulers to exit
             for handle in handles.mut_iter() {
+                rtdebug!("@ about to send shutdown");
                 handle.send(Shutdown);
+                rtdebug!("@ ignoring handle");
+                ignore(handle);
             }
+            rtdebug!("@@ dropped shutdown handles");
 
             rtassert!(exit_status);
         };

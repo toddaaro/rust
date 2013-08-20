@@ -814,6 +814,7 @@ mod test {
 
     // Task blocking tests
 
+    #[ignore(reason = "singleton async callback")]
     #[test]
     fn block_and_wake() {
         do with_test_task |mut task| {
