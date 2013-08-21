@@ -105,6 +105,9 @@ pub mod local;
 /// A parallel work-stealing deque.
 mod work_queue;
 
+/// A chase-lev work-stealing deque.
+mod chase_lev;
+
 /// A parallel queue.
 mod message_queue;
 

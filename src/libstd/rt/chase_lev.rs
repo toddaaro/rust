@@ -39,8 +39,8 @@ impl<T: Send> DequeArray<T> {
     pub fn new() -> DequeArray<T> {
         unsafe {
             DequeArray {
-                size: AtomicUint::new(8000000),
-                raw: ~[AtomicPtr::new(intrinsics::uninit()), ..8000000]
+                size: AtomicUint::new(80000),
+                raw: ~[AtomicPtr::new(intrinsics::uninit()), ..80000]
             }
         }
     }
