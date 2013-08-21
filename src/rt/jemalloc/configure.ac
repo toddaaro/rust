@@ -226,7 +226,7 @@ PIC_CFLAGS='-fPIC -DPIC'
 CTARGET='-o $@'
 LDTARGET='-o $@'
 EXTRA_LDFLAGS=
-MKLIB='$(AR) crus $@'
+MKLIB='ar crus $@'
 CC_MM=1
 
 dnl Platform-specific settings.  abi and RPATH can probably be determined
