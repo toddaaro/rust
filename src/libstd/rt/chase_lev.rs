@@ -18,10 +18,9 @@ use kinds::Send;
 use unstable::intrinsics;
 use unstable::atomics::{AtomicPtr, SeqCst, AtomicUint, Relaxed, Acquire, Release, fence};
 //use unstable::atomics::{AtomicPtr, SeqCst, AtomicUint, Relaxed, Acquire};
-//use cast::{transmute, forget};
+use cast::{transmute, forget};
 //use clone::Clone;
 //use ops::Drop;
-use cast::transmute;
 
 pub struct WorkstealingDeque<T> {
     count: AtomicUint,
@@ -39,8 +38,8 @@ impl<T: Send> DequeArray<T> {
     pub fn new() -> DequeArray<T> {
         unsafe {
             DequeArray {
-                size: AtomicUint::new(80000),
-                raw: ~[AtomicPtr::new(intrinsics::uninit()), ..80000]
+                size: AtomicUint::new(8000000),
+                raw: ~[AtomicPtr::new(intrinsics::uninit()), ..8000000]
             }
         }
     }
@@ -92,6 +91,7 @@ impl<T: Send> WorkstealingDeque<T> {
                 if t == b {
                     // XXX: "compare_exchange_strong_explicit" is what in rust?
                     if t != self.top.compare_and_swap(t, t+1, SeqCst) {
+                        forget(x);
                         x = None;
                     }
                     self.bottom.store(b+1, Relaxed);
@@ -116,6 +116,7 @@ impl<T: Send> WorkstealingDeque<T> {
                 x = Some(transmute((*a).raw[t % size].load(Relaxed)));
                 // XXX: "compare_exchange_strong_explicit" is what in rust?
                 if t != self.top.compare_and_swap(t, t+1, SeqCst) {
+                    forget(x);
                     return None;
                 }
             }
@@ -177,23 +178,23 @@ pub fn test_chase_lev_multithreaded() {
     // Number of stealers
     let m = 8;
     // Number of elements per stealer
-    let n = 1000000;
+    let n = 900000;
 
     // Pipes to report doneness
     let (port, chan) = stream::<uint>();
     let shared_chan = SharedChan::new(chan);
 
     do spawn {
-//        rtdebug!("spawning inserter task");
+        rterrln!("spawning inserter task");
         for i in range (1u, n*m+1) {            
             unsafe {
                 (*deque_ptr).push(~i);
 //                rterrln!("inserting: %u", i);
-            }
+            }            
         }        
     }
     for _ in range(0u, m) {
-//        rterrln!("spawning stealer");
+        rterrln!("spawning stealer");
         let dest = Cell::new(shared_chan.clone());
         do spawn {
             let mut res: uint = 0;
@@ -211,7 +212,7 @@ pub fn test_chase_lev_multithreaded() {
                         }
                     }
                 }
-//                rterrln!("done stealing");
+                rterrln!("done stealing");
             }
             dest.take().send(res);
         }
