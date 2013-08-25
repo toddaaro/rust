@@ -363,8 +363,7 @@ impl Scheduler {
             None => {
                 // Our naive stealing, try kinda hard.
                 rtdebug!("scheduler trying to steal");
-                let len = self.work_queues.len();
-                return self.try_steals(len/2);
+                return self.try_steals(1);
             }
         }
     }
@@ -375,15 +374,19 @@ impl Scheduler {
     fn try_steals(&mut self, n: uint) -> Option<~Task> {
         for _ in range(0, n) {
             let index = self.rng.gen_uint_range(0, self.work_queues.len());
-            let work_queues = &mut self.work_queues;
-            match work_queues[index].steal() {
-                Some(task) => {
-                    rtdebug!("found task by stealing");
-                    return Some(task)
+            for i in range(index, index % self.work_queues.len()) {
+                let work_queues = &mut self.work_queues;
+                match work_queues[i].steal() {
+                    Some(task) => {
+                        rtdebug!("found task by stealing");
+                        rterrln!("found task by stealing");
+                        return Some(task)
+                    }
+                    None => ()
                 }
-                None => ()
-            }
-        };
+            };
+        }
+        rterrln!("giving up on stealing");
         rtdebug!("giving up on stealing");
         return None;
     }
@@ -474,10 +477,11 @@ impl Scheduler {
         // that we always find it.
         match this.sleeper_list.pop() {
             Some(handle) => {
-                        let mut handle = handle;
+                rterrln!("resuming sleeper");
+                let mut handle = handle;
                 handle.send(Wake)
             }
-            None => { (/* pass */) }
+            None => { () }
         };
     }
 

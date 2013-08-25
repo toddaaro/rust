@@ -55,7 +55,7 @@ Several modules in `core` are clients of `rt`:
 */
 
 #[doc(hidden)];
-#[deny(unused_imports)];
+//#[deny(unused_imports)];
 #[deny(unused_mut)];
 #[deny(unused_variable)];
 #[deny(unused_unsafe)];
