@@ -19,7 +19,7 @@ use kinds::Send;
 use unstable::atomics::{AtomicPtr, SeqCst, AtomicUint, Relaxed, Acquire, Release, fence};
 //use unstable::atomics::{AtomicPtr, SeqCst, AtomicUint, Relaxed, Acquire};
 use cast::{transmute, forget};
-use rt::thread::Thread;
+//use rt::thread::*;
 //use vec;
 use prelude::*;
 //use clone::Clone;
@@ -53,7 +53,7 @@ impl<T: Send> DequeArray<T> {
         }
     }
     pub fn new_default() -> DequeArray<T> {
-        DequeArray::new(8)
+        DequeArray::new(20)
     }
     pub fn index<T>(&self, i: uint) -> *mut AtomicPtr<T> {
 //        rterrln!("calling index on: %u", i);
@@ -114,8 +114,9 @@ impl<T: Send> WorkstealingDeque<T> {
             let size = 1 << (*a).size.load(SeqCst); // XXX: Pick ordering.
             if b - t > size - 1 {
 //                rterrln!("growing: %?, size: %u", value, size);
-                let at: &mut DequeArray<T> = transmute(a);
-                at.grow();
+//                let at: &mut DequeArray<T> = transmute(a);
+//                at.grow();
+                rtabort!("growth disabled");
             }
 //            let a: *mut DequeArray<T> = transmute(self.array.load(Relaxed));
             let size = 1 << (*a).size.load(SeqCst); // XXX: Pick ordering.
@@ -123,6 +124,7 @@ impl<T: Send> WorkstealingDeque<T> {
             (*(*a).index::<T>(b % size)).store(value, Relaxed);
             fence(Release);
             self.bottom.store(b+1, Relaxed);                        
+//            rterrln!("pushed value");
         }
     }
 
@@ -160,7 +162,7 @@ impl<T: Send> WorkstealingDeque<T> {
             let t = self.top.load(Acquire);
             fence(SeqCst);
             let b = self.bottom.load(Acquire);
-            let mut x: Option<~T> = None;
+            let mut x: Option<~T>;
             if (t < b) {
                 let a = self.array.load(Relaxed);
                 let size = 1 << (*a).size.load(SeqCst); // XXX: Pick ordering.
@@ -168,9 +170,13 @@ impl<T: Send> WorkstealingDeque<T> {
                 // XXX: "compare_exchange_strong_explicit" is what in rust?
                 if t != self.top.compare_and_swap(t, t+1, SeqCst) {
                     forget(x);
+//                    rterrln!("steal failed, found: %?", x);
                     return None;
                 }
+            } else {
+                x = None;
             }
+//            rterrln!("steal returning");
             return x;
         }
     }
@@ -223,8 +229,8 @@ pub fn test_chase_lev_trivial() {
     let mut one = deque.pop().unwrap();
     rtdebug!("about to steal two");
     let mut two = deque.steal().unwrap();
-    rterrln!("first: %u", transmute(&mut *one));
-    rterrln!("second: %u", transmute(&mut *two));
+//    rterrln!("first: %u", transmute(&mut *one));
+//    rterrln!("second: %u", transmute(&mut *two));
     assert!(3 == *one + *two);
 }
 }
@@ -236,6 +242,7 @@ pub fn test_chase_lev_multithreaded() {
 //    use rt::comm::*;
     use cell::Cell;
 //    use unstable::run_in_bare_thread;
+    use rt::thread::Thread;
 
     let mut deque: WorkstealingDeque<uint> = WorkstealingDeque::new();
     let deque_ptr: *mut WorkstealingDeque<uint> = &mut deque;
@@ -268,48 +275,48 @@ pub fn test_chase_lev_multithreaded() {
     }
 */
     for i in range(0u, m) {
-        rterrln!("spawning stealer");
+//        rterrln!("spawning stealer");
         let dest = Cell::new(dest_ptr);
         let thread = do Thread::start {
-            rterrln!("%u stealer spawned", i);
+//            rterrln!("%u stealer spawned", i);
             let mut res: uint = 0;
             let mut count: uint = 0;
             unsafe {
                 while count < n {
-                    match (*deque_ptr).steal() {
+                    match (*deque_ptr).steal() {                        
                         Some(~x) => {
-                            rterrln!("stole: %u, size: %u, count: %u", x, (*deque_ptr).size(), count);
+//                            rterrln!("stole: %u, size: %u, count: %u", x, (*deque_ptr).size(), count);
                             res += x;
                             count += 1;
                         }
                         None => {
                             if i==0 {
-                               rterrln!("%u failed to steal at count = %u, size=%u", i, count, (*deque_ptr).size());
+//                               rterrln!("%u failed to steal at count = %u, size=%u", i, count, (*deque_ptr).size());
                             }
 //                            rterrln!("failed to steal");
                             ()
                         }
                     }
                 }
-                rterrln!("%u done stealing", i);
+//                rterrln!("%u done stealing", i);
             let dest = dest.take();
-            rterrln!("setting dest ptr");
+//            rterrln!("setting dest ptr");
             (*dest)[i] = res;
-            rterrln!("dest ptr set");
+//            rterrln!("dest ptr set");
             }
         };
         threads.push(thread);
     }
 
     let main_thread = do Thread::start {
-        rterrln!("spawning inserter task");
+//        rterrln!("spawning inserter task");
         for i in range (1u, n*m+1) {
             unsafe {
                 (*deque_ptr).push(~i)
 //                rterrln!("inserting: %u", i);
             }
         }
-        rterrln!("done inserting");
+//        rterrln!("done inserting");
     };
     
     for thread in threads.move_iter() {
