@@ -230,7 +230,7 @@ use std::sync::deque;
 use std::task::{TaskBuilder, Spawner};
 
 use sched::{Shutdown, Scheduler, SchedHandle, TaskFromFriend, PinnedTask, NewNeighbor};
-use sleeper_list::SleeperList;
+//use sleeper_list::SleeperList;
 use stack::StackPool;
 use task::GreenTask;
 
@@ -242,7 +242,7 @@ pub mod basic;
 pub mod context;
 pub mod coroutine;
 pub mod sched;
-pub mod sleeper_list;
+//pub mod sleeper_list;
 pub mod stack;
 pub mod task;
 
@@ -368,7 +368,7 @@ pub struct SchedPool {
     next_friend: uint,
     stack_pool: StackPool,
     deque_pool: deque::BufferPool<Box<task::GreenTask>>,
-    sleepers: SleeperList,
+//    sleepers: SleeperList,
     factory: fn() -> Box<rtio::EventLoop + Send>,
     task_state: TaskState,
     tasks_done: Receiver<()>,
@@ -404,7 +404,7 @@ impl SchedPool {
             handles: vec![],
             stealers: vec![],
             id: unsafe { POOL_ID.fetch_add(1, SeqCst) },
-            sleepers: SleeperList::new(),
+  //          sleepers: SleeperList::new(),
             stack_pool: StackPool::new(),
             deque_pool: deque::BufferPool::new(),
             next_friend: 0,
@@ -428,15 +428,27 @@ impl SchedPool {
         // Now that we've got all our work queues, create one scheduler per
         // queue, spawn the scheduler into a thread, and be sure to keep a
         // handle to the scheduler and the thread to keep them alive.
+        let mut scheds = vec![];
         for worker in workers.move_iter() {
-            rtdebug!("inserting a regular scheduler");
+            let sched = box Scheduler::new(pool.id,
+                                             (pool.factory)(),
+                                             worker,
+                                             pool.stealers.clone(),
+                                             pool.task_state.clone());
+            scheds.push(sched);
+                
+        }
+//            .to_owned_vec();
+        
+        for i in range(0u, scheds.len()) {
+            let left = if i > 0 { i - 1 } else { scheds.len() - 1 };
+            let right = if (i + 1) < scheds.len() { i + 1 } else { 0 };
+            scheds.get_mut(i).left_sched = Some(scheds.get_mut(left).make_handle());
+            scheds.get_mut(i).right_sched = Some(scheds.get_mut(right).make_handle());
+        }
 
-            let mut sched = box Scheduler::new(pool.id,
-                                            (pool.factory)(),
-                                            worker,
-                                            pool.stealers.clone(),
-                                            pool.sleepers.clone(),
-                                            pool.task_state.clone());
+        for mut sched in scheds.move_iter() {
+            rtdebug!("inserting a regular scheduler");
             pool.handles.push(sched.make_handle());
             pool.threads.push(Thread::start(proc() { sched.bootstrap(); }));
         }
@@ -497,7 +509,7 @@ impl SchedPool {
                                         (self.factory)(),
                                         worker,
                                         self.stealers.clone(),
-                                        self.sleepers.clone(),
+//                                        self.sleepers.clone(),
                                         self.task_state.clone());
         let ret = sched.make_handle();
         self.handles.push(sched.make_handle());
