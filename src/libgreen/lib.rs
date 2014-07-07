@@ -230,7 +230,7 @@ use std::sync::deque;
 use std::task::{TaskBuilder, Spawner};
 
 use sched::{Shutdown, Scheduler, SchedHandle, TaskFromFriend, PinnedTask, NewNeighbor};
-//use sleeper_list::SleeperList;
+use sleeper_list::SleeperList;
 use stack::StackPool;
 use task::GreenTask;
 
@@ -242,7 +242,7 @@ pub mod basic;
 pub mod context;
 pub mod coroutine;
 pub mod sched;
-//pub mod sleeper_list;
+pub mod sleeper_list;
 pub mod stack;
 pub mod task;
 
